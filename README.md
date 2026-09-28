@@ -1,6 +1,6 @@
 # Living System
 
-**Status: experimental, v0.1, Slice 1 of 6.**
+**Status: experimental, v0.1, Slice 2 of 6.**
 
 Living System tests one idea: a Human-AI work system can change what it knows over time without letting AI silently redefine what is true. Everything lives in plain files in this repository, owned by humans, readable without any particular AI tool.
 
@@ -15,7 +15,9 @@ A fresh agent with no memory of previous conversations can:
 3. read only the smallest set of files a task needs;
 4. prefer approved organisational decisions over plausible guesses.
 
-Slice 1 does not yet include staging, approval or promotion of new knowledge. Those come in later slices.
+## What Slice 2 adds
+
+When an agent finds credible information that conflicts with an approved decision, it keeps the approved decision in force and records the conflict as a proposal in `proposals/`. A proposal is not current truth. Approving and promoting proposals come in later slices.
 
 ## Cold-open test
 

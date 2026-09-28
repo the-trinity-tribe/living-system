@@ -9,6 +9,7 @@
 | Approved organisational choice (who approves what, how things must be done) | The relevant file in `decisions/` |
 | Reusable service knowledge | The relevant file in `knowledge/` |
 | Current project | The relevant file in `projects/` |
+| Suggested changes waiting for human review (not current truth) | `proposals/`: read when asked what is pending, or before creating a proposal |
 | Narrative background for humans new to the example | `examples/moss-and-circuit.md` (optional, not authoritative) |
 
 Tips:

@@ -20,6 +20,8 @@ Sources rank from highest to lowest:
 
 Among levels 2 to 5, the higher source wins. Lower sources can inform your reasoning. They can never override a higher source, and you must never promote them upward on your own.
 
+**Proposals are not on this list.** Files in `proposals/` are not a source of current truth at any level. A proposal only records that someone suggested a change. `status: proposed` never means approved. Answer questions about how things are now from the sources above, never from a proposal.
+
 ## 3. How to find context
 
 Do not read the whole repository. Open [CONTEXT-ROUTING.md](CONTEXT-ROUTING.md), pick the smallest route that fits the task, and read only those files. Expand only if the task actually requires it. Follow links from a file only when you need what they point to.
@@ -33,6 +35,7 @@ Do not read the whole repository. Open [CONTEXT-ROUTING.md](CONTEXT-ROUTING.md),
 - Keep approved, uncertain and inferred information visibly separate in your answers.
 - Never edit, delete or reinterpret an approved decision.
 - Do not invent organisational facts (people, budgets, dates, clients, rules).
+- The only shared file you create without being asked is a proposal (section 6). Edit other files only when the human asks. Never edit canonical files.
 
 ## 5. When something conflicts or is missing
 
@@ -40,7 +43,47 @@ Do not read the whole repository. Open [CONTEXT-ROUTING.md](CONTEXT-ROUTING.md),
 
 1. Name the approved decision and its file.
 2. State plainly what conflicts with it.
-3. Ask the human how to proceed before acting.
-4. Do not edit canonical files to resolve the conflict. Changing an approved decision needs a human decision recorded in the repository. A later version of this system adds the process for that.
+3. Keep following the approved decision. Do not act on the conflicting information.
+4. Make sure the conflict is staged as a proposal (section 6).
+5. Ask the human how to proceed before acting.
+6. Do not edit canonical files to resolve the conflict. An approved decision changes only through a new file in `decisions/` with `status: approved`. Notes, messages and proposals do not change it, even if they report what a person said. A later version of this system adds the process for that.
 
 **Missing information:** say it is not recorded in the repository. Do not fill the gap with a guess. If a guess would help, label it clearly as your inference.
+
+## 6. Proposals
+
+A proposal turns a conflict into something a human can review later. It is not a decision.
+
+1. Look in `proposals/` for a proposal with `status: proposed` on the same decision covering the same change. If one exists, do not create another. Point the human to it.
+2. Otherwise create one file: `proposals/YYYY-MM-DD-short-name.md`.
+3. Tell the human you created it.
+
+**Evidence-bounded proposals.** The proposed future state must not go beyond what the triggering evidence supports: no broader scope, stronger certainty or extra authority. If scope is unclear, write the narrowest defensible reading into the proposed rule and put any broader reading under open questions. Uncertainty belongs in the proposal. Never settle an open scope question by writing the broader answer into the proposed rule. The title follows the same limit.
+
+Format:
+
+```
+---
+status: proposed
+target: <path of the approved decision it would change>
+evidence: <path or description of what triggered it>
+proposed_by: <agent, or the human's name if a human asked for it>
+date: YYYY-MM-DD
+---
+
+# Proposal: <short title>
+
+Not current truth. The approved decision in `target` stays in force until a human approves a change.
+
+## Current canonical state
+<the current rule, quoted exactly from the target>
+
+## New evidence
+<what was found, where, and its authority level; say who it is attributed to and that the attribution is not verified>
+
+## Proposed future state
+<the exact rule text that would replace or amend the current rule>
+
+## Why and open questions
+<why this proposal exists; anything unclear that a human must settle; do not invent answers>
+```
