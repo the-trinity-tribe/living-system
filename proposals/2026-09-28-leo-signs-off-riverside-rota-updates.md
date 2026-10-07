@@ -1,10 +1,13 @@
 ---
-status: proposed
+status: promoted
 target: decisions/2026-09-01-founder-approves-client-deliverables.md
 target_sha256: c208a09e643ee1e782f099cfe4c40a10f06f68087e12ff30026dc7cf682c28ca
 evidence: projects/riverside-community-garden.md, working note dated 2026-09-24 (notes by Sam)
 proposed_by: agent
 date: 2026-09-28
+reviewed_by: Maya Chen
+reviewed_on: 2026-10-07
+resulting_decision: decisions/2026-10-07-leo-signs-off-riverside-rota-updates.md
 ---
 
 # Proposal: Leo may sign off routine Riverside garden schedule updates
@@ -41,3 +44,7 @@ Open questions for a human:
 - Does the exception apply only to the Riverside garden, or to routine schedule updates for other clients too? (The note mentions only "the garden".)
 - What counts as "routine"? Who decides whether a given update involves unusual commitments or reputational risk?
 - Does it cover schedule updates other than the volunteer rota?
+
+## Review log
+
+- 2026-10-07 | approve | by Maya Chen (attribution, not verified) | resulting decision: decisions/2026-10-07-leo-signs-off-riverside-rota-updates.md | note: Narrow Riverside-only text approved as written; open questions not resolved
