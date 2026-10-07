@@ -183,6 +183,10 @@ def check(root):
             problems.append(f"{k}: unexpected status {m.get('status')}")
         if "supersedes" in m and m["supersedes"] not in decs:
             problems.append(f"{k}: supersedes missing {m['supersedes']}")
+    gone = superseded(root)
+    for p in sorted((root / "projects").glob("*.md")):
+        for ref in sorted(set(re.findall(r"`(decisions/[^`]*\.md)`", p.read_text())) & gone):
+            problems.append(f"{p.relative_to(root)}: references superseded decision {ref}")
     for p in sorted((root / "proposals").glob("*.md")):
         rel = str(p.relative_to(root))
         try:

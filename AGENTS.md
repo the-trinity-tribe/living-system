@@ -22,6 +22,8 @@ Among levels 2 to 5, the higher source wins. Lower sources can inform your reaso
 
 **Proposals are not on this list.** Files in `proposals/` are not a source of current truth at any level. A proposal only records that someone suggested a change. `status: proposed` never means approved. Answer questions about how things are now from the sources above, never from a proposal.
 
+**Promoted proposals are provenance only.** Once a proposal is `promoted`, the resulting current approved decision is the operational source. The proposal's old open questions must not override, narrow or reopen anything that decision resolves; read the decision's own wording for what it covers. Only a genuine gap that the current approved decision does not settle (for example, what counts as "routine" if the decision does not define it) is labelled unresolved, never guessed.
+
 ## 3. How to find context
 
 Do not read the whole repository. Open [CONTEXT-ROUTING.md](CONTEXT-ROUTING.md), pick the smallest route that fits the task, and read only those files. Expand only if the task actually requires it. Follow links from a file only when you need what they point to.

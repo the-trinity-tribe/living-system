@@ -238,6 +238,32 @@ class TestSlice1And2Regression(unittest.TestCase):
         self.assertIn("All client-facing deliverables require Maya Chen's approval before they are sent.", t)
 
 
+class TestSlice4(unittest.TestCase):
+    CURRENT = TestRealRepoState.NEWREAL
+
+    def test_project_routes_to_current_decision(self):
+        text = (REPO / "projects/riverside-community-garden.md").read_text()
+        applies = text.split("## Decisions that apply", 1)[1].split("\n## ", 1)[0]
+        self.assertIn(self.CURRENT, applies)
+        self.assertNotIn(TARGET, applies)
+
+    def test_check_flags_project_reference_to_superseded_decision(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for d in ("decisions", "proposals", "projects", "knowledge", "examples"):
+                shutil.copytree(REPO / d, root / d)
+            for f in ("AGENTS.md", "CONTEXT-ROUTING.md", "SYSTEM.md", "PRINCIPLES.md", "README.md"):
+                shutil.copy(REPO / f, root / f)
+            self.assertEqual(R.check(root), [])
+            (root / "projects/other.md").write_text(f"# P\n\nSee `{TARGET}`.\n")
+            self.assertEqual(R.check(root), [f"projects/other.md: references superseded decision {TARGET}"])
+
+    def test_agents_promoted_proposal_rule(self):
+        agents = (REPO / "AGENTS.md").read_text()
+        self.assertIn("Promoted proposals are provenance only.", agents)
+        self.assertIn("must not override, narrow or reopen", agents)
+
+
 class TestCLI(Fixture):
     def cli(self, *args):
         return subprocess.run([sys.executable, str(REPO / "tools/review.py"), "--root", str(self.root), *args],

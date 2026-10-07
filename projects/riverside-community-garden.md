@@ -24,7 +24,7 @@ Roles are defined in `SYSTEM.md`.
 
 ## Decisions that apply
 
-- Recommendations sent to the garden are client-facing deliverables. See `decisions/2026-09-01-founder-approves-client-deliverables.md`.
+- Recommendations sent to the garden are client-facing deliverables. See `decisions/2026-10-07-leo-signs-off-riverside-rota-updates.md` (current approval rule, including the Riverside routine-schedule exception).
 
 ## Working notes
 

@@ -1,6 +1,6 @@
 # Living System
 
-**Status: experimental, v0.1, Slice 3 of 6.**
+**Status: experimental, v0.1, Slice 4 of 6.**
 
 Living System tests one idea: a Human-AI work system can change what it knows over time without letting AI silently redefine what is true. Everything lives in plain files in this repository, owned by humans, readable without any particular AI tool.
 
@@ -22,6 +22,10 @@ When an agent finds credible information that conflicts with an approved decisio
 ## What Slice 3 adds
 
 A human can approve, reject or defer a proposal with `tools/review.py`. Only approval changes canonical state: it adds a new approved decision that supersedes the old one, which is kept as history. See section 7 of `AGENTS.md`. Run the tests with `python3 -m unittest discover tests`.
+
+## What Slice 4 adds
+
+Routing stays current after a promotion: `tools/review.py check` flags any file in `projects/` that references a superseded decision. `AGENTS.md` also says a promoted proposal is provenance only, so its old open questions never reopen what the current approved decision resolves.
 
 ## Cold-open test
 
