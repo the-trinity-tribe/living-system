@@ -16,7 +16,7 @@ Sources rank from highest to lowest:
 4. Background context: `knowledge/` and `examples/`.
 5. Your own inference.
 
-**Task authority is not canonical authority.** The current human instruction has authority over the task you are doing. It does not redefine canonical organisational truth. If it conflicts with an approved canonical decision, do not treat it as a canonical update and do not silently reinterpret or overwrite anything. Surface the conflict and ask how to proceed (section 5). A governed path for changing canonical state comes in a later version.
+**Task authority is not canonical authority.** The current human instruction has authority over the task you are doing. It does not redefine canonical organisational truth. If it conflicts with an approved canonical decision, do not treat it as a canonical update and do not silently reinterpret or overwrite anything. Surface the conflict and ask how to proceed (section 5). The governed path for changing canonical state is in section 7.
 
 Among levels 2 to 5, the higher source wins. Lower sources can inform your reasoning. They can never override a higher source, and you must never promote them upward on your own.
 
@@ -46,7 +46,7 @@ Do not read the whole repository. Open [CONTEXT-ROUTING.md](CONTEXT-ROUTING.md),
 3. Keep following the approved decision. Do not act on the conflicting information.
 4. Make sure the conflict is staged as a proposal (section 6).
 5. Ask the human how to proceed before acting.
-6. Do not edit canonical files to resolve the conflict. An approved decision changes only through a new file in `decisions/` with `status: approved`. Notes, messages and proposals do not change it, even if they report what a person said. A later version of this system adds the process for that.
+6. Do not edit canonical files to resolve the conflict. An approved decision changes only through a new file in `decisions/` with `status: approved`. Notes, messages and proposals do not change it, even if they report what a person said. The process for that is in section 7.
 
 **Missing information:** say it is not recorded in the repository. Do not fill the gap with a guess. If a guess would help, label it clearly as your inference.
 
