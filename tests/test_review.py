@@ -2,6 +2,7 @@ import hashlib, shutil, subprocess, sys, tempfile, unittest
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
+FIX = Path(__file__).resolve().parent / "fixtures"  # frozen pre-promotion state
 sys.path.insert(0, str(REPO / "tools"))
 import review as R
 
@@ -18,8 +19,10 @@ class Fixture(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.root = Path(self.tmp.name)
-        for d in ("decisions", "proposals", "projects", "knowledge", "examples"):
+        for d in ("projects", "knowledge", "examples"):
             shutil.copytree(REPO / d, self.root / d)
+        for d in ("decisions", "proposals"):
+            shutil.copytree(FIX / d, self.root / d)
         for f in ("AGENTS.md", "CONTEXT-ROUTING.md", "SYSTEM.md", "PRINCIPLES.md", "README.md"):
             shutil.copy(REPO / f, self.root / f)
         self.before = snapshot(self.root)
@@ -44,7 +47,7 @@ class TestSlice3(Fixture):
         status, result = self.run_review("approve")
         self.assertEqual((status, result), ("promoted", NEW))
         self.assertEqual(self.changed(), {NEW, PROPOSAL})  # nothing beyond target/result
-        old = (REPO / TARGET).read_text()
+        old = (FIX / TARGET).read_text()
         expected = f"""---
 status: approved
 approved_by: Test Reviewer
@@ -144,7 +147,7 @@ Promoted from `{PROPOSAL}` and supersedes `{TARGET}`. `approved_by` is attributi
     def test_second_proposal_on_superseded_target(self):
         self.run_review("approve")
         other = "proposals/2026-10-01-other.md"
-        text = (REPO / PROPOSAL).read_text()
+        text = (FIX / PROPOSAL).read_text()
         (self.root / other).write_text(text)
         self.refuses(proposal=other)
 
@@ -176,19 +179,32 @@ Promoted from `{PROPOSAL}` and supersedes `{TARGET}`. `approved_by` is attributi
         self.refuses()
 
 
-class TestRealRepoUntouched(unittest.TestCase):
-    """Slice 3 mechanism exists, but no human has approved the real proposal."""
+class TestRealRepoState(unittest.TestCase):
+    """Real promotion, approved by Maya Chen (attribution) on 2026-10-07."""
+    NEWREAL = "decisions/2026-10-07-leo-signs-off-riverside-rota-updates.md"
 
-    def test_pending_proposal_still_pending(self):
-        text = (REPO / PROPOSAL).read_text()
-        self.assertIn("status: proposed\n", text)
-        self.assertNotIn("reviewed_by", text)
-        self.assertEqual([p.name for p in (REPO / "decisions").glob("*.md")],
-                         ["2026-09-01-founder-approves-client-deliverables.md"])
+    def test_old_decision_byte_identical_history(self):
+        self.assertEqual((REPO / TARGET).read_bytes(), (FIX / TARGET).read_bytes())
 
-    def test_pinned_hash_matches_target(self):
+    def test_pinned_hash_matches_old_target(self):
         h = hashlib.sha256((REPO / TARGET).read_bytes()).hexdigest()
         self.assertIn(f"target_sha256: {h}\n", (REPO / PROPOSAL).read_text())
+
+    def test_real_promotion_recorded(self):
+        meta, _, body = R.split_frontmatter((REPO / PROPOSAL).read_text(), PROPOSAL)
+        self.assertEqual(meta["status"], "promoted")
+        self.assertEqual(meta["reviewed_by"], "Maya Chen")
+        self.assertEqual(meta["resulting_decision"], self.NEWREAL)
+        self.assertEqual(R.current_decisions(REPO), [self.NEWREAL])
+        d, _, dbody = R.split_frontmatter((REPO / self.NEWREAL).read_text(), self.NEWREAL)
+        self.assertEqual((d["status"], d["supersedes"], d["source_proposal"]), ("approved", TARGET, PROPOSAL))
+        quote = R.single_blockquote(R.section(R.split_frontmatter((FIX / PROPOSAL).read_text(), "f")[2],
+                                              "Proposed future state", "f"), "f")
+        self.assertIn(f"### Exception\n\n{quote}\n", dbody)
+
+    def test_promoted_proposal_cannot_be_reapplied(self):
+        with self.assertRaises(R.Refusal):
+            R.review(REPO, PROPOSAL, "approve", "x", date="2026-10-08")
 
 
 class TestSlice1And2Regression(unittest.TestCase):
@@ -204,13 +220,13 @@ class TestSlice1And2Regression(unittest.TestCase):
         self.assertIn("status: approved", (REPO / "SYSTEM.md").read_text())
 
     def test_slice2_proposal_shape(self):
-        text = (REPO / PROPOSAL).read_text()
+        text = (FIX / PROPOSAL).read_text()
         meta, _, body = R.split_frontmatter(text, PROPOSAL)
         self.assertEqual(meta["target"], TARGET)
         for h in ("Current canonical state", "New evidence", "Proposed future state", "Why and open questions"):
             R.section(body, h, PROPOSAL)
         quoted = R.section(body, "Current canonical state", PROPOSAL)
-        rule = R.section(R.split_frontmatter((REPO / TARGET).read_text(), TARGET)[2], "Rule", TARGET)
+        rule = R.section(R.split_frontmatter((FIX / TARGET).read_text(), TARGET)[2], "Rule", TARGET)
         self.assertIn(rule, quoted)  # quoted exactly from target
         self.assertTrue(text.split("---\n", 2)[2].lstrip().startswith("# Proposal:"))
         self.assertIn("Not current truth.", text)
