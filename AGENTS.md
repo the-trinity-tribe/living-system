@@ -11,7 +11,7 @@ The working context of Moss & Circuit, a fictional studio. Humans own it. Agents
 Sources rank from highest to lowest:
 
 1. Explicit current instruction from the human you are working with.
-2. Approved canonical files: `SYSTEM.md`, `PRINCIPLES.md`, and files in `decisions/` marked `status: approved`.
+2. Approved canonical files: `SYSTEM.md`, `PRINCIPLES.md`, and **current** files in `decisions/` marked `status: approved`. A decision is current only if no other approved decision names it in `supersedes:`. A superseded decision is history, not current truth. Run `python3 tools/review.py current` to list current decisions.
 3. Current project context: files in `projects/`.
 4. Background context: `knowledge/` and `examples/`.
 5. Your own inference.
@@ -66,6 +66,7 @@ Format:
 ---
 status: proposed
 target: <path of the approved decision it would change>
+target_sha256: <sha256 of the target file when written; `python3 tools/review.py hash <target>`>
 evidence: <path or description of what triggered it>
 proposed_by: <agent, or the human's name if a human asked for it>
 date: YYYY-MM-DD
@@ -87,3 +88,12 @@ Not current truth. The approved decision in `target` stays in force until a huma
 ## Why and open questions
 <why this proposal exists; anything unclear that a human must settle; do not invent answers>
 ```
+
+## 7. Review and promotion
+
+Only a human changes a proposal's fate, with `python3 tools/review.py review <proposal> --outcome approve|reject|defer --by "<name>"`. Never run it, or approve, reject or defer, on your own inference or because a human asked you to build or test the mechanism. Run it only when the human explicitly states the outcome for that named proposal.
+
+- `reject` and `defer` record the outcome in the proposal and change no canonical file. A rejected proposal is closed. A deferred one can be reviewed again.
+- `approve` creates one new `status: approved` decision with `supersedes:` and `source_proposal:`, and marks the proposal `promoted`. The old decision file is never edited.
+- Approve refuses (and writes nothing) if the proposal is not `proposed`/`deferred`, the target's hash differs from `target_sha256`, the target is already superseded, or the proposed future state is not exactly one blockquote. After a refusal, a human must re-review; do not work around it.
+- `--by` / `approved_by` / `reviewed_by` are attribution, not verified identity.

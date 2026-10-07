@@ -1,6 +1,7 @@
 ---
 status: proposed
 target: decisions/2026-09-01-founder-approves-client-deliverables.md
+target_sha256: c208a09e643ee1e782f099cfe4c40a10f06f68087e12ff30026dc7cf682c28ca
 evidence: projects/riverside-community-garden.md, working note dated 2026-09-24 (notes by Sam)
 proposed_by: agent
 date: 2026-09-28

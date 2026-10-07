@@ -1,6 +1,6 @@
 # Living System
 
-**Status: experimental, v0.1, Slice 2 of 6.**
+**Status: experimental, v0.1, Slice 3 of 6.**
 
 Living System tests one idea: a Human-AI work system can change what it knows over time without letting AI silently redefine what is true. Everything lives in plain files in this repository, owned by humans, readable without any particular AI tool.
 
@@ -17,7 +17,11 @@ A fresh agent with no memory of previous conversations can:
 
 ## What Slice 2 adds
 
-When an agent finds credible information that conflicts with an approved decision, it keeps the approved decision in force and records the conflict as a proposal in `proposals/`. A proposal is not current truth. Approving and promoting proposals come in later slices.
+When an agent finds credible information that conflicts with an approved decision, it keeps the approved decision in force and records the conflict as a proposal in `proposals/`. A proposal is not current truth.
+
+## What Slice 3 adds
+
+A human can approve, reject or defer a proposal with `tools/review.py`. Only approval changes canonical state: it adds a new approved decision that supersedes the old one, which is kept as history. See section 7 of `AGENTS.md`. Run the tests with `python3 -m unittest discover tests`.
 
 ## Cold-open test
 
