@@ -1,0 +1,19 @@
+# Local tools, virtual environments, Python caches
+.claude/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Local configuration, potential credentials, and temporary artifacts
+.env
+.env.*
+!.env.example
+*.log
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

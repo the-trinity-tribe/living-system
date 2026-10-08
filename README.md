@@ -1,40 +1,76 @@
 # Living System
 
-**Status: experimental, v0.1, Slice 4 of 6.**
+**Experimental v0.1 · local-first Human–AI governance Kernel**
 
-Living System tests one idea: a Human-AI work system can change what it knows over time without letting AI silently redefine what is true. Everything lives in plain files in this repository, owned by humans, readable without any particular AI tool.
+Living System explores how people and AI agents can evolve shared working context **without letting agents silently decide what becomes canonical truth**. It uses readable Markdown files and a small Python standard-library review tool, rather than a hosted service, vector database, or proprietary memory.
 
-This repository uses a small fictional organisation, Moss & Circuit, as a worked example.
+Created and architected by **Adrianna Mamczarz**, through **The Trinity Tribe**. AI assisted with implementation; design decisions, review, and acceptance remained human-led.
 
-## What Slice 1 demonstrates
+> **Status:** An experimental, educational reference implementation. Not a security boundary, identity-verification system, or production-ready access-control product. Moss & Circuit, Riverside Community Garden and every person named in the example (including Maya Chen, Leo and Sam) are fictional, and all project details in the example are invented.
 
-A fresh agent with no memory of previous conversations can:
+## Quick start
 
-1. enter the repository and find where to start;
-2. understand who and what has authority;
-3. read only the smallest set of files a task needs;
-4. prefer approved organisational decisions over plausible guesses.
+**Requirements:** Git (to clone) and Python 3. No third-party Python packages or accounts are needed to inspect the example or run the review checks.
 
-## What Slice 2 adds
+```sh
+git clone https://github.com/the-trinity-tribe/living-system.git
+cd living-system
+python3 -B tools/review.py current
+python3 -B tools/review.py check
+python3 -B -m unittest discover tests
+```
 
-When an agent finds credible information that conflicts with an approved decision, it keeps the approved decision in force and records the conflict as a proposal in `proposals/`. A proposal is not current truth.
+These commands **read and check** the provided example. `current` lists active approved decisions; `check` reports certain structural problems; the unit tests exercise the governance rules. Passing them does **not** verify the identity of a reviewer, or guarantee security or agent correctness.
 
-## What Slice 3 adds
+## Explore the worked example
 
-A human can approve, reject or defer a proposal with `tools/review.py`. Only approval changes canonical state: it adds a new approved decision that supersedes the old one, which is kept as history. See section 7 of `AGENTS.md`. Run the tests with `python3 -m unittest discover tests`.
+The repository contains one small fictional organisation, **Moss & Circuit**, and its **Riverside Community Garden** project.
 
-## What Slice 4 adds
+1. Read [AGENTS.md](AGENTS.md) for agent instructions, authority boundaries and human-review rules.
+2. Follow [CONTEXT-ROUTING.md](CONTEXT-ROUTING.md) to read only the context relevant to a task.
+3. Open [projects/riverside-community-garden.md](projects/riverside-community-garden.md), then the **current** approved decision it points to.
+4. Inspect [proposals/](proposals/) and [decisions/](decisions/) to see the evidence, a human-attributed review, the superseded decision and the resulting current decision.
+5. Run `python3 -B tools/review.py current` to confirm which approved decision remains active.
 
-Routing stays current after a promotion: `tools/review.py check` flags any file in `projects/` that references a superseded decision. `AGENTS.md` also says a promoted proposal is provenance only, so its old open questions never reopen what the current approved decision resolves.
+The example demonstrates this lifecycle:
 
-## Cold-open test
+```text
+routed context → contradictory evidence → staged proposal
+    → explicit human review → new approved decision
+    → old decision retained as history → fresh-agent reuse
+```
 
-1. Open a new session of any AI agent that can read files, with this folder as its working directory. Make sure it has no prior conversation history about this project.
-2. Give it no hints. Ask questions about Moss & Circuit and its current work.
-3. Observe which files it opens and whether its answers come from approved sources.
+**Authority is not a role label.** Project notes and proposals cannot override current approved decisions. A `promoted` proposal records provenance; it is not current operating authority. See [AGENTS.md §2–7](AGENTS.md).
 
-The expected answers are deliberately kept out of this repository so the test agent cannot read them.
+## Working with an agent
 
-## Where to start reading
+Use a **fresh session** with the repository as its working directory. Ask the agent to start at `AGENTS.md` and route through `CONTEXT-ROUTING.md`. For a cold-open exercise, do not supply private conversations, external development handoffs or an expected-answer sheet. Observe which files were actually consulted and whether the agent separates approved facts from proposals and uncertainty.
 
-Agents and humans both start at [AGENTS.md](AGENTS.md).
+The example's expected test answers are intentionally **not** stored here, to avoid supplying an answer key to a new agent.
+
+## Review operations and safety
+
+`tools/review.py` also supports `hash` and `review`. Unlike `current` and `check`, the `review` operation **modifies shared files** and must be run only after a human explicitly decides the outcome of a **named, currently reviewable proposal**:
+
+```text
+python3 tools/review.py hash decisions/path-to-current-decision.md
+python3 tools/review.py review proposals/path-to-pending-proposal.md --outcome approve|reject|defer --by "Reviewer Name"
+```
+
+The second line illustrates the CLI syntax (`approve|reject|defer` means choose exactly one). **Do not run it against the shipped promoted example.** An approval creates a new decision and marks the proposal as promoted; rejection or deferral leaves canonical decisions unchanged. The recorded reviewer name is an **attribution field, not authenticated identity**. For exact safeguards and refusal rules, see [AGENTS.md §7](AGENTS.md) and the [review tool](tools/review.py).
+
+## Current scope and limitations
+
+- v0.1 demonstrates context routing, canonical decisions, evidence-bounded proposals, explicit review and deterministic promotion.
+- Living System v0.1 is designed to support fresh-session reuse through explicit, human-readable context and governance rules.
+- There is **no authentication or identity attestation**: `--by`, `approved_by` and similar labels are unverified declarations.
+- There is no automatic approval, secret store, multi-user authorization, hosted product, automatic private-data extraction, or guarantee that an agent will comply with instructions.
+- The fictional organisation is a demonstration, not a recommended deployment with real client or personal data. Review any material before putting it in an AI agent's context or publishing a repository.
+
+## Licensing, community and credit
+
+Living System's repository files are distributed under the **[Mozilla Public License 2.0](LICENSE)** (`MPL-2.0`). Covered modifications distributed to others are subject to the licence's obligations. Independently created files or organisational data are **not automatically MPL-covered merely because someone uses Living System**, though copying covered template material into them may affect the analysis. Read the licence for exact terms.
+
+Copyright © 2026 Adrianna Mamczarz, for copyrightable original material to which she holds rights. The Trinity Tribe is the project home. Contributions are welcome under the repository licence; see [CONTRIBUTING.md](CONTRIBUTING.md). Please credit the creator and other contributors when discussing or building upon this work.
+
+Forks and independent implementations are welcome, but should not imply official approval or affiliation with The Trinity Tribe. For vulnerability reporting, see [SECURITY.md](SECURITY.md).

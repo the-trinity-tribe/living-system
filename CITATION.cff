@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If Living System informs your work, please cite the original project and its creator."
+title: "Living System: A Local-First Human–AI Governance Kernel"
+authors:
+  - family-names: Mamczarz
+    given-names: Adrianna
+repository-code: "https://github.com/the-trinity-tribe/living-system"
+license: MPL-2.0
+type: software
+abstract: "An experimental, local-first Markdown and Python governance Kernel for human-approved evolution of shared AI working context."
