@@ -92,6 +92,8 @@ p{margin:0 0 1em}
 .prose{max-width:62ch}
 .lede{font-family:var(--serif);font-size:clamp(1.25rem,1.05rem + .9vw,1.6rem);line-height:1.45;max-width:36ch}
 .small{font-size:.9rem;color:var(--muted)}
+.doclinks{font-size:.9rem;color:var(--muted);margin:1.5rem 0 0;max-width:62ch}
+.doclinks span{font-weight:700;margin-right:.3rem}
 code,pre,.path{font-family:var(--mono);font-size:.88em}
 code{background:var(--code-bg);padding:.1em .35em;border-radius:4px;overflow-wrap:anywhere}
 mark{background:var(--mark);color:inherit;padding:0 .15em;border-radius:2px;text-decoration:underline;text-decoration-style:wavy;text-decoration-thickness:1px;text-underline-offset:.2em}
@@ -386,6 +388,7 @@ footer.site{margin-top:4rem;padding-block:2rem 4rem;border-top:1px solid var(--l
           <p>You choose which folder the agent opens and what it may read or change. The agent tool asks for your approval in the ways its own settings allow. Those settings differ between tools, so check them before you put real material in a folder (see chapter 10).</p>
         </div>
       </details>
+          <p class="doclinks"><span>Read more:</span> <a href="https://github.com/the-trinity-tribe/living-system/blob/main/docs/ai-tools.md">Which AI tool you need, and what the permissions mean</a></p>
     </section>
 
     <!-- 3 -->
@@ -403,6 +406,7 @@ footer.site{margin-top:4rem;padding-block:2rem 4rem;border-top:1px solid var(--l
           <p>A decision is current only if no other approved decision names it in <code>supersedes:</code>. The command <code>python3 -B tools/review.py current</code> lists the current ones. Source: <code>AGENTS.md</code> section 2.</p>
         </div>
       </details>
+          <p class="doclinks"><span>Read more:</span> <a href="https://github.com/the-trinity-tribe/living-system/blob/main/docs/features/decisions-and-proposals.md">Decisions and proposals</a></p>
     </section>
 
     <!-- 4 -->
@@ -410,6 +414,7 @@ footer.site{margin-top:4rem;padding-block:2rem 4rem;border-top:1px solid var(--l
       <h2 id="h4-4">New information becomes a proposal, not a rewrite</h2>
       <div class="prose">
         <p>Someone writes in a meeting note that a rule has changed. The agent does not act on it. It keeps following the approved decision, writes down the suggestion, and waits for a human.</p>
+        <p><strong>Your first rule takes two minutes.</strong> Right after setup, say <em>“Help me make my first decision from my setup answers.”</em> The agent turns a rule you mentioned, such as “nothing goes to a client without my OK”, into a proposal, asks you about the wording, and you approve it yourself. Claude Code and Codex both did this correctly in a recorded test run.</p>
       </div>
       <div class="chiprow"><span data-status="governance"></span></div>
       <div id="replay-amend" class="panelbox"></div>
@@ -421,6 +426,7 @@ footer.site{margin-top:4rem;padding-block:2rem 4rem;border-top:1px solid var(--l
           <p>The name given with <code>--by</code> is a label. It is not a login and it is not checked.</p>
         </div>
       </details>
+          <p class="doclinks"><span>Read more:</span> <a href="https://github.com/the-trinity-tribe/living-system/blob/main/docs/features/decisions-and-proposals.md">Decisions and proposals, including the four kinds of change</a></p>
     </section>
 
     <!-- 5 -->
@@ -432,6 +438,7 @@ footer.site{margin-top:4rem;padding-block:2rem 4rem;border-top:1px solid var(--l
       </div>
       <div class="chiprow"><span data-status="jobScenario"></span></div>
       <div id="replay-placement" class="panelbox"></div>
+          <p class="doclinks"><span>Read more:</span> <a href="https://github.com/the-trinity-tribe/living-system/blob/main/docs/features/decisions-and-proposals.md">Decisions and proposals</a></p>
     </section>
 
     <!-- 6 -->
@@ -466,13 +473,14 @@ footer.site{margin-top:4rem;padding-block:2rem 4rem;border-top:1px solid var(--l
             <div class="profile-grid"><div><h4>Your workspace holds</h4><ul><li>Approval rules</li><li>Roles</li></ul></div></div>
           </div>
         </div>
-        <p class="small" style="margin:1rem 0 0">Personal goals stay separate from company truth, in every profile.</p>
+        <p class="small" style="margin:1rem 0 0">Personal goals stay separate from company truth, in every profile. The starter files come in English, German or Polish; the agent replies in the language you choose.</p>
       </div>
       <div class="planned built" id="module-picker">
         <h3>Add only what you need <span data-status="modulePicker"></span></h3>
         <p>Three optional modules to start: a weekly update, meeting notes that turn remarks into proposals, and lessons the agent may suggest but only you approve. Every command shows its plan first and writes nothing until you say yes. Removing a module keeps the files you edited and never touches your decisions.</p>
         <p class="small">Suggestions are an instruction to the agent: it mentions a fitting module when the same need keeps coming up. Nothing watches or counts your work.</p>
       </div>
+          <p class="doclinks"><span>Read more:</span> <a href="https://github.com/the-trinity-tribe/living-system/blob/main/docs/features/workspace-setup.md">Workspace setup: profiles and languages</a> · <a href="https://github.com/the-trinity-tribe/living-system/blob/main/docs/features/modules.md">Optional modules</a></p>
     </section>
 
     <!-- 7 -->
@@ -504,6 +512,7 @@ footer.site{margin-top:4rem;padding-block:2rem 4rem;border-top:1px solid var(--l
           </div>
         </form>
       </div>
+          <p class="doclinks"><span>Read more:</span> <a href="https://github.com/the-trinity-tribe/living-system/blob/main/docs/features/value-check.md">The value check</a></p>
     </section>
 
     <!-- 8 -->
@@ -544,6 +553,7 @@ footer.site{margin-top:4rem;padding-block:2rem 4rem;border-top:1px solid var(--l
         <h3>Workflow generator <span data-status="icmGenerator"></span></h3>
         <p>Ask your agent for a workflow, for example "a workflow for planning a launch post". It suggests the stages and shows the plan. After your yes it creates the stage-by-stage folders, with every part still to write clearly marked, and fills them in with you.</p>
       </div>
+          <p class="doclinks"><span>Read more:</span> <a href="https://github.com/the-trinity-tribe/living-system/blob/main/docs/features/workflow-generator.md">The workflow generator</a></p>
     </section>
 
     <!-- 9 -->
@@ -582,6 +592,7 @@ footer.site{margin-top:4rem;padding-block:2rem 4rem;border-top:1px solid var(--l
           <p>In this repository <code>CLAUDE.md</code> only contains <code>@AGENTS.md</code>. All real rules live in <code>AGENTS.md</code>, so there is one place to read and one place to change.</p>
         </div>
       </details>
+          <p class="doclinks"><span>Read more:</span> <a href="https://github.com/the-trinity-tribe/living-system/blob/main/docs/ai-tools.md">Claude Code, Codex and AGENTS.md</a></p>
     </section>
 
     <!-- 10 -->
@@ -596,6 +607,7 @@ footer.site{margin-top:4rem;padding-block:2rem 4rem;border-top:1px solid var(--l
         <li><strong>Not a hosted product.</strong> It is plain files and a small Python tool on your computer.</li>
       </ul>
       <div class="callout"><p>The example organisation is a demonstration, not a recommended setup for real client or personal data. Review any material before you put it in an AI agent's context.</p></div>
+          <p class="doclinks"><span>Read more:</span> <a href="https://github.com/the-trinity-tribe/living-system/blob/main/SECURITY.md">Security and responsible disclosure</a> · <a href="https://github.com/the-trinity-tribe/living-system/blob/main/CHANGELOG.md">Known limitations in the changelog</a></p>
     </section>
 
     <!-- 11 -->
@@ -611,11 +623,12 @@ footer.site{margin-top:4rem;padding-block:2rem 4rem;border-top:1px solid var(--l
       <p class="prose">Pick your profile (student, professional, employee or manager) and language. Run this from the <code>living-system</code> folder.</p>
       <div class="cmd"><pre><code>python3 -B tools/living.py init ~/my-workspace --profile manager --language en</code></pre><button class="btn small" type="button" data-copy-text="python3 -B tools/living.py init ~/my-workspace --profile manager --language en" data-md="skip">Copy command</button></div>
       <h3>3. Open it in an agent</h3>
-      <p class="prose">Open <code>~/my-workspace</code> in Claude Code or Codex and ask the agent to start at <code>AGENTS.md</code>.</p>
+      <p class="prose">Open <code>~/my-workspace</code> in Claude Code or Codex and ask the agent to start at <code>AGENTS.md</code>. Then say “Help me make my first decision from my setup answers.” Prefer a guided setup? Open the <code>living-system</code> folder instead and say “Read INSTALL.md and set up my workspace.”</p>
       <h3>4. See what needs your attention</h3>
       <p class="prose">Any time, this lists proposals waiting for your review, drafts you have not approved and where the last session stopped. It changes nothing. When a newer Living System comes out, <code>upgrade</code> updates only the files you never changed.</p>
       <div class="cmd"><pre><code>python3 -B tools/living.py status ~/my-workspace</code></pre><button class="btn small" type="button" data-copy-text="python3 -B tools/living.py status ~/my-workspace" data-md="skip">Copy command</button></div>
       <p><a class="btn primary" href="https://github.com/the-trinity-tribe/living-system">Living System on GitHub</a></p>
+          <p class="doclinks"><span>Read more:</span> <a href="https://github.com/the-trinity-tribe/living-system/blob/main/INSTALL.md">Guided setup</a> · <a href="https://github.com/the-trinity-tribe/living-system/blob/main/docs/features/status.md">status</a> · <a href="https://github.com/the-trinity-tribe/living-system/blob/main/docs/features/upgrade.md">upgrade</a> · <a href="https://github.com/the-trinity-tribe/living-system/blob/main/docs/README.md">All docs</a></p>
     </section>
 
     <!-- 12 -->
@@ -637,14 +650,15 @@ footer.site{margin-top:4rem;padding-block:2rem 4rem;border-top:1px solid var(--l
         <table class="skills stack">
           <thead><tr><th scope="col">Skill</th><th scope="col">Evidence</th></tr></thead>
           <tbody>
-            <tr><th scope="row">Systems design</th><td data-label="Evidence">The order of trust and the full proposal-to-decision cycle: <a href="#ch3">chapter 3</a>, <a href="#ch4">chapter 4</a>, <a href="https://github.com/the-trinity-tribe/living-system/blob/main/AGENTS.md">AGENTS.md</a>.</td></tr>
+            <tr><th scope="row">Systems design</th><td data-label="Evidence">The order of trust and the full proposal-to-decision cycle: <a href="#ch3">chapter 3</a>, <a href="#ch4">chapter 4</a>, <a href="https://github.com/the-trinity-tribe/living-system/blob/main/core/template/AGENTS.md">AGENTS.md</a>.</td></tr>
             <tr><th scope="row">Governance and approval boundaries</th><td data-label="Evidence">A note cannot change a decision; a human must approve, and the old rule stays as history: <a href="#ch4">chapter 4</a>, <a href="#ch10">chapter 10</a>.</td></tr>
-            <tr><th scope="row">Knowledge architecture</th><td data-label="Evidence">Routing an agent to the smallest set of files: <a href="#ch3">chapter 3</a>, <a href="https://github.com/the-trinity-tribe/living-system/blob/main/CONTEXT-ROUTING.md">CONTEXT-ROUTING.md</a>.</td></tr>
+            <tr><th scope="row">Knowledge architecture</th><td data-label="Evidence">Routing an agent to the smallest set of files: <a href="#ch3">chapter 3</a>, <a href="https://github.com/the-trinity-tribe/living-system/blob/main/core/template/CONTEXT-ROUTING.md">CONTEXT-ROUTING.md</a>.</td></tr>
             <tr><th scope="row">AI-assisted implementation</th><td data-label="Evidence">The README states how AI was used and where humans decided: <a href="https://github.com/the-trinity-tribe/living-system/blob/main/README.md">README.md</a>.</td></tr>
             <tr><th scope="row">Accessible UX</th><td data-label="Evidence">This page: keyboard-operable walk-throughs (<a href="#ch3">chapter 3</a>), status chips that use a word and a shape, not only colour, light and dark themes, reduced-motion support.</td></tr>
           </tbody>
         </table>
       </div>
+          <p class="doclinks"><span>Read more:</span> <a href="https://github.com/the-trinity-tribe/living-system/blob/main/CREDITS.md">Credits and influences</a></p>
     </section>
 
     <footer class="site">
