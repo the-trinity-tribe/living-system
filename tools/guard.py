@@ -363,8 +363,10 @@ def check_shell(cmd, cwd, depth=0):
                     raise Blocked(GUARD_MSG)
                 if (any(f in code for f in APPROVAL_FILES) or "proposals/" in code) and STATUS_WORDS.search(code):
                     raise Blocked(STATUS_MSG)
-                if ORG and (str(ORG) in code or ORG.as_posix() in code.replace("\\\\", "/").replace("\\", "/")):
-                    raise Blocked(ORG_MSG)
+                if ORG:
+                    quoted = re.findall(r"'([^'\n]+)'|\"([^\"\n]+)\"", code)
+                    if any(p.startswith("@org/") for q in quoted for s in q if s for p in rel(s, here)):
+                        raise Blocked(ORG_MSG)  # a path in the code that resolves into the company workspace
                 if re.search(r"roles[/\\][^/\\'\"]+[/\\](?:inbox|knowledge)", code):
                     raise Blocked(ROLE_MSG)
                 for f, key in SETTINGS.items():
