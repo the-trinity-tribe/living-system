@@ -124,6 +124,12 @@ def build(ws, profile, language, calm_replies):
         copy_tree(translated_profile, ws, translation=True)
     apply_appends(CORE / "profiles" / profile, ws, translated_profile)
     strip_markers(ws)
+    for skill in sorted((CORE / "skills").glob("*/SKILL.md")) if (CORE / "skills").is_dir() else []:
+        # One source, two places: Claude Code reads .claude/skills, Codex reads .agents/skills.
+        for agent_dir in (".claude/skills", ".agents/skills"):
+            dst = ws / agent_dir / skill.parent.name / "SKILL.md"
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(skill, dst)
     (ws / "tools").mkdir()
     shutil.copyfile(HERE / "review.py", ws / "tools" / "review.py")
     shutil.copyfile(HERE / "guard.py", ws / "tools" / "guard.py")

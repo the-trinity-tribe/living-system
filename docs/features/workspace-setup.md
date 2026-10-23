@@ -44,6 +44,8 @@ python3 tools/review.py --root ~/my-workspace check
 
 Success prints the new path, your choices, and `Undo: delete that folder.`
 
+Every workspace also gets four short skills, in `.claude/skills/` for Claude Code and `.agents/skills/` for Codex, both copied from one source: `living-status`, `first-decision`, `propose-change` and `wrap-up`. In Claude Code you can also type them as `/living-status` and so on; both agents pick them up when your request matches.
+
 ## How do you use it?
 
 ### The guided flow (INSTALL.md)
