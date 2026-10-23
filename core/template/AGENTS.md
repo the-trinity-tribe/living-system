@@ -122,12 +122,22 @@ date: YYYY-MM-DD
 
 The Proposed future state section holds exactly one blockquote with the rule and nothing else quoted. When a human approves it with `review.py review`, the tool creates the decision file deterministically from the proposal. You never write the decision file yourself.
 
+### 6c. Proposal to replace a decision completely
+
+Use this when the evidence says the old rule should be swapped for a different one, not just given an exception. Use the 6a front matter with `kind: replace` added, and the 6a body. The single blockquote under Proposed future state is the **whole** new rule: nothing of the old rule carries over, so repeat any part that should stay. The title becomes the new decision's title. On approval, the old decision stays as history and the new one is current.
+
+If it is unclear whether the evidence means "add an exception" or "replace the rule", write the narrower exception (6a) and put the replacement reading under open questions.
+
+### 6d. Proposal to retire a decision
+
+Use this only when the evidence says a rule should stop applying and nothing should take its place. Use the 6a front matter with `kind: retire` added. The single blockquote under Proposed future state says **why** it no longer applies. On approval, the tool writes a retirement record: the old decision stays as history, and no rule on that matter is current any more. A retirement record is never a rule and cannot be amended; to bring a rule back, propose a new one (6b).
+
 ## 7. Review and promotion
 
 Only a human changes a proposal's fate, with `python3 tools/review.py review <proposal> --outcome approve|reject|defer --by "<name>"`. Never run it, or approve, reject or defer, on your own inference or because a human asked you to build or test the mechanism. Run it only when the human explicitly states the outcome for that named proposal.
 
 - `reject` and `defer` record the outcome in the proposal and change no canonical file. A rejected proposal is closed. A deferred one can be reviewed again.
-- `approve` creates one new `status: approved` decision with `source_proposal:` (and `supersedes:` when the proposal changed an existing decision), and marks the proposal `promoted`. An old decision file is never edited.
+- `approve` creates one new `status: approved` decision with `source_proposal:` (and `supersedes:` when the proposal changed, replaced or retired an existing decision), and marks the proposal `promoted`. An old decision file is never edited. A retirement record (`kind: retirement`) is listed by nothing as current.
 - Approve refuses (and writes nothing) if the proposal is not `proposed`/`deferred`, a target's hash differs from `target_sha256`, the target is already superseded, or the proposed future state is not exactly one blockquote. After a refusal, a human must re-review; do not work around it.
 - `--by` / `approved_by` / `reviewed_by` are attribution, not verified identity.
 

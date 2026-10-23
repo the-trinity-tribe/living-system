@@ -126,7 +126,7 @@ python3 tools/review.py --root <workspace> hash decisions/path-to-current-decisi
 python3 tools/review.py --root <workspace> review proposals/path-to-pending-proposal.md --outcome approve|reject|defer --by "Reviewer Name"
 ```
 
-The second line illustrates the CLI syntax (`approve|reject|defer` means choose exactly one). **Do not run it against the shipped demo.** An approval creates a new decision and marks the proposal as promoted; rejection or deferral leaves canonical decisions unchanged. The recorded reviewer name is an **attribution field, not authenticated identity**. For exact safeguards and refusal rules, see [AGENTS.md §7](core/template/AGENTS.md) and the [review tool](tools/review.py).
+The second line illustrates the CLI syntax (`approve|reject|defer` means choose exactly one). **Do not run it against the shipped demo.** An approval creates a new decision and marks the proposal as promoted; rejection or deferral leaves canonical decisions unchanged. A proposal can add a first rule (`kind: new`), add an exception (the default), replace a rule completely (`kind: replace`) or retire one so no rule applies (`kind: retire`). In every case the old decision file stays unchanged as history. The recorded reviewer name is an **attribution field, not authenticated identity**. For exact safeguards and refusal rules, see [AGENTS.md §7](core/template/AGENTS.md) and the [review tool](tools/review.py).
 
 ## Credits
 

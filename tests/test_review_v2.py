@@ -172,7 +172,7 @@ class TestNewDecisionRefusals(EmptyWorkspace):
         self.assertIn("target: none requires kind: new", "\n".join(R.check(self.root)))
 
     def test_unknown_kind(self):
-        self.write_proposal(FRONT.replace("kind: new", "kind: replace") + BODY)
+        self.write_proposal(FRONT.replace("kind: new", "kind: rewrite") + BODY)
         self.assertRefused()
         self.assertIn("unknown kind", "\n".join(R.check(self.root)))
 

@@ -4,10 +4,14 @@
 Only an explicit `review --outcome approve` can change canonical state.
 `--by` is attribution, not verified identity. Standard library only.
 
-Two proposal kinds:
-- no `kind` (default): adds an Exception to the approved decision in `target`.
-- `kind: new` with `target: none`: creates a new decision from the single
-  blockquote in `## Proposed future state`, titled from `# Proposal: <title>`.
+Proposal kinds (`kind:` in the front matter):
+- none (default): adds an Exception to the current decision in `target`.
+- `new`, with `target: none`: creates a decision from the single blockquote in
+  `## Proposed future state`, titled from `# Proposal: <title>`.
+- `replace`: a new decision whose Rule is that blockquote supersedes `target`.
+- `retire`: a retirement record supersedes `target`, so no rule applies any more.
+  The blockquote says why. A retirement record is never a current rule.
+Every kind except `new` needs `target_sha256` of the current target.
 """
 import argparse
 import contextlib
@@ -23,7 +27,8 @@ from pathlib import Path
 TERMINAL = {"promoted", "rejected"}
 REVIEWABLE = {"proposed", "deferred"}
 OUTCOME_STATUS = {"approve": "promoted", "reject": "rejected", "defer": "deferred"}
-KINDS = {"exception", "new"}
+KINDS = {"exception", "new", "replace", "retire"}
+RETIREMENT = "retirement"  # `kind` of a decision that only records that another one stopped applying
 
 
 class Refusal(Exception):
@@ -95,7 +100,8 @@ def superseded(root):
 
 def current_decisions(root):
     gone = superseded(root)
-    return [k for k, m in decisions(root).items() if m.get("status") == "approved" and k not in gone]
+    return [k for k, m in decisions(root).items()
+            if m.get("status") == "approved" and k not in gone and m.get("kind") != RETIREMENT]
 
 
 def safe_rel(root, rel, prefix):
@@ -111,15 +117,39 @@ def safe_rel(root, rel, prefix):
     return p
 
 
-def build_decision(root, proposal_rel, pmeta, pbody, reviewer, date):
+def checked_target(root, pmeta):
+    """The target decision, if it is current, unchanged since the proposal, and a real rule."""
     target_rel = pmeta["target"]
     tmeta, _, tbody = split_frontmatter((root / target_rel).read_text(encoding="utf-8"), target_rel)
     if tmeta.get("status") != "approved":
         raise Refusal(f"target {target_rel} is not approved")
+    if tmeta.get("kind") == RETIREMENT:
+        raise Refusal(f"target {target_rel} only records a retirement; propose kind: new to bring a rule back")
     if target_rel in superseded(root):
         raise Refusal(f"target {target_rel} is already superseded; a human must re-review against the current decision")
     if sha256(root / target_rel) != pmeta.get("target_sha256"):
         raise Refusal(f"target {target_rel} changed since the proposal was written (hash mismatch); human re-review required")
+    return tmeta, tbody
+
+
+def new_decision_path(root, proposal_rel, date):
+    slug = Path(proposal_rel).stem[len("YYYY-MM-DD-"):]
+    new_rel = f"decisions/{date}-{slug}.md"
+    if (root / new_rel).exists() or (root / new_rel).is_symlink():
+        raise Refusal(f"{new_rel} already exists")
+    return new_rel
+
+
+def proposal_title(pbody, proposal_rel):
+    titles = re.findall(r"^# Proposal: (.+)$", pbody, re.M)
+    if len(titles) != 1 or not titles[0].strip():
+        raise Refusal(f"{proposal_rel}: expected exactly one '# Proposal: <title>' line")
+    return one_line(titles[0].strip(), "the proposal title")
+
+
+def build_decision(root, proposal_rel, pmeta, pbody, reviewer, date):
+    target_rel = pmeta["target"]
+    tmeta, tbody = checked_target(root, pmeta)
     quote = single_blockquote(section(pbody, "Proposed future state", proposal_rel), proposal_rel)
     title = re.search(r"^# (.+)$", tbody, re.M)
     if not title:
@@ -143,23 +173,56 @@ def build_decision(root, proposal_rel, pmeta, pbody, reviewer, date):
 
 
 def build_new_decision(root, proposal_rel, pbody, reviewer, date):
-    titles = re.findall(r"^# Proposal: (.+)$", pbody, re.M)
-    if len(titles) != 1 or not titles[0].strip():
-        raise Refusal(f"{proposal_rel}: expected exactly one '# Proposal: <title>' line")
-    one_line(titles[0], "the proposal title")
+    title = proposal_title(pbody, proposal_rel)
     quote = single_blockquote(section(pbody, "Proposed future state", proposal_rel), proposal_rel)
-    slug = Path(proposal_rel).stem[len("YYYY-MM-DD-"):]
-    new_rel = f"decisions/{date}-{slug}.md"
-    if (root / new_rel).exists():
-        raise Refusal(f"{new_rel} already exists")
+    new_rel = new_decision_path(root, proposal_rel, date)
     text = (
         f"---\nstatus: approved\napproved_by: {reviewer}\ndate: {date}\n"
         f"source_proposal: {proposal_rel}\n---\n\n"
-        f"# {titles[0].strip()}\n\n"
+        f"# {title}\n\n"
         f"## Rule\n\n{quote}\n\n"
         f"## Why\n\nSee source proposal.\n\n"
         f"## Scope\n\nAs stated in the Rule.\n\n"
         f"## Provenance\n\nCreated from `{proposal_rel}`. "
+        f"`approved_by` is attribution, not verified identity.\n"
+    )
+    return new_rel, text
+
+
+def build_replacement(root, proposal_rel, pmeta, pbody, reviewer, date):
+    target_rel = pmeta["target"]
+    checked_target(root, pmeta)
+    title = proposal_title(pbody, proposal_rel)
+    quote = single_blockquote(section(pbody, "Proposed future state", proposal_rel), proposal_rel)
+    new_rel = new_decision_path(root, proposal_rel, date)
+    text = (
+        f"---\nstatus: approved\napproved_by: {reviewer}\ndate: {date}\n"
+        f"supersedes: {target_rel}\nsource_proposal: {proposal_rel}\n---\n\n"
+        f"# {title}\n\n"
+        f"## Rule\n\n{quote}\n\n"
+        f"## Why\n\nSee source proposal.\n\n"
+        f"## Scope\n\nAs stated in the Rule.\n\n"
+        f"## Provenance\n\nPromoted from `{proposal_rel}`. Replaces `{target_rel}`, which stays as history. "
+        f"`approved_by` is attribution, not verified identity.\n"
+    )
+    return new_rel, text
+
+
+def build_retirement(root, proposal_rel, pmeta, pbody, reviewer, date):
+    target_rel = pmeta["target"]
+    _, tbody = checked_target(root, pmeta)
+    title = re.search(r"^# (.+)$", tbody, re.M)
+    if not title:
+        raise Refusal(f"{target_rel}: no title")
+    reason = single_blockquote(section(pbody, "Proposed future state", proposal_rel), proposal_rel)
+    new_rel = new_decision_path(root, proposal_rel, date)
+    text = (
+        f"---\nstatus: approved\nkind: {RETIREMENT}\napproved_by: {reviewer}\ndate: {date}\n"
+        f"supersedes: {target_rel}\nsource_proposal: {proposal_rel}\n---\n\n"
+        f"# Retired: {title.group(1)}\n\n"
+        f"This record is not a rule. From {date}, `{target_rel}` no longer applies, and no rule replaces it.\n\n"
+        f"## Why\n\n{reason}\n\n"
+        f"## Provenance\n\nPromoted from `{proposal_rel}`. `{target_rel}` stays as history. "
         f"`approved_by` is attribution, not verified identity.\n"
     )
     return new_rel, text
@@ -271,7 +334,7 @@ def _review(root, proposal_rel, outcome, reviewer, note, date):
     if pmeta["status"] not in REVIEWABLE:
         raise Refusal(f"{proposal_rel} status {pmeta['status']!r} is not reviewable")
     kind = proposal_kind(pmeta, proposal_rel)
-    if kind == "exception":
+    if kind != "new":
         safe_rel(root, pmeta["target"], "decisions/")
 
     writes = {}
@@ -280,7 +343,8 @@ def _review(root, proposal_rel, outcome, reviewer, note, date):
         if kind == "new":
             new_rel, new_text = build_new_decision(root, proposal_rel, pbody, reviewer, date)
         else:
-            new_rel, new_text = build_decision(root, proposal_rel, pmeta, pbody, reviewer, date)
+            build = {"exception": build_decision, "replace": build_replacement, "retire": build_retirement}[kind]
+            new_rel, new_text = build(root, proposal_rel, pmeta, pbody, reviewer, date)
         if (root / "decisions").is_symlink():
             raise Refusal("decisions/ is a link; nothing was written")
         writes[root / new_rel] = new_text
@@ -326,6 +390,10 @@ def check(root):
             problems.append(f"{k}: unexpected status {m.get('status')}")
         if "supersedes" in m and m["supersedes"] not in decs:
             problems.append(f"{k}: supersedes missing {m['supersedes']}")
+        if m.get("kind") not in (None, RETIREMENT):
+            problems.append(f"{k}: unexpected kind {m.get('kind')}")
+        if m.get("kind") == RETIREMENT and "supersedes" not in m:
+            problems.append(f"{k}: a retirement record must name the decision it retires in supersedes")
     gone = superseded(root)
     for p in sorted((root / "projects").glob("*.md")):
         for ref in sorted(set(re.findall(r"`(decisions/[^`]*\.md)`", p.read_text(encoding="utf-8"))) & gone):
@@ -345,7 +413,7 @@ def check(root):
         except Refusal as e:
             problems.append(str(e))
             continue
-        if kind == "exception" and meta.get("target") not in decs:
+        if kind != "new" and meta.get("target") not in decs:
             problems.append(f"{rel}: target missing")
     return problems
 
