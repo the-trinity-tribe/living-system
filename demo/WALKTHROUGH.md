@@ -102,6 +102,31 @@ Fill in after each real run. Do not fill in from memory.
 
 Date of run: 2026-10-23, one run per step (plus one Claude Code re-run of step 3 after the routing change). Agent versions: Claude Code 2.1.309 with Claude Sonnet 5.5 (`claude -p`, file tools limited to the temp copy, `review.py review` not allowed); Codex CLI 0.163.0 with its default model (`codex exec`, read-only sandbox for step 2, workspace-write for steps 3 and 4).
 
+## Optional: modules and workflows (5 min)
+
+Use a fresh workspace, not the demo: `python3 tools/living.py init "$WORK/mine" --profile professional --language en`. Open a fresh agent session in it and say, one message at a time:
+
+1. "Can you help me write a short weekly update for my client Acme about the website project? This week we finished the homepage design; next week we build the contact form. Just give me the text here."
+2. "Thanks! I write one of these for Acme every Friday, and another one for my second client too. I keep doing this by hand every week."
+3. "Yes, show me what it would add. My Living System folder is <this repository's path>."
+4. "Yes, install it."
+
+**Look for:** no suggestion after message 1; one suggestion of `weekly-update` after message 2; a plan with nothing written after message 3; the install only after message 4. Then run `python3 tools/living.py doctor "$WORK/mine"`.
+
+For the workflow generator, open a fresh session and say "Create a workflow for planning my monthly newsletter. My Living System folder is <path>." Look for a plan first, and folders only after your yes.
+
+### Results: modules and workflows
+
+| Step | Claude Code | Codex | Notes |
+| --- | --- | --- | --- |
+| 1. One mention: no suggestion | Passed: wrote the update, no module mentioned, nothing installed | Passed: same | Both added small guesses (a date range, a sign-off line); Claude Code flagged its guess |
+| 2. Repeated need: suggests the module once | First run partly passed: installed nothing and asked first, but never read `.living/catalog.md` and offered to build its own workflow instead. After the rules were changed to check the catalog first, a re-run in a fresh workspace passed: it read the catalog and suggested `weekly-update` once | Passed: read `.living/catalog.md`, suggested `weekly-update` once, offered the plan | |
+| 3. Plan before install | Passed (first run): ran `new-workflow` without `--apply`, explained the plan, asked | Passed: ran `add` without `--apply`, explained the plan, asked | Nothing was written by either |
+| 4. Install only after yes | Passed (first run): created its own workflow with `--apply`; `doctor` listed the blanks left to fill | Passed: installed `weekly-update` with `--apply`; `doctor` showed no errors | |
+| Workflow generator | Passed as part of steps 3 and 4 above | Passed: dry run first, asked who it is for, what it produces and how often it was done by hand (Third-Run Rule); after the yes created four stages, filled them without inventing facts, no instruction files inside `workflows/`, `doctor` showed no errors | Codex also wrote an HTML preview of the plan to `/tmp`, outside the workspace, and added a routing row for the new workflow |
+
+Date of run: 2026-10-23, one run per step (plus one Claude Code re-run of steps 1 and 2 after the rule change). Agent versions: Claude Code 2.1.309 with Claude Sonnet 5.5 (`claude -p`, file tools and `living.py` allowed, `review.py review` not allowed); Codex CLI 0.163.0 with its default model (`codex exec`, workspace-write sandbox). Before this run, new workspaces got `.living/catalog.md`; without it, an agent in a workspace had no way to know which modules exist.
+
 ## What this demo does not show
 
 - It does not prove an agent will always follow the rules. Agents can ignore instructions.

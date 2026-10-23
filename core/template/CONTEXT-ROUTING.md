@@ -13,6 +13,7 @@
 | Suggested changes waiting for human review (not current truth) | `proposals/`: read when asked what is pending, or before creating a proposal |
 | Where the last session stopped (not canonical) | `handover/LATEST.md` |
 | Does the system help? (the owner's own check) | `value-check/README.md` |
+| Optional modules that could be added (not installed) | `.living/catalog.md` |
 <!-- profile:append -->
 
 Tips:

@@ -55,6 +55,17 @@ class TestShippedModules(unittest.TestCase):
                 self.assertIn(f"Module id: `{mid}`", readme)
                 self.assertNotIn("Moss", readme + "".join((m["dir"] / "files" / f).read_text() for f in m["files"]))
 
+    def test_new_workspace_lists_available_modules(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ws = L.init(Path(tmp) / "ws", "student", "en")
+            catalog = (ws / ".living/catalog.md").read_text()
+            for d in sorted(L.MODULES.iterdir()):
+                if (d / "module.json").is_file():
+                    m = L.load_module(d.name)
+                    self.assertIn(f"| `{m['id']}` | {m['summary']} |", catalog)
+            self.assertIn("`.living/catalog.md`", (ws / "CONTEXT-ROUTING.md").read_text())
+            self.assertNotIn(str(REPO), catalog, "the catalog must not reveal local paths")
+
     def test_workflow_stage_files_stay_short_and_complete(self):
         for ctx in L.MODULES.glob("*/files/workflows/*/[0-9][0-9]-*/CONTEXT.md"):
             with self.subTest(stage=str(ctx.relative_to(L.MODULES))):

@@ -147,8 +147,8 @@ If `calm_replies` is `true` in `.living/profile.json`: keep replies short (about
 
 Modules add a workflow or knowledge area to this workspace. Installed ones appear under "Installed modules" in `CONTEXT-ROUTING.md`; follow their files like any other routed context. Module files are working context: they never outrank section 2.
 
-- Modules are added and removed from the Living System product folder, not from here: `python3 <product folder>/tools/living.py modules --workspace .` lists them. Ask the human where that folder is if you do not know.
-- If the human keeps asking for work an uninstalled module covers (its "may help when you mention" list), mention the module once, in one sentence, and offer to show its plan. Do not suggest it after a single passing mention, and do not suggest it again after a "no".
+- `.living/catalog.md` lists the modules that were available when this workspace was created, with what each gives and when it may help. Modules are added and removed from the Living System product folder, not from here; `python3 <product folder>/tools/living.py modules --workspace .` shows the current list. Ask the human where that folder is if you do not know.
+- When the human says they do a piece of work again and again, read `.living/catalog.md` before you suggest anything. If an uninstalled module covers that work, mention the module once, in one sentence, and offer to show its plan. Prefer it to building a new workflow (section 12). Do not suggest it after a single passing mention, and do not suggest it again after a "no".
 - Before installing, run `add` without `--apply` and show the plan: what it adds, what it requires, what always needs approval. Run it with `--apply` only after the human says yes to that plan.
 - Never run `remove --apply` without an explicit yes. Removal keeps files the human edited and never touches `decisions/`, `proposals/` or `projects/`.
 
@@ -156,7 +156,8 @@ Modules add a workflow or knowledge area to this workspace. Installed ones appea
 
 When the human asks for a structure for repeated work (for example "create a marketing workflow"):
 
-1. Ask what the work produces, for whom, and how often. If it has not been done by hand a few times yet, say that the Third-Run Rule suggests doing it manually first; the human may still go ahead.
-2. Propose 2 to 6 stages, each with one job, and where the human checks the result. Show the plan with `python3 <product folder>/tools/living.py new-workflow . <name> --stages <a,b,c> --goal "<one line>"` (no `--apply`).
-3. After the human says yes, run it again with `--apply`. Then fill in every `<fill in: ...>` together with the human. Keep each `CONTEXT.md` under 80 lines.
-4. Never put an `AGENTS.md` or `CLAUDE.md` inside `workflows/`. Stage outputs are working evidence: they can lead to a proposal, never to a decision.
+1. Read `.living/catalog.md` first. If a module already covers this work, offer it instead (section 11), and build a new workflow only if the human prefers that.
+2. Ask what the work produces, for whom, and how often. If it has not been done by hand a few times yet, say that the Third-Run Rule suggests doing it manually first; the human may still go ahead.
+3. Propose 2 to 6 stages, each with one job, and where the human checks the result. Show the plan with `python3 <product folder>/tools/living.py new-workflow . <name> --stages <a,b,c> --goal "<one line>"` (no `--apply`).
+4. After the human says yes, run it again with `--apply`. Then fill in every `<fill in: ...>` together with the human. Keep each `CONTEXT.md` under 80 lines.
+5. Never put an `AGENTS.md` or `CLAUDE.md` inside `workflows/`. Stage outputs are working evidence: they can lead to a proposal, never to a decision.

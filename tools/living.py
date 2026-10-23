@@ -99,7 +99,24 @@ def build(ws, profile, language, calm_replies):
     (ws / ".living" / "profile.json").write_text(json.dumps(
         {"profile": profile, "language": language, "calm_replies": bool(calm_replies)}, indent=2) + "\n",
         encoding="utf-8")
+    (ws / ".living" / "catalog.md").write_text(catalog_text(), encoding="utf-8")
     write_manifest(ws)
+
+
+def catalog_text(root=None):
+    """A snapshot of the optional modules, so an agent in the workspace knows what exists."""
+    root = root or MODULES
+    mods = [load_module(d.name, root) for d in sorted(Path(root).iterdir()) if (d / "module.json").is_file()] \
+        if Path(root).is_dir() else []
+    rows = "".join(f"| `{m['id']}` | {m['summary']} | {', '.join(m['signals'])} |\n" for m in mods)
+    return ("# Optional modules you can add\n\n"
+            "Not installed unless they appear under \"Installed modules\" in `CONTEXT-ROUTING.md`. This list is a "
+            "snapshot from when the workspace was created; the Living System folder may have more.\n\n"
+            "| Module | What it gives you | May help when the human keeps asking about |\n| --- | --- | --- |\n"
+            f"{rows or '| (none) | | |' + chr(10)}\n"
+            "To see what a module would add, run `python3 <Living System folder>/tools/living.py add . <module>` "
+            "inside this workspace. Nothing is written without `--apply`, and only after the human says yes "
+            "(`AGENTS.md` section 11).\n")
 
 
 def init(target, profile, language, calm_replies=False):
