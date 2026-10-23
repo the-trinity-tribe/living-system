@@ -15,6 +15,7 @@
   living.py link <ws> --org <company ws> --role <role> | --remove
   living.py share <ws> <file> [--as LABEL] [--apply]
   living.py onboard <ws> [--done ID] [--next N]
+  living.py evidence <ws> [--out FILE]
   living.py role-review <company ws> <file> --outcome accept|reject --by NAME
   living.py export <ws> <file.zip> [--apply]
   living.py protect <ws> [--apply]
@@ -2126,21 +2127,101 @@ def handbook(ws, today=None):
     return "\n".join(out)
 
 
-def write_handbook(ws, target, text):
-    """Save the handbook outside the workspace. Only a previous handbook is ever replaced."""
+EVIDENCE_MARK = "<!-- living-system evidence summary: counts only, no content -->"
+
+
+def evidence(ws, today=None):
+    """Counts from the workspace's own files that a person can show others. No content, names or titles. Read-only."""
+    import datetime
+    ws = Path(ws)
+    read_manifest(ws)
+    R = review_tool()
+    today = today or datetime.date.today()
+    out = [EVIDENCE_MARK, "# Living System: evidence summary", "",
+           f"Counts from one workspace's own files on {today}. It contains no content, names, titles or client "
+           f"details. Anything not listed here was not measured.", "", "## Value check (the owner's own before/after test)", ""]
+    try:
+        counts, unscored = value_score(ws)
+    except Refusal:
+        counts, unscored = None, {}
+    if counts and any(sum(counts[w].values()) for w in counts):
+        out += ["| | " + " | ".join(SCORES) + " |", "| --- |" + " --- |" * len(SCORES)]
+        out += [f"| {w} | " + " | ".join(str(counts[w][s]) for s in SCORES) + " |" for w in ("before", "after")]
+        out += [""] + [f"{w}: {n} question(s) not scored yet." for w, n in unscored.items() if n]
+        out += ["Before = a fresh AI chat with no context; after = an agent in this workspace. Same questions, scored "
+                "by the owner.", ""]
+    else:
+        out += ["Not done yet (`value-check/README.md` explains the 10-minute test).", ""]
+    log = ws / "value-check/log.md"
+    entries = len(re.findall(r"^\s*[-*]?\s*\d{4}-\d{2}-\d{2}", log.read_text(encoding="utf-8", errors="replace"), re.M)) \
+        if log.is_file() else 0
+    out += [f"Dated notes in the value check log: {entries}.", "", "## Rules and reviews", ""]
+    decs = R.decisions(ws) if (ws / "decisions").is_dir() else {}
+    current = R.current_decisions(ws) if decs else []
+    outcomes = {"promoted": 0, "rejected": 0, "deferred": 0, "proposed": 0}
+    dates = [str(m.get("date")) for m in decs.values() if m.get("date")]
+    for p in sorted((ws / "proposals").glob("*.md")) if (ws / "proposals").is_dir() else []:
+        try:
+            meta = R.split_frontmatter(p.read_text(encoding="utf-8"), p.name)[0]
+        except (Refusal, UnicodeDecodeError):
+            continue
+        if meta.get("status") in outcomes:
+            outcomes[meta["status"]] += 1
+        if meta.get("date"):
+            dates.append(str(meta["date"]))
+    checks = R.verify(ws) if (ws / "decisions").is_dir() else []
+    lines_ = R.record_lines(ws) if (ws / R.RECORD).is_file() else []
+    record = ("not started" if not lines_ else
+              "intact" if not any(l == "ERROR" for l, _ in checks) else "reports changes after approval")
+    out += [f"- Rules in force: {len(current)} (of {len(decs)} decision files; the rest are history).",
+            f"- Proposals: {outcomes['promoted']} approved, {outcomes['rejected']} rejected, {outcomes['deferred']} "
+            f"deferred, {outcomes['proposed']} waiting.",
+            f"- Review record: {record}" + (f", {len(lines_)} entr{'y' if len(lines_) == 1 else 'ies'}." if lines_ else "."),
+            f"- First recorded date: {min(dates) if dates else 'none yet'}.", "", "## Repeated work and workflows", ""]
+    try:
+        work = read_runs(ws)["work"]
+    except Refusal:
+        work = {}
+    chosen = {d: sum(1 for e in work.values() if e.get("decision") == d) for d in RUN_DECISIONS}
+    manifest = read_manifest(ws)
+    flows = len(list((ws / "workflows").glob("*/CONTEXT.md"))) if (ws / "workflows").is_dir() else 0
+    out += [f"- Kinds of repeated work counted: {len(work)}, {sum(e['count'] for e in work.values())} run(s) in total; "
+            f"decided: {chosen['automate']} automate, {chosen['manual']} keep manual, {chosen['later']} later.",
+            f"- Workflows: {flows}. Modules installed: {', '.join(sorted(manifest.get('modules', {}))) or 'none'}.", "",
+            "## Knowledge", ""]
+    ages = knowledge_ages(ws, today)
+    fresh = sum(1 for _, days, problem in ages if days is not None and not problem and days <= STALE_DAYS)
+    out.append(f"- Knowledge files: {len(ages)}, of which checked in the last {STALE_DAYS} days: {fresh}.")
+    accepted = len(list(ws.glob("roles/*/knowledge/*.md")))
+    if accepted or (ws / "roles").is_dir():
+        out.append(f"- Role knowledge handed on and accepted: {accepted} file(s).")
+    health = doctor(ws)
+    out += ["", "## Health", "", f"- `doctor`: {sum(l == 'ERROR' for l, _ in health)} error(s), "
+            f"{sum(l == 'WARN' for l, _ in health)} warning(s).", "", "## What this does not show", "",
+            "- Time or money saved: not measured. If you want to claim it, measure it first (for example, time one "
+            "task before and after for two weeks) and label the numbers as your own.",
+            "- Whether the rules are good ones: only the people who approved them can say.",
+            "- Anything about other workspaces or other people.", ""]
+    return "\n".join(out)
+
+
+def write_handbook(ws, target, text, mark=None, what="handbook"):
+    """Save a generated copy (the handbook, the evidence summary) outside the workspace.
+    Only an earlier copy of the same kind (same first line) is ever replaced."""
+    mark = mark or HANDBOOK_MARK
     ws, target = Path(ws).resolve(), Path(target).expanduser().resolve()
     if target.suffix.lower() not in (".md", ".txt"):
-        raise Refusal("the handbook file name must end in .md or .txt")
+        raise Refusal(f"the {what} file name must end in .md or .txt")
     if ws in (target, *target.parents):
-        raise Refusal("save the handbook outside the workspace, so no agent mistakes the copy for the rules")
+        raise Refusal(f"save the {what} outside the workspace, so no agent mistakes the copy for the rules")
     if not target.parent.is_dir():
         raise Refusal(f"folder {target.parent} does not exist")
     if target.is_symlink() or (target.exists() and not target.is_file()):
         raise Refusal(f"{target} is not a plain file; choose a new file name")
     if target.exists():
         with open(target, encoding="utf-8", errors="replace") as f:
-            if f.readline().strip() != HANDBOOK_MARK:
-                raise Refusal(f"{target} already exists and is not a handbook; choose a new file name")
+            if f.readline().strip() != mark:
+                raise Refusal(f"{target} already exists and is not a {what}; choose a new file name")
     fd, tmp = tempfile.mkstemp(prefix=".living-handbook-", suffix=".tmp", dir=target.parent)
     try:
         with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as f:
@@ -2245,6 +2326,9 @@ def main(argv=None):
     ob.add_argument("workspace")
     ob.add_argument("--done", metavar="ID", help="tick one item you have understood")
     ob.add_argument("--next", type=int, default=3, help="how many next items to show (default 3)")
+    ev = sub.add_parser("evidence", help="counts you can show others: value check, reviews, repeated work (no content)")
+    ev.add_argument("workspace")
+    ev.add_argument("--out", help="save it to this .md file outside the workspace (default: print it)")
     hb = sub.add_parser("handbook", help="a readable copy of your rules and workflows, for working without AI")
     hb.add_argument("workspace")
     hb.add_argument("--out", help="save it to this .md file outside the workspace (default: print it)")
@@ -2319,6 +2403,13 @@ def main(argv=None):
             print(role_review(a.workspace, a.file, a.outcome, a.by))
         elif a.cmd == "onboard":
             print(format_onboard(*onboard(a.workspace, a.done, a.next)))
+        elif a.cmd == "evidence":
+            text = evidence(a.workspace)
+            if a.out:
+                saved = write_handbook(a.workspace, os.path.expanduser(a.out), text, EVIDENCE_MARK, "evidence summary")
+                print(f"Saved {saved}. Read it before you share it.")
+            else:
+                print(text)
         elif a.cmd == "handbook":
             text = handbook(a.workspace)
             if a.out:

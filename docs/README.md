@@ -40,6 +40,10 @@ Plain words first. Exact commands are under the heading that needs them. Every f
 - [Second check](../modules/second-check/README.md): important work gets an independent check before you decide.
 - [Knowledge inbox](../modules/knowledge-inbox/README.md): keeps reusable knowledge with its source and reminds you to re-check old facts.
 
+## For people who want to recommend it
+
+- [Making the case](champions.md): honest arguments for CEOs, CTOs and founders, from your own evidence summary (`living.py evidence`).
+
 ## For contributors
 
 - [Manual test checklist](testing-checklist.md): a step-by-step check of a release on a real computer, Windows first.
