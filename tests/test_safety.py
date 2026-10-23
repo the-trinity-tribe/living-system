@@ -126,7 +126,11 @@ class TestModuleRules(Case):
                "space": "workflows/x /a.md", "colon": "workflows/x:y.md"}
         for mid, rel in bad.items():
             with self.subTest(module=mid):
-                make_module(mods, mid, {rel: "x\n"})
+                self.assertIsNotNone(L.path_problem(rel), rel)
+                try:
+                    make_module(mods, mid, {rel: "x\n"})
+                except OSError:
+                    continue  # this system cannot even create the name (e.g. Windows and "x " or "x:y")
                 with self.assertRaises(L.Refusal):
                     L.load_module(mid, mods)
 
