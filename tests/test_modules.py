@@ -1,5 +1,5 @@
 """Optional modules: listing, planning, adding and removing them safely."""
-import json, re, subprocess, sys, tempfile, unittest
+import json, os, re, subprocess, sys, tempfile, unittest
 from pathlib import Path
 from unittest import mock
 
@@ -214,6 +214,16 @@ class TestCLI(ModuleCase):
     def run_cli(self, *args):
         return subprocess.run([sys.executable, "-B", str(REPO / "tools/living.py"), *args],
                               capture_output=True, text=True)
+
+    def test_tilde_paths_work_for_every_command(self):
+        env = dict(os.environ, HOME=str(self.base), USERPROFILE=str(self.base))
+        run = lambda *args: subprocess.run([sys.executable, "-B", str(REPO / "tools/living.py"), *args],
+                                           capture_output=True, text=True, env=env)
+        self.assertEqual(run("doctor", "~/ws").returncode, 0)
+        self.assertEqual(run("add", "~/ws", "weekly-update").returncode, 0)
+        r = subprocess.run([sys.executable, "-B", str(REPO / "tools/review.py"), "--root", "~/ws", "current"],
+                           capture_output=True, text=True, env=env)
+        self.assertEqual(r.returncode, 0, r.stderr)
 
     def test_plan_apply_and_refusal_codes(self):
         r = self.run_cli("add", str(self.ws), "weekly-update")

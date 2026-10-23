@@ -892,6 +892,9 @@ def main(argv=None):
     d = sub.add_parser("doctor", help="read-only health check of a workspace")
     d.add_argument("workspace")
     a = ap.parse_args(argv)
+    for name in ("workspace", "dir"):  # PowerShell passes ~ through unexpanded
+        if getattr(a, name, None):
+            setattr(a, name, os.path.expanduser(getattr(a, name)))
     try:
         if a.cmd == "init":
             ws = init(a.dir, a.profile, a.language, a.calm_replies)

@@ -433,6 +433,7 @@ def main(argv=None):
     h.add_argument("file")
     sub.add_parser("check")
     a = ap.parse_args(argv)
+    a.root = os.path.expanduser(a.root)  # PowerShell passes ~ through unexpanded
     try:
         if not Path(a.root).is_dir():
             raise Refusal(f"{a.root} is not a folder")

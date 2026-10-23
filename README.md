@@ -37,6 +37,8 @@ git clone https://github.com/the-trinity-tribe/living-system.git
 cd living-system
 ```
 
+**On Windows:** type `py` where this page says `python3` (for example `py tools/living.py doctor %USERPROFILE%\my-workspace`). If `py` is not found, install Python from python.org and tick "Add python.exe to PATH". In PowerShell, `~\my-workspace` also works for a folder in your home directory. Use the same `/` or `\` style throughout one command.
+
 ### Make your own workspace
 
 The easiest way is to open this repository in Claude Code or Codex and say *"Read INSTALL.md and set up my workspace."* The agent asks you up to five questions, shows you what it will create, and waits for your yes. See [INSTALL.md](INSTALL.md).

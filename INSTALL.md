@@ -2,7 +2,7 @@
 
 This guide is read by an AI agent (Claude Code or Codex) while it sets up your workspace with you. You can also follow it by hand.
 
-**You need:** Python 3 and this repository on your computer. No accounts, no extra packages.
+**You need:** Python 3.10 or newer and this repository on your computer. No accounts, no extra packages.
 
 ## Tell your agent
 
@@ -15,6 +15,8 @@ Open this repository in Claude Code or Codex and say:
 ## For the agent: read this first
 
 You are helping a human, who may not be technical, create a private workspace. Keep replies short and plain.
+
+**On Windows:** use `py` (or `python` if `py` is missing) wherever this guide says `python3`. Check first with `py --version`. Use a workspace path in the human's home folder, for example `%USERPROFILE%\living-workspace` in cmd or `~\living-workspace` in PowerShell.
 
 **You may:**
 
