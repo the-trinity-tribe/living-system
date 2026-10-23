@@ -65,6 +65,7 @@ Optional modules add a ready-made workflow or knowledge area. Nothing is install
 | `weekly-update` | A three-step weekly update: gather facts, draft, check who approves. You send it. |
 | `meeting-notes` | Meeting notes become clean notes, actions, and proposals for anything that would change a rule. |
 | `staged-learning` | Your agent suggests lessons from its mistakes; only lessons you approve are used next time. |
+| `second-check` | Important work is made, then checked by a fresh session (ideally a different agent) against a checklist, then you decide. |
 | `knowledge-inbox` | Your agent suggests knowledge worth keeping, with its source; only what you approve is kept, and old facts are flagged for a re-check. |
 
 ```sh

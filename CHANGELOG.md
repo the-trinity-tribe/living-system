@@ -14,7 +14,7 @@ From a governance demo to a workspace you can install and grow.
 - **Value check:** a 10-minute before/after test you run yourself, and `value-score` to count the results.
 - **Handover note:** `handover/LATEST.md`, so the next session (with any agent) starts where the last one stopped.
 - **Decision kinds:** proposals can now add a first rule (`kind: new`), replace a rule completely (`kind: replace`) or retire one (`kind: retire`), besides adding an exception. Old decision files are never edited.
-- **Optional modules:** `modules`, `add`, `remove`, with four modules: `weekly-update`, `meeting-notes`, `staged-learning`, `knowledge-inbox`. Plans are shown before anything is written; removal keeps files you edited and never touches decisions, proposals or projects. New workspaces list the available modules in `.living/catalog.md`.
+- **Optional modules:** `modules`, `add`, `remove`, with five modules: `weekly-update`, `meeting-notes`, `staged-learning`, `knowledge-inbox`, `second-check`. Plans are shown before anything is written; removal keeps files you edited and never touches decisions, proposals or projects. New workspaces list the available modules in `.living/catalog.md`.
 - **Workflow generator:** `new-workflow` creates a staged workflow folder in the style of Interpretable Context Methodology (see `CREDITS.md`).
 - **`doctor`:** a read-only health check in plain words.
 - **Export:** `living.py export` packs a workspace into one zip (without machine-specific files); `upgrade` on a restored copy records the new computer's Living System folder.

@@ -1,0 +1,10 @@
+{
+  "id": "second-check",
+  "version": "0.1.0",
+  "kind": "workflow",
+  "summary": "Important work gets an independent check by a fresh agent session before you decide; at most two correction rounds.",
+  "requires": [],
+  "routing": [["Important work that needs an independent check before it is used (maker-checker workflow)", "workflows/second-check/CONTEXT.md"]],
+  "needs_approval": ["Using or sending the work", "A third correction round"],
+  "signals": ["double-check this", "second pair of eyes", "check before I send", "important document", "can you review this"]
+}
