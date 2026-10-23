@@ -1,36 +1,78 @@
 # Living System
 
-**Experimental v0.1 · local-first Human–AI governance Kernel**
+**Experimental · local-first Human–AI governance Kernel**
 
-Living System explores how people and AI agents can evolve shared working context **without letting agents silently decide what becomes canonical truth**. It uses readable Markdown files and a small Python standard-library review tool, rather than a hosted service, vector database, or proprietary memory.
+Living System is a way to give your AI agent a **written memory you control**.
+
+What it is designed to give you:
+
+- **Your rules, written down.** Your agent reads them at the start of each session instead of guessing.
+- **You stay the decision-maker.** The agent can *propose* a change. Only you approve it.
+- **A trail you can read.** Every rule is a plain file that says where it came from and what it replaced.
+- **Less lost context.** A handover note lets the next session continue where the last one stopped.
+- **Yours, on your computer.** Plain Markdown files and one small Python tool (standard library only). No server, no account, no tie to one AI vendor.
+
+Whether it helps *you* is something you can test: the workspace includes a small [value check](core/template/value-check/README.md) you run yourself.
 
 Created and architected by **Adrianna Mamczarz**, through **The Trinity Tribe**. AI assisted with implementation; design decisions, review, and acceptance remained human-led.
 
 > **Status:** An experimental, educational reference implementation. Not a security boundary, identity-verification system, or production-ready access-control product. Moss & Circuit, Riverside Community Garden and every person named in the example (including Maya Chen, Leo and Sam) are fictional, and all project details in the example are invented.
 
+## Three things to keep apart
+
+| | What it is | Where |
+| --- | --- | --- |
+| **The product** (this repository) | The template, the tools and the docs. Public. | You are here. |
+| **Your workspace** | Your own private folder, made by `init`. | A separate folder you choose, **outside** this repository. |
+| **The demo** | A fictional sandbox to explore. Not your workspace. | [demo/moss-and-circuit/](demo/moss-and-circuit/) |
+
+Your workspace is created in its own folder on purpose: personal data should never sit inside a clone of a public repository.
+
 ## Quick start
 
-**Requirements:** Git (to clone) and Python 3. No third-party Python packages or accounts are needed to inspect the example or run the review checks.
+**Requirements:** Git (to clone) and Python 3. No third-party packages or accounts.
 
 ```sh
 git clone https://github.com/the-trinity-tribe/living-system.git
 cd living-system
-python3 -B tools/review.py current
-python3 -B tools/review.py check
+```
+
+### Make your own workspace
+
+The easiest way is to open this repository in Claude Code or Codex and say *"Read INSTALL.md and set up my workspace."* The agent asks you up to five questions, shows you what it will create, and waits for your yes. See [INSTALL.md](INSTALL.md).
+
+Or do it yourself. Profiles: `student`, `professional`, `employee`, `manager`.
+
+```sh
+python3 tools/living.py init ~/my-workspace --profile professional --language en --calm-replies
+python3 tools/review.py --root ~/my-workspace check
+```
+
+`init` refuses a folder that already has files in it, and leaves nothing behind if it fails. To undo: delete the folder.
+
+Your starter `SYSTEM.md` and `PRINCIPLES.md` are **drafts** until you change them to `status: approved` yourself.
+
+### Explore the demo
+
+```sh
+python3 -B tools/review.py --root demo/moss-and-circuit current
+python3 -B tools/review.py --root demo/moss-and-circuit check
 python3 -B -m unittest discover tests
 ```
 
-These commands **read and check** the provided example. `current` lists active approved decisions; `check` reports certain structural problems; the unit tests exercise the governance rules. Passing them does **not** verify the identity of a reviewer, or guarantee security or agent correctness.
+These commands **read and check** the fictional example. `current` lists active approved decisions; `check` reports certain structural problems; the unit tests exercise the governance rules and workspace creation. Passing them does **not** verify the identity of a reviewer, or guarantee security or agent correctness.
+
+For a scripted 10-minute live demo on temporary copies, see [demo/WALKTHROUGH.md](demo/WALKTHROUGH.md).
 
 ## Explore the worked example
 
-The repository contains one small fictional organisation, **Moss & Circuit**, and its **Riverside Community Garden** project.
+The demo contains one small fictional organisation, **Moss & Circuit**, and its **Riverside Community Garden** project.
 
-1. Read [AGENTS.md](AGENTS.md) for agent instructions, authority boundaries and human-review rules.
-2. Follow [CONTEXT-ROUTING.md](CONTEXT-ROUTING.md) to read only the context relevant to a task.
-3. Open [projects/riverside-community-garden.md](projects/riverside-community-garden.md), then the **current** approved decision it points to.
-4. Inspect [proposals/](proposals/) and [decisions/](decisions/) to see the evidence, a human-attributed review, the superseded decision and the resulting current decision.
-5. Run `python3 -B tools/review.py current` to confirm which approved decision remains active.
+1. Read [demo/moss-and-circuit/AGENTS.md](demo/moss-and-circuit/AGENTS.md) for agent instructions, authority boundaries and human-review rules.
+2. Follow [CONTEXT-ROUTING.md](demo/moss-and-circuit/CONTEXT-ROUTING.md) to read only the context relevant to a task.
+3. Open the [project file](demo/moss-and-circuit/projects/riverside-community-garden.md), then the **current** approved decision it points to.
+4. Inspect [proposals/](demo/moss-and-circuit/proposals/) and [decisions/](demo/moss-and-circuit/decisions/) to see the evidence, a human-attributed review, the superseded decision and the resulting current decision.
+5. Open the hand-written [client-update workflow](demo/moss-and-circuit/workflows/client-update/CONTEXT.md), a labelled example of working in stages with a human checkpoint after each one.
 
 The example demonstrates this lifecycle:
 
@@ -40,31 +82,37 @@ routed context → contradictory evidence → staged proposal
     → old decision retained as history → fresh-agent reuse
 ```
 
-**Authority is not a role label.** Project notes and proposals cannot override current approved decisions. A `promoted` proposal records provenance; it is not current operating authority. See [AGENTS.md §2–7](AGENTS.md).
+**Authority is not a role label.** Project notes and proposals cannot override current approved decisions. A `promoted` proposal records provenance; it is not current operating authority. See [AGENTS.md §2–7](core/template/AGENTS.md).
 
 ## Working with an agent
 
-Use a **fresh session** with the repository as its working directory. Ask the agent to start at `AGENTS.md` and route through `CONTEXT-ROUTING.md`. For a cold-open exercise, do not supply private conversations, external development handoffs or an expected-answer sheet. Observe which files were actually consulted and whether the agent separates approved facts from proposals and uncertainty.
+Use a **fresh session** with the workspace (or the demo folder) as its working directory. Ask the agent to start at `AGENTS.md` and route through `CONTEXT-ROUTING.md`. For a cold-open exercise, do not supply private conversations, external development handoffs or an expected-answer sheet. Observe which files were actually consulted and whether the agent separates approved facts from proposals and uncertainty.
 
-The example's expected test answers are intentionally **not** stored here, to avoid supplying an answer key to a new agent.
+The example's expected test answers are intentionally **not** stored in the demo, to avoid supplying an answer key to a new agent.
 
 ## Review operations and safety
 
 `tools/review.py` also supports `hash` and `review`. Unlike `current` and `check`, the `review` operation **modifies shared files** and must be run only after a human explicitly decides the outcome of a **named, currently reviewable proposal**:
 
 ```text
-python3 tools/review.py hash decisions/path-to-current-decision.md
-python3 tools/review.py review proposals/path-to-pending-proposal.md --outcome approve|reject|defer --by "Reviewer Name"
+python3 tools/review.py --root <workspace> hash decisions/path-to-current-decision.md
+python3 tools/review.py --root <workspace> review proposals/path-to-pending-proposal.md --outcome approve|reject|defer --by "Reviewer Name"
 ```
 
-The second line illustrates the CLI syntax (`approve|reject|defer` means choose exactly one). **Do not run it against the shipped promoted example.** An approval creates a new decision and marks the proposal as promoted; rejection or deferral leaves canonical decisions unchanged. The recorded reviewer name is an **attribution field, not authenticated identity**. For exact safeguards and refusal rules, see [AGENTS.md §7](AGENTS.md) and the [review tool](tools/review.py).
+The second line illustrates the CLI syntax (`approve|reject|defer` means choose exactly one). **Do not run it against the shipped demo.** An approval creates a new decision and marks the proposal as promoted; rejection or deferral leaves canonical decisions unchanged. The recorded reviewer name is an **attribution field, not authenticated identity**. For exact safeguards and refusal rules, see [AGENTS.md §7](core/template/AGENTS.md) and the [review tool](tools/review.py).
+
+## Credits
+
+See [CREDITS.md](CREDITS.md).
 
 ## Current scope and limitations
 
-- v0.1 demonstrates context routing, canonical decisions, evidence-bounded proposals, explicit review and deterministic promotion.
-- Living System v0.1 is designed to support fresh-session reuse through explicit, human-readable context and governance rules.
+- The review mechanism demonstrates context routing, canonical decisions, evidence-bounded proposals, explicit review and deterministic promotion.
+- Living System is designed to support fresh-session reuse through explicit, human-readable context and governance rules.
 - There is **no authentication or identity attestation**: `--by`, `approved_by` and similar labels are unverified declarations.
 - There is no automatic approval, secret store, multi-user authorization, hosted product, automatic private-data extraction, or guarantee that an agent will comply with instructions.
+- Starter files are written in English; your agent writes new content in the language you choose, but the starter files are not translated for you.
+- The profile files (`student`, `professional`, `employee`, `manager`) are small starting points, not tested against real use.
 - The fictional organisation is a demonstration, not a recommended deployment with real client or personal data. Review any material before putting it in an AI agent's context or publishing a repository.
 
 ## Licensing, community and credit

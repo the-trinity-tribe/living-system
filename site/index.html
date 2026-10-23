@@ -1,0 +1,1011 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Living System</title>
+<meta name="description" content="Living System: one set of plain files that you and your AI agents share, so agents can suggest changes to what you decided but never silently replace it.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Source+Serif+4:opsz,wght@8..60,500..700&display=swap">
+<style>
+:root{
+  --bg:#F2F4F1;
+  --surface:#FBFCFA;
+  --ink:#17231F;
+  --muted:#46564F;
+  --line:#C9D2CC;
+  --moss:#2A6347;
+  --moss-soft:#DCE9E0;
+  --live:#1E6B43;
+  --live-bg:#DDEEE3;
+  --replay:#3A4FA8;
+  --replay-bg:#E4E8F7;
+  --road:#8A5A00;
+  --road-bg:#F6EBD2;
+  --mark:#FFE9A0;
+  --code-bg:#E9EDEA;
+  --focus:#1B4FD6;
+  --serif:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --sans:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1815;
+    --surface:#16221E;
+    --ink:#E6EEE9;
+    --muted:#A6B6AF;
+    --line:#2E3E38;
+    --moss:#86CFA3;
+    --moss-soft:#1C3328;
+    --live:#86CFA3;
+    --live-bg:#1B3226;
+    --replay:#AFBBFF;
+    --replay-bg:#222A52;
+    --road:#EDBE5C;
+    --road-bg:#3A2D10;
+    --mark:#5A4A12;
+    --code-bg:#1B2823;
+    --focus:#8FB0FF;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1815;
+  --surface:#16221E;
+  --ink:#E6EEE9;
+  --muted:#A6B6AF;
+  --line:#2E3E38;
+  --moss:#86CFA3;
+  --moss-soft:#1C3328;
+  --live:#86CFA3;
+  --live-bg:#1B3226;
+  --replay:#AFBBFF;
+  --replay-bg:#222A52;
+  --road:#EDBE5C;
+  --road-bg:#3A2D10;
+  --mark:#5A4A12;
+  --code-bg:#1B2823;
+  --focus:#8FB0FF;
+  color-scheme:dark;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 1.0625rem/1.65 var(--sans);overflow-wrap:break-word}
+img,svg{max-width:100%}
+a{color:var(--moss);text-underline-offset:.18em}
+a:hover{text-decoration-thickness:2px}
+:focus-visible{outline:3px solid var(--focus);outline-offset:3px;border-radius:3px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.skip{position:absolute;left:16px;top:-4rem;background:var(--ink);color:var(--bg);padding:.6rem 1rem;border-radius:6px;z-index:10}
+.skip:focus{top:12px}
+
+h1,h2,h3{font-family:var(--serif);font-weight:600;line-height:1.2;margin:0;letter-spacing:-.01em;text-wrap:balance}
+h1{font-size:clamp(2.5rem,1.6rem + 4vw,4.25rem);font-weight:700;letter-spacing:-.025em}
+h2{font-size:clamp(1.65rem,1.25rem + 1.7vw,2.3rem)}
+h3{font-size:1.2rem}
+p{margin:0 0 1em}
+.prose{max-width:62ch}
+.lede{font-family:var(--serif);font-size:clamp(1.25rem,1.05rem + .9vw,1.6rem);line-height:1.45;max-width:36ch}
+.small{font-size:.9rem;color:var(--muted)}
+code,pre,.path{font-family:var(--mono);font-size:.88em}
+code{background:var(--code-bg);padding:.1em .35em;border-radius:4px;overflow-wrap:anywhere}
+mark{background:var(--mark);color:inherit;padding:0 .15em;border-radius:2px;text-decoration:underline;text-decoration-style:wavy;text-decoration-thickness:1px;text-underline-offset:.2em}
+
+/* layout */
+.wrap{max-width:1180px;margin-inline:auto;padding-inline:16px;display:grid;grid-template-columns:minmax(0,1fr)}
+.rail{padding-top:1rem}
+main{min-width:0}
+@media (min-width:1000px){
+  .wrap{grid-template-columns:13.5rem minmax(0,48rem);column-gap:3.5rem;padding-inline:24px}
+  .rail{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;padding-top:2rem}
+}
+.toolbar{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;padding-block:1rem 0}
+.toolbar .grow{flex:1}
+
+/* chapter nav */
+.chnav summary{cursor:pointer;font-weight:700;padding:.5rem 0}
+.chnav ol{list-style:none;margin:0;padding:0}
+.chnav a{display:block;padding:.3rem .6rem;border-left:3px solid var(--line);text-decoration:none;color:var(--muted);font-size:.95rem;line-height:1.35}
+.chnav a:hover{color:var(--ink)}
+.chnav a[aria-current="location"]{border-left-color:var(--moss);color:var(--ink);font-weight:700}
+@media (min-width:1000px){.chnav summary{display:none}}
+
+/* buttons */
+.btn{font:700 .95rem/1.2 var(--sans);display:inline-flex;align-items:center;gap:.5rem;padding:.65rem 1rem;min-height:44px;border-radius:8px;border:1.5px solid var(--ink);background:transparent;color:var(--ink);cursor:pointer;text-decoration:none}
+.btn:hover{background:var(--moss-soft)}
+.btn.primary{background:var(--ink);color:var(--bg)}
+.btn.primary:hover{background:var(--moss);border-color:var(--moss);color:#fff}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.small{min-height:36px;padding:.4rem .7rem;font-size:.85rem}
+
+/* chips */
+.chip{display:inline-flex;align-items:center;gap:.4em;font:700 .72rem/1 var(--sans);letter-spacing:.07em;padding:.34rem .6rem;border-radius:999px;border:1.5px solid currentColor;white-space:nowrap;vertical-align:middle}
+.chip::before{content:"";display:inline-block;flex:none}
+.chip[data-s="LIVE"]{color:var(--live);background:var(--live-bg)}
+.chip[data-s="LIVE"]::before{width:.55em;height:.55em;border-radius:50%;background:currentColor}
+.chip[data-s="REPLAY"]{color:var(--replay);background:var(--replay-bg)}
+.chip[data-s="REPLAY"]::before{border-style:solid;border-width:.32em 0 .32em .55em;border-color:transparent transparent transparent currentColor}
+.chip[data-s="ROADMAP"]{color:var(--road);background:var(--road-bg);border-style:dashed}
+.chip[data-s="ROADMAP"]::before{width:.5em;height:.5em;border:1.5px solid currentColor;transform:rotate(45deg)}
+.chiprow{display:flex;flex-wrap:wrap;gap:.6rem 1rem;align-items:center;margin:0 0 1.25rem}
+.legend{list-style:none;margin:1.75rem 0 0;padding:0;display:grid;gap:.6rem}
+.legend li{display:grid;grid-template-columns:6.2rem minmax(0,1fr);gap:.75rem;align-items:start;font-size:.95rem}
+
+/* hero */
+.hero{padding-block:2.5rem 3rem}
+.hero h1{margin-bottom:1rem}
+.hero .origin{margin-top:1.25rem;color:var(--muted);max-width:52ch}
+.cta{display:flex;flex-wrap:wrap;gap:.75rem;margin-top:1.75rem}
+.tableau{margin:2.5rem 0 .5rem;position:relative;display:grid;gap:.75rem}
+.tableau .card{background:var(--surface);border:1.5px solid var(--line);border-left:6px solid var(--moss);border-radius:10px;padding:1rem 1.1rem}
+.tableau .card p{margin:.4rem 0 0;font-family:var(--serif);font-size:1.05rem;line-height:1.5}
+.tableau .path{display:block;color:var(--muted)}
+.tableau .tag{display:inline-block;margin-top:.6rem;font-weight:700;font-size:.8rem;color:var(--moss)}
+.tableau .link{justify-self:start;margin-left:1.1rem;font-size:.85rem;color:var(--muted);display:flex;align-items:center;gap:.5rem}
+.tableau .link::before{content:"";width:2px;height:1.6rem;background:var(--line)}
+.tableau .old .tag-old{display:none}
+.settled .old{border-left-color:var(--muted);background:transparent}
+.settled .old p{text-decoration:line-through;text-decoration-thickness:1px;color:var(--muted)}
+.settled .old .tag-new{display:none}
+.settled .old .tag-old{display:inline-block;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){
+  .tableau .old,.tableau .old p{transition:background-color .9s ease .6s,color .9s ease .6s,border-color .9s ease .6s}
+}
+
+/* chapters */
+.chapter{padding-block:3.5rem 1rem;border-top:1px solid var(--line);scroll-margin-top:1rem}
+.chapter>h2{margin-bottom:1.25rem}
+.chapter h3{margin:2rem 0 .6rem}
+.chapter ul.plain,.chapter ol.plain{padding-left:1.2rem;max-width:62ch}
+.chapter ul.plain li,.chapter ol.plain li{margin-bottom:.5rem}
+.panelbox{background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:1rem;margin:1.25rem 0}
+@media (min-width:640px){.panelbox{padding:1.4rem}}
+.callout{border-left:6px solid var(--road);background:var(--road-bg);padding:.9rem 1.1rem;border-radius:0 8px 8px 0;margin:1rem 0;max-width:62ch}
+.callout.note{border-left-color:var(--moss);background:var(--moss-soft)}
+.callout p:last-child{margin:0}
+
+details.how{margin:1.5rem 0;border:1.5px solid var(--line);border-radius:10px;background:var(--surface)}
+details.how>summary{cursor:pointer;padding:.75rem 1rem;font-weight:700;min-height:44px;display:flex;align-items:center}
+details.how[open]>summary{border-bottom:1px solid var(--line)}
+details.how>div{padding:.9rem 1rem .4rem}
+
+/* three chats illustration */
+.chats{display:grid;gap:.75rem;margin:1.25rem 0}
+@media (min-width:640px){.chats{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.bubble{background:var(--surface);border:1.5px solid var(--line);border-radius:12px 12px 12px 2px;padding:.8rem 1rem;font-size:.95rem}
+.bubble b{display:block;font-size:.8rem;color:var(--muted);margin-bottom:.25rem}
+
+/* tables */
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{text-align:left;vertical-align:top;padding:.6rem .7rem;border-bottom:1px solid var(--line)}
+th{font-weight:700}
+@media (max-width:639px){
+  table.stack thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  table.stack tr{display:block;padding:.6rem 0;border-bottom:1px solid var(--line)}
+  table.stack th,table.stack td{display:block;border:0;padding:.15rem 0}
+  table.stack td::before{content:attr(data-label) ": ";font-weight:700}
+}
+
+/* tabs (shared) */
+[role="tablist"]{display:flex;flex-wrap:wrap;gap:.4rem}
+[role="tab"]{font:700 .95rem/1.2 var(--sans);min-height:44px;padding:.55rem .9rem;border-radius:8px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;text-align:left}
+[role="tab"]:hover{border-color:var(--moss)}
+[role="tab"][aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+[role="tabpanel"]:focus-visible{outline-offset:6px}
+[role="tabpanel"][hidden]{display:none}
+
+/* file cards */
+.file{margin:0 0 .9rem;border:1.5px solid var(--line);border-left-width:6px;border-radius:8px;background:var(--surface);overflow:hidden}
+.file figcaption{display:flex;flex-wrap:wrap;gap:.3rem .75rem;justify-content:space-between;align-items:baseline;padding:.5rem .8rem;background:var(--code-bg);border-bottom:1px solid var(--line)}
+.file .path{overflow-wrap:anywhere}
+.file .ftag{font-weight:700;font-size:.8rem}
+.file pre{margin:0;padding:.8rem;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.55}
+.file[data-kind="current"]{border-left-color:var(--live)}
+.file[data-kind="history"]{border-left-color:var(--muted);border-style:dashed;border-left-style:dashed}
+.file[data-kind="history"] pre{color:var(--muted)}
+.file[data-kind="proposal"]{border-left-color:var(--replay)}
+.file[data-kind="note"]{border-left-color:var(--road)}
+.file[data-kind="rules"]{border-left-color:var(--moss)}
+.file[data-kind="terminal"] pre{background:#101815;color:#DCEBE2}
+.file[data-kind="terminal"] mark{color:#101815}
+
+/* replay */
+.replay-note{margin:0 0 1rem;font-size:.95rem;color:var(--muted);max-width:62ch}
+.question{margin:0 0 1.25rem;font-family:var(--serif);font-size:1.2rem;line-height:1.4}
+.stepper{display:grid;gap:1rem}
+@media (min-width:760px){.stepper{grid-template-columns:13rem minmax(0,1fr);gap:1.5rem}}
+.stepper [role="tablist"]{flex-direction:row;align-content:flex-start}
+@media (min-width:760px){.stepper [role="tablist"]{flex-direction:column;flex-wrap:nowrap}}
+.stepper [role="tab"]{display:flex;gap:.6rem;align-items:baseline}
+.stepper .n{font-variant-numeric:tabular-nums}
+@media (max-width:759px){
+  .stepper [role="tab"]{min-width:44px;justify-content:center}
+  .stepper .t{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+}
+.stepper h3{margin:0 0 .4rem}
+.stepper .say{margin-bottom:1rem}
+.stepnav{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin-top:1rem}
+.stepnav .pos{color:var(--muted);font-size:.9rem}
+.answer{margin:0 0 1rem;border:1.5px solid var(--live);border-radius:10px;padding:.2rem 1rem .6rem;background:var(--surface)}
+.answer dt{font-weight:700;margin-top:.7rem;font-size:.9rem}
+.answer dd{margin:.15rem 0 0}
+.answer dd .path{overflow-wrap:anywhere}
+
+/* profiles */
+.profile-grid{display:grid;gap:1rem}
+@media (min-width:640px){.profile-grid{grid-template-columns:1fr 1fr}}
+.profile-grid h4{margin:0 0 .4rem;font-size:1rem}
+.profile-grid ul{margin:0;padding-left:1.2rem}
+.profile-grid li{margin-bottom:.35rem}
+#profile-panels>div>p:first-child{font-family:var(--serif);font-size:1.15rem;line-height:1.45;max-width:46ch}
+
+/* value check */
+.vc-q{margin:0 0 1.25rem;padding:0;border:0}
+.vc-q legend{font-weight:700;padding:0;margin-bottom:.5rem}
+.vc-row{display:grid;gap:.75rem}
+@media (min-width:640px){.vc-row{grid-template-columns:1fr 1fr}}
+.vc-set{border:1.5px solid var(--line);border-radius:8px;padding:.6rem .8rem .8rem;margin:0}
+.vc-set legend{font-size:.9rem;color:var(--muted);font-weight:700;padding:0 .3rem}
+.vc-opts{display:flex;flex-wrap:wrap;gap:.4rem}
+.vc-opts label{position:relative}
+.vc-opts input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.vc-opts span{display:inline-flex;align-items:center;min-height:40px;padding:.35rem .7rem;border:1.5px solid var(--line);border-radius:999px;font-size:.9rem;background:var(--bg)}
+.vc-opts input:checked+span{background:var(--ink);color:var(--bg);border-color:var(--ink);font-weight:700}
+.vc-opts input:checked+span::before{content:"\2713\00a0"}
+.vc-opts input:focus-visible+span{outline:3px solid var(--focus);outline-offset:2px}
+.vc-result{margin-top:1rem;padding:1rem;border:1.5px solid var(--moss);border-radius:10px;background:var(--moss-soft)}
+.vc-result p{margin:.2rem 0}
+
+/* ICM tree */
+.icm{display:grid;gap:1rem}
+@media (min-width:760px){.icm{grid-template-columns:15rem minmax(0,1fr);gap:1.5rem}}
+.tree-root{font-family:var(--mono);font-size:.9rem;margin:0 0 .5rem;color:var(--muted)}
+.icm [role="tablist"]{flex-direction:column;flex-wrap:nowrap;margin-left:1rem;border-left:2px solid var(--line);padding-left:.8rem}
+.icm [role="tab"]{font-family:var(--mono);font-weight:400;font-size:.9rem}
+.icm [role="tab"][aria-selected="true"]{font-weight:700}
+
+.planned{display:grid;gap:.4rem;border:1.5px dashed var(--road);border-radius:10px;padding:1rem;margin:1.25rem 0;background:transparent;max-width:62ch}
+.planned h3{margin:0}
+.planned p{margin:0}
+
+/* agents */
+.agent-flow{list-style:none;margin:0 0 1rem;padding:0;display:grid;gap:.5rem}
+.agent-flow li{position:relative;padding-left:1.6rem}
+.agent-flow li::before{content:"\2192";position:absolute;left:0;color:var(--moss);font-weight:700}
+
+/* code block with copy */
+.cmd{position:relative;margin:0 0 1rem}
+.cmd pre{margin:0;padding:.9rem 1rem;background:#101815;color:#DCEBE2;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.55}
+.cmd .btn{margin-top:.4rem}
+
+.skills td:first-child{font-weight:700;min-width:11rem}
+.influences{list-style:none;padding:0;margin:0 0 1rem;max-width:62ch}
+.influences li{padding:.7rem 0;border-bottom:1px solid var(--line)}
+.draft{font-weight:700;font-size:.8rem;color:var(--road);border:1.5px dashed var(--road);border-radius:999px;padding:.15rem .5rem;margin-left:.4rem;white-space:nowrap}
+
+footer.site{margin-top:4rem;padding-block:2rem 4rem;border-top:1px solid var(--line)}
+#toast{min-height:1.5em;font-weight:700;color:var(--moss)}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<noscript><p style="padding:1rem;margin:0;background:#F6EBD2;color:#17231F">This page needs JavaScript for the status chips and walk-throughs. The text below still reads in order.</p></noscript>
+
+<div class="wrap">
+  <aside class="rail" data-md="skip">
+    <nav class="chnav" aria-label="Chapters">
+      <details id="chnav-details" open>
+        <summary>Chapters</summary>
+        <ol id="chlist"></ol>
+      </details>
+    </nav>
+  </aside>
+
+  <main id="main">
+    <div class="toolbar" data-md="skip">
+      <span class="grow"></span>
+      <button class="btn small" id="theme-btn" type="button">Theme: auto</button>
+      <button class="btn small" type="button" data-copy-md>Copy as Markdown</button>
+    </div>
+
+    <header class="hero" id="top">
+      <h1>Living System</h1>
+      <p class="lede">One set of plain files that you and your AI agents share. Agents can suggest changes to what you decided. They never quietly replace it.</p>
+      <p class="origin">Invented and tested by Adrianna Mamczarz inside The Trinity Tribe. Free and open source (MPL-2.0).</p>
+      <div class="cta" data-md="skip">
+        <a class="btn primary" href="#ch3">Watch a replay</a>
+        <a class="btn" href="#ch11">Try it yourself</a>
+      </div>
+      <figure class="tableau" id="tableau" style="margin-inline:0">
+        <div class="card old">
+          <code class="path">demo/moss-and-circuit/decisions/2026-09-01-founder-approves-client-deliverables.md</code>
+          <p>All client-facing deliverables require Maya Chen's approval before they are sent.</p>
+          <span class="tag tag-new">current</span> <span class="tag tag-old">kept as history</span>
+        </div>
+        <div class="link">replaced by a new approved decision, after a human said yes</div>
+        <div class="card new">
+          <code class="path">demo/moss-and-circuit/decisions/2026-10-07-leo-signs-off-riverside-rota-updates.md</code>
+          <p>For the Riverside Community Garden project, Leo Martin may approve routine schedule updates sent to the garden, such as a revised volunteer rota, before they are sent.</p>
+          <span class="tag">current</span>
+        </div>
+        <figcaption class="small">Real files from the worked example. Moss &amp; Circuit and everyone in it are fictional.</figcaption>
+      </figure>
+
+      <h2 class="sr">What the status chips mean</h2>
+      <ul class="legend" id="legend" aria-label="What the status chips mean"></ul>
+    </header>
+
+    <!-- 1 -->
+    <section class="chapter" id="ch1" aria-labelledby="h1-1">
+      <h2 id="h1-1">You keep explaining the same rule</h2>
+      <div class="prose">
+        <p>You tell one AI who approves client work. A week later you tell a second one. Then a third, in slightly different words. Now they disagree, and you are the one who remembers which is right.</p>
+      </div>
+      <div class="chats" role="group" aria-label="Illustration: three chats, three different wordings of one rule">
+        <div class="bubble"><b>Chat A (illustration)</b>"Maya signs off on client work."</div>
+        <div class="bubble"><b>Chat B (illustration)</b>"Leo can approve the routine stuff."</div>
+        <div class="bubble"><b>Chat C (illustration)</b>"I'm not sure who approves. Ask the team?"</div>
+      </div>
+      <ul class="plain">
+        <li><strong>Knowledge is scattered.</strong> It lives in chats, documents and people's heads.</li>
+        <li><strong>Founders become the bottleneck.</strong> Every "who decides this?" goes to one person.</li>
+        <li><strong>Employees rebuild context.</strong> Each new task starts with "what do I need to know first?"</li>
+      </ul>
+      <div class="callout note"><p><strong>What changes:</strong> the rule is written down once, in a plain file. Every person and every AI agent reads the same file. When something new comes up, it becomes a suggestion that a human approves or rejects.</p></div>
+    </section>
+
+    <!-- 2 -->
+    <section class="chapter" id="ch2" aria-labelledby="h2-2">
+      <h2 id="h2-2">A web chat can explain. It can't keep your files.</h2>
+      <div class="prose">
+        <p>A chat in your browser is good for explaining an idea or drafting a paragraph. It cannot open the folder on your computer, read your approved decisions, or update a file when something changes.</p>
+        <p>Agents such as Claude Code and Codex can. They work inside a folder, within the permissions you give them. That is what makes a shared, durable memory possible.</p>
+      </div>
+      <div class="tablewrap">
+        <table class="stack">
+          <thead><tr><th scope="col">You want to…</th><th scope="col">Web chat</th><th scope="col">Agent in a folder</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Explain an idea or draft text</th><td data-label="Web chat">Yes</td><td data-label="Agent in a folder">Yes</td></tr>
+            <tr><th scope="row">Read your approved files</th><td data-label="Web chat">Only what you paste or upload each time</td><td data-label="Agent in a folder">Yes, in folders you let it open</td></tr>
+            <tr><th scope="row">Start a new session with the same context</th><td data-label="Web chat">You paste it again</td><td data-label="Agent in a folder">It reads the same files again</td></tr>
+            <tr><th scope="row">Save a suggestion for a human to review</th><td data-label="Web chat">No, you copy it yourself</td><td data-label="Agent in a folder">Yes, if you allow it to write files</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <details class="how">
+        <summary>How it works: what "within permissions" means</summary>
+        <div>
+          <p>You choose which folder the agent opens and what it may read or change. The agent tool asks for your approval in the ways its own settings allow. Those settings differ between tools, so check them before you put real material in a folder (see chapter 10).</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- 3 -->
+    <section class="chapter" id="ch3" aria-labelledby="h3-3">
+      <h2 id="h3-3">Ask once. Get the one approved answer.</h2>
+      <div class="prose">
+        <p>The agent does not read everything. It follows a short route to the one file that holds the current rule, and it says where the answer came from.</p>
+      </div>
+      <div class="chiprow"><span data-status="governance"></span></div>
+      <div id="replay-route" class="panelbox"></div>
+      <details class="how">
+        <summary>How it works: the order of trust</summary>
+        <div>
+          <p>The repository ranks sources: (1) what the human tells the agent now, (2) approved canonical files, (3) project files, (4) background notes, (5) the agent's own guess. A lower source never overrides a higher one. A proposal is not on the list at all.</p>
+          <p>A decision is current only if no other approved decision names it in <code>supersedes:</code>. The command <code>python3 -B tools/review.py current</code> lists the current ones. Source: <code>AGENTS.md</code> section 2.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- 4 -->
+    <section class="chapter" id="ch4" aria-labelledby="h4-4">
+      <h2 id="h4-4">New information becomes a proposal, not a rewrite</h2>
+      <div class="prose">
+        <p>Someone writes in a meeting note that a rule has changed. The agent does not act on it. It keeps following the approved decision, writes down the suggestion, and waits for a human.</p>
+      </div>
+      <div class="chiprow"><span data-status="governance"></span></div>
+      <div id="replay-amend" class="panelbox"></div>
+      <details class="how">
+        <summary>How it works: what the review tool does</summary>
+        <div>
+          <p>The review command records the outcome on the proposal. Approving creates one new decision file with <code>supersedes:</code> and <code>source_proposal:</code> and never edits the old file. It refuses if the target changed since the proposal was written, or if the proposed text is not exactly one quoted block.</p>
+          <p>The name given with <code>--by</code> is a label. It is not a login and it is not checked.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- 5 -->
+    <section class="chapter" id="ch5" aria-labelledby="h5-5">
+      <h2 id="h5-5">The same idea in a small placement office</h2>
+      <div class="callout"><p><strong>Fictional, not built for or about any real business.</strong> The office, its rule and its people are made up for this page (synthetic data). No data-protection or compliance guarantees.</p></div>
+      <div class="prose">
+        <p>A small job-placement office has one rule about who may send a candidate's profile to an employer. Then a new instruction arrives in chat.</p>
+      </div>
+      <div class="chiprow"><span data-status="jobScenario"></span></div>
+      <div id="replay-placement" class="panelbox"></div>
+    </section>
+
+    <!-- 6 -->
+    <section class="chapter" id="ch6" aria-labelledby="h6-6">
+      <h2 id="h6-6">A workspace shaped for you</h2>
+      <div class="prose">
+        <p>When you set up your own workspace, you pick the profile that matches your work. You also pick a language. Choose one to see what your workspace holds.</p>
+      </div>
+      <div class="chiprow"><span data-status="profiles"></span></div>
+      <div class="panelbox">
+        <div role="tablist" aria-label="Choose a profile" id="profile-tabs">
+          <button role="tab" id="ptab-student" aria-controls="ppanel-student">Student</button>
+          <button role="tab" id="ptab-professional" aria-controls="ppanel-professional">Professional</button>
+          <button role="tab" id="ptab-employee" aria-controls="ppanel-employee">Employee</button>
+          <button role="tab" id="ptab-manager" aria-controls="ppanel-manager">Manager</button>
+        </div>
+        <div id="profile-panels" style="margin-top:1.25rem">
+          <div role="tabpanel" id="ppanel-student" aria-labelledby="ptab-student" tabindex="0">
+            <p>Your own goals, and the projects you are studying or working on.</p>
+            <div class="profile-grid"><div><h4>Your workspace holds</h4><ul><li>Your own goals</li><li>Your study projects</li></ul></div></div>
+          </div>
+          <div role="tabpanel" id="ppanel-professional" aria-labelledby="ptab-professional" tabindex="0" hidden>
+            <p>Your goals, and the projects you do for clients.</p>
+            <div class="profile-grid"><div><h4>Your workspace holds</h4><ul><li>Your goals</li><li>Your client projects</li></ul></div></div>
+          </div>
+          <div role="tabpanel" id="ppanel-employee" aria-labelledby="ptab-employee" tabindex="0" hidden>
+            <p>Your private goals stay yours. At work, you suggest changes, and a manager decides.</p>
+            <div class="profile-grid"><div><h4>Your workspace holds</h4><ul><li>Your private goals</li></ul></div><div><h4>What you can do with company rules</h4><ul><li>Propose changes</li><li>You do not approve them</li></ul></div></div>
+          </div>
+          <div role="tabpanel" id="ppanel-manager" aria-labelledby="ptab-manager" tabindex="0" hidden>
+            <p>You set who approves what, and you review the proposals your team sends.</p>
+            <div class="profile-grid"><div><h4>Your workspace holds</h4><ul><li>Approval rules</li><li>Roles</li></ul></div></div>
+          </div>
+        </div>
+        <p class="small" style="margin:1rem 0 0">Personal goals stay separate from company truth, in every profile.</p>
+      </div>
+      <div class="planned" id="module-picker">
+        <h3>Module picker and suggestions <span data-status="modulePicker"></span></h3>
+        <p>Planned: choose extra building blocks for your workspace and get suggestions for which ones fit your work. Not available yet.</p>
+      </div>
+    </section>
+
+    <!-- 7 -->
+    <section class="chapter" id="ch7" aria-labelledby="h7-7">
+      <h2 id="h7-7">Check it on your own work</h2>
+      <div class="prose">
+        <p>The value check takes about ten minutes and uses five questions about your own work. You ask the same five questions twice: once in a fresh web chat, and once to an agent working in your workspace. Then you score each answer yourself.</p>
+        <p>This measures <strong>context continuity</strong>: does the answer match what is actually true for you? It does not measure money, time saved or quality of writing.</p>
+      </div>
+      <div class="chiprow"><span data-status="valueCheck"></span></div>
+      <h3>Example questions</h3>
+      <p class="small" style="max-width:62ch">These five are examples of the kind of question to ask. Replace them with questions where you know the true answer.</p>
+      <ol class="plain" id="vc-questions">
+        <li>What are my main goals right now?</li>
+        <li>Who decides this, and where is that written down?</li>
+        <li>What did we decide last time about this, and why?</li>
+        <li>What is waiting for a decision?</li>
+        <li>What should an assistant never do without asking me?</li>
+      </ol>
+      <h3>Score your answers</h3>
+      <div class="panelbox" data-md="skip">
+        <form id="vc-form" aria-describedby="vc-help">
+          <p id="vc-help" class="small">For each answer choose: <strong>Right</strong>, <strong>Wrong</strong>, <strong>Made up</strong> (sounded sure, but invented), or <strong>Don't know</strong> (it said so honestly). Nothing leaves this page.</p>
+          <div id="vc-grid"></div>
+          <div class="vc-result" id="vc-result" aria-live="polite"></div>
+          <div class="stepnav">
+            <button class="btn small" type="button" id="vc-copy">Copy my result</button>
+            <button class="btn small" type="button" id="vc-reset">Start again</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- 8 -->
+    <section class="chapter" id="ch8" aria-labelledby="h8-8">
+      <h2 id="h8-8">Workflows you don't have to design from scratch</h2>
+      <div class="prose">
+        <p>A repeatable task becomes a small folder per stage. Each stage reads only what it needs and leaves a plain file for the next one. Here is a hand-written example for preparing something that needs sign-off. Select a stage.</p>
+      </div>
+      <div class="chiprow"><span data-status="icmExample"></span></div>
+      <div class="panelbox">
+        <div class="icm">
+          <div>
+            <p class="tree-root" id="tree-root">workflow/</p>
+            <div role="tablist" aria-orientation="vertical" aria-label="Workflow stages" id="icm-tabs">
+              <button role="tab" id="itab-1" aria-controls="ipanel-1">01-gather/</button>
+              <button role="tab" id="itab-2" aria-controls="ipanel-2">02-draft/</button>
+              <button role="tab" id="itab-3" aria-controls="ipanel-3">03-approval-check/</button>
+            </div>
+          </div>
+          <div>
+            <div role="tabpanel" id="ipanel-1" aria-labelledby="itab-1" tabindex="0">
+              <h3 style="margin-top:0">Gather</h3>
+              <p>Collect only the facts the task needs, from approved files. Write down which files were used.</p>
+            </div>
+            <div role="tabpanel" id="ipanel-2" aria-labelledby="itab-2" tabindex="0" hidden>
+              <h3 style="margin-top:0">Draft</h3>
+              <p>Write the draft from what was gathered. Anything uncertain is marked as uncertain, not smoothed over.</p>
+            </div>
+            <div role="tabpanel" id="ipanel-3" aria-labelledby="itab-3" tabindex="0" hidden>
+              <h3 style="margin-top:0">Approval check</h3>
+              <p>Look up which current decision says who must approve this. Stop, and hand the draft to that person.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="callout note"><p><strong>Credit:</strong> the idea of using folders and plain files as the structure of a workflow comes from Jake Van Clief's Interpretable Context Methodology (ICM). Living System reimplements the idea in its own way. No endorsement by Jake Van Clief is implied.</p></div>
+      <div class="planned" id="icm-generator">
+        <h3>Workflow generator <span data-status="icmGenerator"></span></h3>
+        <p>Planned: describe a task and get a stage-by-stage folder like the one above. Not available yet.</p>
+      </div>
+    </section>
+
+    <!-- 9 -->
+    <section class="chapter" id="ch9" aria-labelledby="h9-9">
+      <h2 id="h9-9">Same files, Claude Code or Codex</h2>
+      <div class="prose">
+        <p>The knowledge lives in the files, not in one vendor's tool. Each agent gets a thin adapter file that points it to the same starting place. The tools still differ: in their settings, permission prompts and how they phrase answers, so results can differ too.</p>
+      </div>
+      <div class="chiprow"><span data-status="crossAgent"></span></div>
+      <p class="replay-note">Replay: this shows the reading order each tool follows. A side-by-side run of both agents on the same question has not been verified yet.</p>
+      <div class="panelbox">
+        <div role="tablist" aria-label="Choose an agent" id="agent-tabs">
+          <button role="tab" id="atab-claude" aria-controls="apanel-claude">Claude Code</button>
+          <button role="tab" id="atab-codex" aria-controls="apanel-codex">Codex</button>
+        </div>
+        <div style="margin-top:1.25rem">
+          <div role="tabpanel" id="apanel-claude" aria-labelledby="atab-claude" tabindex="0">
+            <ol class="agent-flow">
+              <li>Reads <code>CLAUDE.md</code>, which contains one line: <code>@AGENTS.md</code></li>
+              <li>That line pulls in <code>AGENTS.md</code>, the shared rules</li>
+              <li>Follows <code>CONTEXT-ROUTING.md</code> to the files the task needs</li>
+            </ol>
+          </div>
+          <div role="tabpanel" id="apanel-codex" aria-labelledby="atab-codex" tabindex="0" hidden>
+            <ol class="agent-flow">
+              <li>Reads <code>AGENTS.md</code>, the shared rules</li>
+              <li>Follows <code>CONTEXT-ROUTING.md</code> to the files the task needs</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+      <details class="how">
+        <summary>How it works: why the adapter is thin</summary>
+        <div>
+          <p>In this repository <code>CLAUDE.md</code> only contains <code>@AGENTS.md</code>. All real rules live in <code>AGENTS.md</code>, so there is one place to read and one place to change.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- 10 -->
+    <section class="chapter" id="ch10" aria-labelledby="h10-10">
+      <h2 id="h10-10">What it is not</h2>
+      <ul class="plain">
+        <li><strong>No login.</strong> Nobody signs in.</li>
+        <li><strong>No access control.</strong> Anyone who can open the folder can read and change the files.</li>
+        <li><strong>No identity check.</strong> A name in <code>approved_by</code> or <code>--by</code> is a label someone typed, not proof of who they are.</li>
+        <li><strong>No compliance guarantees.</strong> It is not a security boundary and makes no data-protection claims.</li>
+        <li><strong>Agent rules are instructions, not enforcement.</strong> An agent is asked to follow them. Nothing forces it to.</li>
+        <li><strong>Not a hosted product.</strong> It is plain files and a small Python tool on your computer.</li>
+      </ul>
+      <div class="callout"><p>The example organisation is a demonstration, not a recommended setup for real client or personal data. Review any material before you put it in an AI agent's context.</p></div>
+    </section>
+
+    <!-- 11 -->
+    <section class="chapter" id="ch11" aria-labelledby="h11-11">
+      <h2 id="h11-11">Try it</h2>
+      <div class="prose">
+        <p>You need Git and Python 3. No accounts and no extra Python packages.</p>
+      </div>
+      <div class="chiprow"><span data-status="init"></span></div>
+      <h3>1. Get the code</h3>
+      <div class="cmd"><pre><code>git clone https://github.com/the-trinity-tribe/living-system.git</code></pre><button class="btn small" type="button" data-copy-text="git clone https://github.com/the-trinity-tribe/living-system.git" data-md="skip">Copy command</button></div>
+      <h3>2. Create your own workspace</h3>
+      <p class="prose">Pick your profile (student, professional, employee or manager) and language. Run this from the <code>living-system</code> folder.</p>
+      <div class="cmd"><pre><code>python3 -B tools/living.py init ~/my-workspace --profile manager --language en</code></pre><button class="btn small" type="button" data-copy-text="python3 -B tools/living.py init ~/my-workspace --profile manager --language en" data-md="skip">Copy command</button></div>
+      <h3>3. Open it in an agent</h3>
+      <p class="prose">Open <code>~/my-workspace</code> in Claude Code or Codex and ask the agent to start at <code>AGENTS.md</code>.</p>
+      <p><a class="btn primary" href="https://github.com/the-trinity-tribe/living-system">Living System on GitHub</a></p>
+    </section>
+
+    <!-- 12 -->
+    <section class="chapter" id="ch12" aria-labelledby="h12-12">
+      <h2 id="h12-12">About</h2>
+      <div class="prose">
+        <p><strong>Adrianna Mamczarz</strong> is a product designer and brand strategist moving into Human–AI systems design. She invented and tested Living System's features and structure in her own practice, inside The Trinity Tribe.</p>
+        <p>AI assisted with implementation. Design decisions, review and acceptance stayed human-led (from the README).</p>
+      </div>
+      <h3>Influences <span class="draft">draft — to confirm</span></h3>
+      <ul class="influences">
+        <li><strong>Jake Van Clief</strong> — folders and plain files as the structure of a workflow (ICM). <span class="draft">draft — to confirm</span></li>
+        <li><strong>David Shapiro</strong> — heuristic imperatives and post-labour economics. <span class="draft">draft — to confirm</span></li>
+        <li><strong>Jacque Fresco</strong> — systems designed around human needs and sustainability. <span class="draft">draft — to confirm</span></li>
+      </ul>
+      <p class="small prose">Credit only. None of them has endorsed Living System.</p>
+      <h3>Skills shown here, and where to see them</h3>
+      <div class="tablewrap">
+        <table class="skills stack">
+          <thead><tr><th scope="col">Skill</th><th scope="col">Evidence</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Systems design</th><td data-label="Evidence">The order of trust and the full proposal-to-decision cycle: <a href="#ch3">chapter 3</a>, <a href="#ch4">chapter 4</a>, <a href="https://github.com/the-trinity-tribe/living-system/blob/main/AGENTS.md">AGENTS.md</a>.</td></tr>
+            <tr><th scope="row">Governance and approval boundaries</th><td data-label="Evidence">A note cannot change a decision; a human must approve, and the old rule stays as history: <a href="#ch4">chapter 4</a>, <a href="#ch10">chapter 10</a>.</td></tr>
+            <tr><th scope="row">Knowledge architecture</th><td data-label="Evidence">Routing an agent to the smallest set of files: <a href="#ch3">chapter 3</a>, <a href="https://github.com/the-trinity-tribe/living-system/blob/main/CONTEXT-ROUTING.md">CONTEXT-ROUTING.md</a>.</td></tr>
+            <tr><th scope="row">AI-assisted implementation</th><td data-label="Evidence">The README states how AI was used and where humans decided: <a href="https://github.com/the-trinity-tribe/living-system/blob/main/README.md">README.md</a>.</td></tr>
+            <tr><th scope="row">Accessible UX</th><td data-label="Evidence">This page: keyboard-operable walk-throughs (<a href="#ch3">chapter 3</a>), status chips that use a word and a shape, not only colour, light and dark themes, reduced-motion support.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer class="site">
+      <p class="small prose">Moss &amp; Circuit, Riverside Community Garden and every person named in the example are fictional. The placement office in chapter 5 is made up for this page. Living System is an experimental v0.1 reference implementation, not a security product.</p>
+      <div class="cta" data-md="skip">
+        <button class="btn" type="button" data-copy-md>Copy as Markdown</button>
+        <button class="btn" type="button" id="dl-md">Download .md</button>
+      </div>
+      <p id="toast" role="status" data-md="skip"></p>
+    </footer>
+  </main>
+</div>
+
+<script>
+/* ===== Status chips: flip a value here and every chip on the page follows. =====
+   LIVE    = runs today
+   REPLAY  = scripted walk-through (the file text is copied from the repository,
+             except chapter 5, which uses made-up text)
+   ROADMAP = planned, not available yet */
+const STATUS = {
+  profiles:    "LIVE",
+  valueCheck:  "LIVE",
+  init:        "LIVE",
+  governance:  "REPLAY",
+  icmExample:  "REPLAY",
+  jobScenario: "REPLAY",
+  crossAgent:  "REPLAY",
+  modulePicker:"ROADMAP",
+  icmGenerator:"ROADMAP"
+};
+const CHIP_INFO = {
+  LIVE:    {tip:"Runs today",                       text:"You can run this today."},
+  REPLAY:  {tip:"Scripted walk-through",            text:"A scripted walk-through. It is not a live agent run."},
+  ROADMAP: {tip:"Planned, not available yet",       text:"Planned. It does not exist yet."}
+};
+
+const DEMO = "demo/moss-and-circuit/";
+const SYN  = "synthetic/placement-office/";
+
+/* ===== Replay data. Text in [[double brackets]] is highlighted. ===== */
+const REPLAYS = {
+  route: {
+    status: "governance",
+    note: "Scripted walk-through. The file text below is copied from the repository (link markup removed for reading). No agent is running.",
+    question: "Who has to approve the revised October volunteer rota before it goes to the garden?",
+    steps: [
+      {title:"Read the agent rules",
+       say:"The agent starts at AGENTS.md. The rules tell it not to read everything.",
+       files:[{path:DEMO+"AGENTS.md", tag:"agent rules", kind:"rules",
+        text:"3. How to find context\n\nDo not read the whole repository. Open CONTEXT-ROUTING.md, pick the smallest route that fits the task, and read only those files. Expand only if the task actually requires it. Follow links from a file only when you need what they point to."}]},
+      {title:"Pick the smallest route",
+       say:"The routing file says where approval questions are answered.",
+       files:[{path:DEMO+"CONTEXT-ROUTING.md", tag:"routing", kind:"rules",
+        text:"Tips:\n\n- For a project task, start with the project file. It links to the decisions that apply.\n- [[Anything about approvals is a decision question. Check decisions/, not role descriptions.]]"}]},
+      {title:"Open the project file",
+       say:"The project file links to the decision that applies, and shows the task.",
+       files:[{path:DEMO+"projects/riverside-community-garden.md", tag:"project", kind:"note",
+        text:"## Decisions that apply\n\n- Recommendations sent to the garden are client-facing deliverables. See [[decisions/2026-10-07-leo-signs-off-riverside-rota-updates.md]] (current approval rule, including the Riverside routine-schedule exception).\n\n[…]\n\n- Next: send the garden the revised volunteer rota for October."}]},
+      {title:"Use the current decision",
+       say:"The newer decision replaced an older one. The agent uses the current one and ignores the old one.",
+       files:[
+        {path:DEMO+"decisions/2026-10-07-leo-signs-off-riverside-rota-updates.md", tag:"current", kind:"current",
+         text:"supersedes: decisions/2026-09-01-founder-approves-client-deliverables.md\n\n### Exception\n\nFor the Riverside Community Garden project, [[Leo Martin may approve routine schedule updates sent to the garden, such as a revised volunteer rota, before they are sent.]] This exception does not cover anything involving unusual commitments, pricing changes, or anything that could affect Moss & Circuit's reputation; those still require Maya Chen's approval. All other client-facing deliverables still require Maya Chen's approval."},
+        {path:DEMO+"decisions/2026-09-01-founder-approves-client-deliverables.md", tag:"history, superseded", kind:"history",
+         text:"All client-facing deliverables require Maya Chen's approval before they are sent."},
+        {path:"Terminal, run inside the workspace", tag:"check", kind:"terminal",
+         text:"$ python3 -B tools/review.py current\n[[decisions/2026-10-07-leo-signs-off-riverside-rota-updates.md]]"}]},
+      {title:"Answer, with its source",
+       say:"The answer keeps what is approved apart from what is not written down.",
+       answer:[
+        ["Approved", "Leo Martin may approve it before it is sent, because it is a routine schedule update for the Riverside garden. If it involved unusual commitments, pricing changes or reputational risk, Maya Chen would still need to approve it."],
+        ["Source", "<code class=\"path\">"+DEMO+"decisions/2026-10-07-leo-signs-off-riverside-rota-updates.md</code>"],
+        ["Not written down", "What counts as \"routine\" beyond the example given, and who decides whether an update involves reputational risk. The approved text does not say."],
+        ["Inference", "None used."]]}
+    ]
+  },
+  amend: {
+    status: "governance",
+    note: "Scripted walk-through. The file text below is copied from the repository. A human decides in step 4; nothing here runs the review tool.",
+    question: "A meeting note says Leo can now sign off the Riverside rota. Does the rule change?",
+    steps: [
+      {title:"A note says something new",
+       say:"Sam wrote this after a working session. It is project context, not an approved decision.",
+       files:[{path:DEMO+"projects/riverside-community-garden.md", tag:"working note, not canonical", kind:"note",
+        text:"- 2026-09-24 working session (notes by Sam): Maya said Leo can now sign off routine schedule updates we send to the garden, like the revised volunteer rota, before they go out. She doesn't need to see every rota change. Maya still wants to handle anything involving unusual commitments, pricing changes, or anything that could affect our reputation."}]},
+      {title:"The agent keeps the rule and flags the conflict",
+       say:"The note conflicts with the approved rule. The agent does not act on the note.",
+       files:[{path:DEMO+"AGENTS.md", tag:"agent rules", kind:"rules",
+        text:"1. Name the approved decision and its file.\n2. State plainly what conflicts with it.\n3. [[Keep following the approved decision. Do not act on the conflicting information.]]\n4. Make sure the conflict is staged as a proposal (section 6).\n5. Ask the human how to proceed before acting."}]},
+      {title:"It writes a proposal, not a decision",
+       say:"The proposal says plainly that it is not truth, that the attribution is unchecked, and what a human must settle.",
+       files:[
+        {path:DEMO+"proposals/2026-09-28-leo-signs-off-riverside-rota-updates.md", tag:"proposal, not current truth", kind:"proposal",
+         text:"[[Not current truth. The approved decision in `target` stays in force until a human approves a change.]]\n\n## New evidence\n\n[…] The statement is attributed to Maya Chen through Sam's notes. [[The attribution is not verified, and a working note does not change an approved decision.]]"},
+        {path:DEMO+"proposals/2026-09-28-leo-signs-off-riverside-rota-updates.md", tag:"open questions", kind:"proposal",
+         text:"Open questions for a human:\n\n- Did Maya say this, and does she want it recorded as an approved decision?\n- Does the exception apply only to the Riverside garden, or to routine schedule updates for other clients too? (The note mentions only \"the garden\".)\n- What counts as \"routine\"? Who decides whether a given update involves unusual commitments or reputational risk?\n- Does it cover schedule updates other than the volunteer rota?"}]},
+      {title:"A human decides",
+       say:"Only a human runs the review. The log records who, when and what was left open.",
+       files:[
+        {path:DEMO+"proposals/2026-09-28-leo-signs-off-riverside-rota-updates.md", tag:"review log", kind:"proposal",
+         text:"## Review log\n\n- 2026-10-07 | approve | by Maya Chen (attribution, not verified) | resulting decision: decisions/2026-10-07-leo-signs-off-riverside-rota-updates.md | note: [[Narrow Riverside-only text approved as written; open questions not resolved]]"},
+        {path:"README.md (command syntax)", tag:"syntax only", kind:"rules",
+         text:"python3 tools/review.py review proposals/path-to-pending-proposal.md --outcome approve|reject|defer --by \"Reviewer Name\""}]},
+      {title:"New decision, old one kept as history",
+       say:"Approval creates a new decision file. The old file is never edited, so you can always see what changed and why.",
+       files:[
+        {path:DEMO+"decisions/2026-10-07-leo-signs-off-riverside-rota-updates.md", tag:"current", kind:"current",
+         text:"status: approved\napproved_by: Maya Chen\ndate: 2026-10-07\n[[supersedes: decisions/2026-09-01-founder-approves-client-deliverables.md]]\n[[source_proposal: proposals/2026-09-28-leo-signs-off-riverside-rota-updates.md]]"},
+        {path:DEMO+"AGENTS.md", tag:"agent rules", kind:"rules",
+         text:"`approve` creates one new `status: approved` decision with `supersedes:` and `source_proposal:`, and marks the proposal `promoted`. [[The old decision file is never edited.]]"}]}
+    ]
+  },
+  placement: {
+    status: "jobScenario",
+    note: "Scripted walk-through with synthetic text written for this page. It is not from the repository, and the office, rule and people are made up. No data-protection or compliance guarantees.",
+    question: "Can I send this candidate's profile to the employer today?",
+    steps: [
+      {title:"Open the project file",
+       say:"The agent follows the same route as before: project file first.",
+       files:[{path:SYN+"projects/spring-employer-round.md", tag:"project (synthetic)", kind:"note",
+        text:"## Immediate work\n\n- Send three candidate profiles to an employer.\n\n## Decisions that apply\n\n- Sending a candidate profile to an employer: see [[decisions/2026-03-02-profile-sharing.md]]"}]},
+      {title:"Read the approved rule",
+       say:"One approved decision says who may send a profile, and when.",
+       files:[{path:SYN+"decisions/2026-03-02-profile-sharing.md", tag:"current (synthetic)", kind:"current",
+        text:"status: approved\napproved_by: Office lead (fictional)\ndate: 2026-03-02\n\n# Who may send a candidate profile to an employer\n\n## Rule\n\n[[A candidate profile is sent to an employer only after the candidate has said yes to that employer and the office lead has approved the version being sent.]]"}]},
+      {title:"A new instruction arrives in chat",
+       say:"The placement coordinator says something that conflicts with the rule. The agent keeps following the approved rule.",
+       files:[{path:"Chat message (synthetic)", tag:"not canonical", kind:"note",
+        text:"Coordinator: \"For employers we've placed someone with before, I'll just send profiles myself from now on.\""}]},
+      {title:"It becomes a proposal",
+       say:"The proposal covers only what the message says, no more. Everything unclear is listed as an open question.",
+       files:[{path:SYN+"proposals/2026-10-20-coordinator-sends-profiles.md", tag:"proposal, not current truth (synthetic)", kind:"proposal",
+        text:"status: proposed\ntarget: decisions/2026-03-02-profile-sharing.md\nevidence: chat message from the coordinator (attribution not verified)\n\n## Proposed future state\n\n> For employers the office has already placed a candidate with, the placement coordinator may send a candidate profile without the office lead's approval, [[once the candidate has said yes to that employer]].\n\n## Open questions\n\n- Does the coordinator also mean to skip the candidate's yes? (The message does not say.)\n- What counts as \"placed someone with before\"?\n- Who keeps the list of those employers?"}]},
+      {title:"Answer, until a human decides",
+       say:"The proposal waits for the office lead. Until then, the original rule is the answer.",
+       answer:[
+        ["Approved", "Not yet. The profile needs the candidate's yes and the office lead's approval of the version being sent."],
+        ["Source", "<code class=\"path\">"+SYN+"decisions/2026-03-02-profile-sharing.md</code>"],
+        ["Pending, not in force", "A proposal to let the coordinator send profiles to employers the office has placed with before. It changes nothing until a human approves it."],
+        ["Not written down", "How the office decides which employers count as \"placed with before\"."]]}
+    ]
+  }
+};
+
+/* ===== helpers ===== */
+const $  = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const hl  = s => esc(s).replace(/\[\[([\s\S]+?)\]\]/g,"<mark>$1</mark>");
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+function store(k, v){ try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k, v); }catch(e){} return null; }
+
+/* ===== status chips ===== */
+function paintChips(){
+  $$("[data-status]").forEach(el=>{
+    const s = STATUS[el.dataset.status];
+    const info = CHIP_INFO[s];
+    el.className = "chip";
+    el.dataset.s = s || "";
+    el.textContent = s || "?";
+    if(info){ el.title = info.tip; const sr=document.createElement("span"); sr.className="sr"; sr.textContent=" ("+info.tip+")"; el.appendChild(sr); }
+  });
+  const lg = $("#legend");
+  lg.innerHTML = Object.keys(CHIP_INFO).map(k=>'<li><span class="chip" data-s="'+k+'">'+k+'</span><span>'+CHIP_INFO[k].text+'</span></li>').join("");
+}
+
+/* ===== shared tabs behaviour (arrow keys, Home/End; Enter/Space via button) ===== */
+function makeTabs(list, onSelect){
+  const tabs = $$('[role="tab"]', list);
+  const panels = tabs.map(t=>document.getElementById(t.getAttribute("aria-controls")));
+  const vertical = list.getAttribute("aria-orientation")==="vertical";
+  function select(i, focus){
+    tabs.forEach((t,j)=>{
+      const on = i===j;
+      t.setAttribute("aria-selected", on);
+      t.tabIndex = on ? 0 : -1;
+      panels[j].hidden = !on;
+    });
+    if(focus) tabs[i].focus();
+    if(onSelect) onSelect(i);
+  }
+  list.addEventListener("keydown", e=>{
+    const i = tabs.indexOf(document.activeElement);
+    if(i<0) return;
+    let n = null;
+    if(e.key==="ArrowRight"||e.key==="ArrowDown") n=(i+1)%tabs.length;
+    else if(e.key==="ArrowLeft"||e.key==="ArrowUp") n=(i-1+tabs.length)%tabs.length;
+    else if(e.key==="Home") n=0;
+    else if(e.key==="End") n=tabs.length-1;
+    if(n!==null){ e.preventDefault(); select(n,true); }
+  });
+  tabs.forEach((t,i)=>t.addEventListener("click",()=>select(i,false)));
+  select(0,false);
+  return {select, count:tabs.length};
+}
+
+/* ===== replay builder ===== */
+function fileHtml(f){
+  return '<figure class="file" data-kind="'+f.kind+'"><figcaption><code class="path">'+esc(f.path)+'</code><span class="ftag">'+esc(f.tag)+'</span></figcaption><pre>'+hl(f.text)+'</pre></figure>';
+}
+function buildReplay(host, key, d){
+  const id = "rp-"+key;
+  let h = '<div class="chiprow"><span data-status="'+d.status+'"></span></div>';
+  h += '<p class="replay-note">'+esc(d.note)+'</p>';
+  h += '<p class="question"><span class="small" style="display:block;font-family:var(--sans)">Question </span>'+esc(d.question)+'</p>';
+  h += '<div class="stepper"><div role="tablist" aria-orientation="vertical" aria-label="Steps" id="'+id+'-tabs">';
+  d.steps.forEach((s,i)=>{ h += '<button role="tab" id="'+id+'-t'+i+'" aria-controls="'+id+'-p'+i+'"><span class="n">'+(i+1)+'</span><span class="t">'+esc(s.title)+'</span></button>'; });
+  h += '</div><div>';
+  d.steps.forEach((s,i)=>{
+    h += '<div role="tabpanel" id="'+id+'-p'+i+'" aria-labelledby="'+id+'-t'+i+'" tabindex="0" hidden>';
+    h += '<h3>Step '+(i+1)+': '+esc(s.title)+'</h3><p class="say">'+esc(s.say)+'</p>';
+    if(s.files) h += s.files.map(fileHtml).join("");
+    if(s.answer) h += '<dl class="answer">'+s.answer.map(a=>'<dt>'+esc(a[0])+'</dt><dd>'+a[1]+'</dd>').join("")+'</dl>';
+    h += '</div>';
+  });
+  h += '<div class="stepnav" data-md="skip"><button class="btn small" type="button" data-prev>Back</button><button class="btn small primary" type="button" data-next>Next</button><span class="pos" aria-live="polite"></span></div>';
+  h += '</div></div>';
+  host.innerHTML = h;
+  const list = $("#"+id+"-tabs", host), prev=$("[data-prev]",host), next=$("[data-next]",host), pos=$(".pos",host);
+  let cur = 0;
+  const total = d.steps.length;
+  const t = makeTabs(list, i=>{ cur=i; prev.disabled = i===0; next.disabled = i===total-1; pos.textContent = "Step "+(i+1)+" of "+total; });
+  prev.addEventListener("click",()=>{ if(cur>0) t.select(cur-1,true); });
+  next.addEventListener("click",()=>{ if(cur<total-1) t.select(cur+1,true); });
+}
+
+/* ===== value check ===== */
+const VC_QS = ["What are my main goals right now?","Who decides this, and where is that written down?","What did we decide last time about this, and why?","What is waiting for a decision?","What should an assistant never do without asking me?"];
+const VC_OPTS = [["right","Right"],["wrong","Wrong"],["made","Made up"],["unknown","Don't know"]];
+function buildValueCheck(){
+  let h = "";
+  VC_QS.forEach((q,i)=>{
+    h += '<fieldset class="vc-q"><legend>Question '+(i+1)+': '+esc(q)+'</legend><div class="vc-row">';
+    [["chat","Fresh web chat"],["agent","Agent in workspace"]].forEach(([who,label])=>{
+      h += '<fieldset class="vc-set"><legend>'+label+'</legend><div class="vc-opts">';
+      VC_OPTS.forEach(([v,l])=>{ h += '<label><input type="radio" name="q'+i+'-'+who+'" value="'+v+'"><span>'+l+'</span></label>'; });
+      h += '</div></fieldset>';
+    });
+    h += '</div></fieldset>';
+  });
+  $("#vc-grid").innerHTML = h;
+  const form = $("#vc-form"), out = $("#vc-result");
+  function tally(who){
+    const c = {right:0,wrong:0,made:0,unknown:0,scored:0};
+    VC_QS.forEach((q,i)=>{ const r = form.querySelector('input[name="q'+i+'-'+who+'"]:checked'); if(r){ c[r.value]++; c.scored++; } });
+    return c;
+  }
+  const line = (name,c)=> name+": "+c.scored+" of 5 scored. "+c.right+" right, "+c.wrong+" wrong, "+c.made+" made up, "+c.unknown+" don't know.";
+  function text(){ return "Living System value check (my own scoring)\n"+line("Fresh web chat",tally("chat"))+"\n"+line("Agent in workspace",tally("agent"))+"\nThis counts context continuity. It does not measure money."; }
+  function render(){
+    const c=tally("chat"), a=tally("agent");
+    if(!c.scored && !a.scored){ out.innerHTML = '<p>Your counts appear here as you score. Nothing is saved or sent.</p>'; return; }
+    out.innerHTML = '<p><strong>Fresh web chat:</strong> '+line("",c).slice(2)+'</p><p><strong>Agent in workspace:</strong> '+line("",a).slice(2)+'</p><p class="small">This counts how well each one kept your context. It does not measure money or time saved.</p>';
+  }
+  form.addEventListener("change", render);
+  $("#vc-reset").addEventListener("click",()=>{ form.reset(); render(); });
+  $("#vc-copy").addEventListener("click",()=>copyText(text()).then(ok=>toast(ok?"Result copied.":"Could not copy. Select and copy the result by hand.")));
+  render();
+}
+
+/* ===== Markdown export of the page text ===== */
+function mdText(){
+  const BLOCK = new Set(["H1","H2","H3","H4","P","UL","OL","PRE","TABLE","FIGURE","DL","DETAILS","BLOCKQUOTE","DIV","SECTION","ARTICLE","HEADER","FOOTER","MAIN","ASIDE","FORM","FIELDSET"]);
+  const out = [];
+  const skip = n => n.nodeType===1 && (n.dataset.md==="skip" || n.tagName==="SCRIPT" || n.tagName==="STYLE" || n.tagName==="NOSCRIPT" || n.tagName==="BUTTON" || n.classList.contains("sr"));
+  function inl(n){
+    if(n.nodeType===3) return n.nodeValue.replace(/\s+/g," ");
+    if(n.nodeType!==1 || skip(n)) return "";
+    const t = n.tagName, kids = () => Array.from(n.childNodes).map(inl).join("");
+    if(n.classList.contains("chip")) return "["+n.firstChild.nodeValue+"] ";
+    if(t==="CODE") return "`"+n.textContent+"`";
+    if(t==="A") return "["+kids().trim()+"]("+n.getAttribute("href")+")";
+    if(t==="STRONG"||t==="B") return "**"+kids().trim()+"** ";
+    if(t==="EM"||t==="I") return "*"+kids().trim()+"*";
+    if(t==="BR") return "\n";
+    return kids();
+  }
+  const clean = s => s.replace(/[ \t]+/g," ").replace(/ +([.,;:!?)])/g,"$1").trim();
+  function blk(root){
+    let buf = "";
+    const flush = () => { const s = clean(buf); if(s) out.push(s); buf = ""; };
+    Array.from(root.childNodes).forEach(n=>{
+      if(skip(n)) return;
+      if(n.nodeType!==1 || !BLOCK.has(n.tagName)){ buf += inl(n); return; }
+      flush();
+      const t = n.tagName;
+      if(/^H[1-4]$/.test(t)) out.push("#".repeat(+t[1]+0)+" "+clean(inl(n)));
+      else if(t==="P") out.push(clean(inl(n)));
+      else if(t==="UL"||t==="OL"){ out.push(Array.from(n.children).map((li,i)=>(t==="OL"?(i+1)+". ":"- ")+clean(inl(li))).join("\n")); }
+      else if(t==="PRE") out.push("```\n"+n.textContent.replace(/\n$/,"")+"\n```");
+      else if(t==="TABLE"){
+        const rows = $$("tr",n).map(tr=>Array.from(tr.children).map(c=>clean(inl(c)).replace(/\|/g,"\\|")));
+        if(rows.length){ const w=rows[0].length; out.push([rows[0], Array(w).fill("---"), ...rows.slice(1)].map(r=>"| "+r.join(" | ")+" |").join("\n")); }
+      }
+      else if(t==="FIGURE" && n.classList.contains("file")){
+        out.push("**`"+n.querySelector(".path").textContent+"`** ("+n.querySelector(".ftag").textContent+")\n\n```\n"+n.querySelector("pre").textContent.replace(/\n$/,"")+"\n```");
+      }
+      else if(t==="DL"){ const parts=[]; Array.from(n.children).forEach(c=>{ if(c.tagName==="DT") parts.push("- **"+clean(inl(c))+":** "); else parts[parts.length-1]+=clean(inl(c)); }); out.push(parts.join("\n")); }
+      else if(t==="DETAILS"){ const s=n.querySelector("summary"); out.push("**"+clean(inl(s))+"**"); blk(n); }
+      else if(t==="BLOCKQUOTE") out.push("> "+clean(inl(n)));
+      else if(t==="FIELDSET" && n.querySelector("legend") && !n.querySelector("fieldset")) out.push(clean(inl(n)));
+      else blk(n);
+    });
+    flush();
+  }
+  blk($("main"));
+  return "<!-- Living System page text, exported as Markdown. Status chips shown as [LIVE], [REPLAY], [ROADMAP]. -->\n\n"+out.join("\n\n")+"\n";
+}
+function copyText(t){
+  if(navigator.clipboard && window.isSecureContext){ return navigator.clipboard.writeText(t).then(()=>true,()=>fallbackCopy(t)); }
+  return Promise.resolve(fallbackCopy(t));
+}
+function fallbackCopy(t){
+  const ta = document.createElement("textarea");
+  ta.value = t; ta.setAttribute("readonly",""); ta.style.cssText = "position:fixed;top:0;left:0;opacity:0";
+  document.body.appendChild(ta); ta.select();
+  let ok = false; try{ ok = document.execCommand("copy"); }catch(e){}
+  ta.remove(); return ok;
+}
+let toastTimer;
+function toast(msg){ const el=$("#toast"); el.textContent=msg; clearTimeout(toastTimer); toastTimer=setTimeout(()=>{el.textContent="";},5000); }
+
+/* ===== chapter nav + scroll spy ===== */
+function buildNav(){
+  const secs = $$("section.chapter");
+  $("#chlist").innerHTML = secs.map((s,i)=>'<li><a href="#'+s.id+'">'+(i+1)+'. '+esc($("h2",s).textContent)+'</a></li>').join("");
+  const links = $$("#chlist a");
+  const io = new IntersectionObserver(es=>{
+    es.forEach(e=>{ if(e.isIntersecting){ links.forEach(a=>a.removeAttribute("aria-current")); const a=$('#chlist a[href="#'+e.target.id+'"]'); if(a) a.setAttribute("aria-current","location"); } });
+  },{rootMargin:"-20% 0px -70% 0px"});
+  secs.forEach(s=>io.observe(s));
+  const det = $("#chnav-details"), mq = window.matchMedia("(min-width:1000px)");
+  const sync = () => { det.open = mq.matches; };
+  sync(); mq.addEventListener("change", sync);
+  links.forEach(a=>a.addEventListener("click",()=>{ if(!mq.matches) det.open=false; }));
+}
+
+/* ===== theme ===== */
+function initTheme(){
+  const btn = $("#theme-btn"), order = ["auto","light","dark"];
+  let cur = store("ls-theme") || "auto";
+  function apply(){ if(cur==="auto") document.documentElement.removeAttribute("data-theme"); else document.documentElement.setAttribute("data-theme",cur); btn.textContent = "Theme: "+cur; }
+  btn.addEventListener("click",()=>{ cur = order[(order.indexOf(cur)+1)%3]; store("ls-theme",cur); apply(); });
+  apply();
+}
+
+/* ===== start ===== */
+buildReplay($("#replay-route"), "route", REPLAYS.route);
+buildReplay($("#replay-amend"), "amend", REPLAYS.amend);
+buildReplay($("#replay-placement"), "placement", REPLAYS.placement);
+/* the replay builder adds its own chip row; drop the duplicate one placed in the chapter */
+["ch3","ch4","ch5"].forEach(id=>{ const c=$("#"+id+" > .chiprow"); if(c) c.remove(); });
+paintChips();
+makeTabs($("#profile-tabs"));
+makeTabs($("#icm-tabs"));
+makeTabs($("#agent-tabs"));
+buildValueCheck();
+buildNav();
+initTheme();
+$$("[data-copy-md]").forEach(b=>b.addEventListener("click",()=>copyText(mdText()).then(ok=>toast(ok?"Page text copied as Markdown.":"Could not copy. Use Download .md instead."))));
+$$("[data-copy-text]").forEach(b=>b.addEventListener("click",()=>copyText(b.dataset.copyText).then(ok=>toast(ok?"Command copied.":"Could not copy. Select the command and copy it by hand."))));
+$("#dl-md").addEventListener("click",()=>{
+  const url = URL.createObjectURL(new Blob([mdText()],{type:"text/markdown"}));
+  const a = document.createElement("a"); a.href=url; a.download="living-system-page.md"; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  toast("Download started.");
+});
+/* hero: the older decision settles into history once, on load */
+(function(){ const t=$("#tableau"); if(reduceMotion){ t.classList.add("settled"); } else { setTimeout(()=>t.classList.add("settled"),700); } })();
+</script>
+</body>
+</html>
