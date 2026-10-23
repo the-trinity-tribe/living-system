@@ -86,6 +86,8 @@ python3 tools/living.py new-workflow ~/my-workspace launch-post --stages researc
 
 **Automate only what really repeats:** your agent counts repeated work (`python3 tools/living.py runs ~/my-workspace` shows the count) and asks you at the third time whether to automate it, keep it manual or decide later.
 
+**Your rules stay yours:** a small guard stops the agent from editing your decisions or approving your drafts directly ([write guard](docs/features/write-guard.md)).
+
 **What needs my attention?** `python3 tools/living.py status ~/my-workspace` lists the proposals waiting for your review, lesson suggestions, drafts you have not approved, and where the last session stopped. It changes nothing.
 
 **Health check:** `python3 tools/living.py doctor ~/my-workspace` reads your workspace and lists problems in plain words (for example a draft you have not approved yet, a workflow step left unfinished, or demo material that slipped in). It changes nothing.
@@ -150,7 +152,7 @@ See [CREDITS.md](CREDITS.md).
 - The review mechanism demonstrates context routing, canonical decisions, evidence-bounded proposals, explicit review and deterministic promotion.
 - Living System is designed to support fresh-session reuse through explicit, human-readable context and governance rules.
 - There is **no authentication or identity attestation**: `--by`, `approved_by` and similar labels are unverified declarations.
-- There is no automatic approval, secret store, multi-user authorization, hosted product, automatic private-data extraction, or guarantee that an agent will comply with instructions.
+- There is no automatic approval, secret store, multi-user authorization, hosted product, automatic private-data extraction, or guarantee that an agent will comply with instructions. The write guard (`docs/features/write-guard.md`) blocks agent edits to decisions in Claude Code, and in Codex after you trust its hooks; it is a guard rail, not a security boundary.
 - Starter files come in English, German and Polish. The agent's rule files stay English in every language, and the tools print English messages. The German and Polish texts would benefit from review by native speakers.
 - The profile files (`student`, `professional`, `employee`, `manager`) are small starting points, not tested against real use.
 - Modules, `new-workflow` and `doctor` are new and experimental. Module suggestions and counting repeated work are instructions to the agent: nothing watches your work in the background, and the count holds only short names and dates.

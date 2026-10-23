@@ -18,6 +18,7 @@ From a governance demo to a workspace you can install and grow.
 - **Workflow generator:** `new-workflow` creates a staged workflow folder in the style of Interpretable Context Methodology (see `CREDITS.md`).
 - **`doctor`:** a read-only health check in plain words.
 - **`status`:** what needs your attention (proposals to review, drafts, the last next step), with the exact review command for each waiting proposal.
+- **Write guard:** `tools/guard.py`, wired into Claude Code (`.claude/settings.json`) and Codex (`.codex/hooks.json`), blocks agent edits to `decisions/`, approvals of `SYSTEM.md`/`PRINCIPLES.md`, hand-set proposal outcomes and changes to the guard itself. Live-tested in Claude Code; in Codex it needs your trust first.
 - **Third-Run counter:** `runs` keeps a visible count of repeated work in `.living/runs.json` (short names and dates only); at the third run the agent offers a module, a workflow or keeping it manual, and records your decision. Workspaces record the Living System folder in `.living/local.json`, which a new `.gitignore` keeps out of shared repositories.
 - **`propose`** writes a correctly formatted proposal of any kind, including the target's current text and fingerprint, and never approves anything. **Guided first decision:** right after setup, the agent helps turn one rule from your answers into your first approved decision; you approve it yourself.
 - **`upgrade`:** brings a workspace up to date, updating only files you never changed.
@@ -37,7 +38,7 @@ Three read-only code reviews (Codex, high effort) found 59 defects; all were che
 ### Known limitations
 
 - Not a security boundary: there is no login, no access control and no identity check. `--by` is a label.
-- Agent rules are instructions. An agent can still ignore them; the tools only refuse unsafe changes they are asked to make.
+- Agent rules are instructions. The write guard enforces the most important ones in Claude Code, and in Codex once its hooks are trusted; everything else, and any change made outside the agent, is not enforced.
 - Windows support is covered by automatic tests but not yet by a person using it day to day.
 
 ## 0.1.0 (2026-10-08)

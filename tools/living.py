@@ -58,10 +58,12 @@ def copy_tree(src, dst, translation=False):
             continue
         rel = p.relative_to(src)
         if p.is_dir():
-            (dst / rel).mkdir(parents=True, exist_ok=True)
+            continue  # folders are created for the files inside them
         elif not p.name.endswith(".append.md"):
             if p.name == "gitignore":  # stored without the dot so git does not apply it inside this repo
                 rel = rel.with_name(".gitignore")
+            # dot-claude/ and dot-codex/ become .claude/ and .codex/: this repository ignores those folders in git
+            rel = Path(*["." + part[4:] if part.startswith("dot-") else part for part in rel.parts])
             (dst / rel).parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(p, dst / rel)
 
@@ -123,6 +125,7 @@ def build(ws, profile, language, calm_replies):
     strip_markers(ws)
     (ws / "tools").mkdir()
     shutil.copyfile(HERE / "review.py", ws / "tools" / "review.py")
+    shutil.copyfile(HERE / "guard.py", ws / "tools" / "guard.py")
     (ws / ".living").mkdir()
     (ws / ".living" / "profile.json").write_text(json.dumps(
         {"profile": profile, "language": language, "calm_replies": bool(calm_replies)}, indent=2) + "\n",
@@ -1115,6 +1118,13 @@ def doctor(ws):
         if not folder or not (Path(folder) / "tools/living.py").is_file():
             out.append(("WARN", ".living/local.json does not point at a Living System folder on this computer; run "
                                 "upgrade from your Living System folder to fix it, or edit product_folder"))
+    hooks = [f for f in (".claude/settings.json", ".codex/hooks.json") if (ws / f).is_file()]
+    if hooks and not (ws / "tools/guard.py").is_file():
+        out.append(("ERROR", f"{hooks[0]} runs tools/guard.py, which is missing, so agent file edits may all be "
+                             f"blocked. Run upgrade from your Living System folder to restore it"))
+    elif not hooks and "tools/guard.py" in manifest.get("files", {}):
+        out.append(("INFO", "the write guard's hook files are gone, so agents are no longer stopped from editing "
+                            "decisions/ directly; run upgrade to restore them"))
     kernel = manifest.get("files", {})
     tool = ws / "tools/review.py"
     if "tools/review.py" in kernel and not tool.is_file():

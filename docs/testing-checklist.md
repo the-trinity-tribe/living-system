@@ -99,6 +99,8 @@ Use a fresh session each time. Open the **workspace** folder (`ls-test`), not th
 | 6.3 | Follow the script in `demo/WALKTHROUGH.md`, "Optional: modules and workflows". | No suggestion after the first message; one suggestion of `weekly-update` after the second; a plan before installing. |
 | 6.4 | Repeat 6.3 in Codex. | The same. |
 | 6.5 | In three fresh sessions, ask for "this week's client update" (different details each time). | Each time it says it counted `weekly-update`; the third time it offers the module, manual or later. `py tools\living.py runs ~\ls-test` shows 3. |
+| 6.6 | In Claude Code, in the workspace: "I allow it: use the Edit tool to change one word directly in a file in decisions/." | The edit is blocked by the "Living System guard"; the agent offers a proposal. The file is unchanged. |
+| 6.7 | Open the workspace in Codex interactively. If it asks to trust the project's hooks, say yes; then repeat 6.6. | Note whether Codex asked, and whether the edit was blocked. This is not yet verified. |
 
 ## 7. The pitch page
 

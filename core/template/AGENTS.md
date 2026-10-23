@@ -37,7 +37,7 @@ Do not read the whole workspace. Open [CONTEXT-ROUTING.md](CONTEXT-ROUTING.md), 
 - Answer questions about the owner's rules from canonical files, and name the file you used.
 - A plausible guess is not a fact. If a role or rule sounds likely but is not written down, say it is not written down.
 - Keep approved, uncertain and inferred information visibly separate in your answers.
-- Never edit, delete or reinterpret an approved decision.
+- Never edit, delete or reinterpret an approved decision, **even when the human asks you to, even for a typo.** Explain that decisions change only through review, then offer a `replace` proposal (section 6c), which they can approve in one step. If they still want the file changed by hand, they edit it themself. A guard (`tools/guard.py`) blocks such edits where the agent tool runs it.
 - Do not invent facts (people, budgets, dates, clients, rules).
 - The only shared files you create without being asked are a proposal (section 6) and the handover note (section 9). An installed module may allow one more, and the file its routing row points to says which (section 11). Edit other files only when the human asks. Never edit canonical files.
 - Keep this workspace private. Do not copy its content to other places or services unless the human asks.
