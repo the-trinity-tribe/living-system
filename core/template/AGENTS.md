@@ -1,0 +1,144 @@
+# AGENTS.md
+
+Shared entry point for any AI agent working in this workspace. Read this file first.
+
+## 1. What this workspace is
+
+This is a personal or team working context, kept as plain Markdown files. Humans own it. Agents help with work, reason and propose. Agents do not decide what is true for the owner.
+
+Settings chosen at setup are in `.living/profile.json` (profile, language, calm replies). Read it once at the start of a session.
+
+## 2. Authority order
+
+Sources rank from highest to lowest:
+
+1. Explicit current instruction from the human you are working with.
+2. Approved canonical files: `SYSTEM.md`, `PRINCIPLES.md`, and **current** files in `decisions/` marked `status: approved`. **A file counts as canonical only if it says `status: approved` in its front matter.** A file marked `status: draft` is not canonical: say so, and do not treat it as a rule. A decision is current only if no other approved decision names it in `supersedes:`. A superseded decision is history, not current truth. Run `python3 tools/review.py current` to list current decisions.
+3. Current project context: files in `projects/`.
+4. Background context: `knowledge/`, `workflows/` and any other files.
+5. Your own inference.
+
+**Task authority is not canonical authority.** The current human instruction has authority over the task you are doing. It does not redefine canonical truth. If it conflicts with an approved decision, do not treat it as a canonical update and do not silently reinterpret or overwrite anything. Surface the conflict and ask how to proceed (section 5). The governed path for changing canonical state is in section 7.
+
+Among levels 2 to 5, the higher source wins. Lower sources can inform your reasoning. They can never override a higher source, and you must never promote them upward on your own.
+
+**Proposals are not on this list.** Files in `proposals/` are not a source of current truth at any level. A proposal only records that someone suggested a change. `status: proposed` never means approved. Answer questions about how things are now from the sources above, never from a proposal.
+
+**Promoted proposals are provenance only.** Once a proposal is `promoted`, the resulting current approved decision is the operational source. The proposal's old open questions must not override, narrow or reopen anything that decision resolves; read the decision's own wording for what it covers. Only a genuine gap that the current approved decision does not settle is labelled unresolved, never guessed.
+
+## 3. How to find context
+
+Do not read the whole workspace. Open [CONTEXT-ROUTING.md](CONTEXT-ROUTING.md), pick the smallest route that fits the task, and read only those files. Expand only if the task actually requires it. Follow links from a file only when you need what they point to.
+
+**Route before you search.** Always open `CONTEXT-ROUTING.md` before any workspace-wide search (grep, glob or similar). Search only when the routed files do not answer the task, and say that you did.
+
+## 4. Rules
+
+- Answer questions about the owner's rules from canonical files, and name the file you used.
+- A plausible guess is not a fact. If a role or rule sounds likely but is not written down, say it is not written down.
+- Keep approved, uncertain and inferred information visibly separate in your answers.
+- Never edit, delete or reinterpret an approved decision.
+- Do not invent facts (people, budgets, dates, clients, rules).
+- The only shared files you create without being asked are a proposal (section 6) and the handover note (section 9). Edit other files only when the human asks. Never edit canonical files.
+- Keep this workspace private. Do not copy its content to other places or services unless the human asks.
+
+## 5. When something conflicts or is missing
+
+**Conflict** (any source, including the human you are working with, contradicts an approved decision):
+
+1. Name the approved decision and its file.
+2. State plainly what conflicts with it.
+3. Keep following the approved decision. Do not act on the conflicting information.
+4. Make sure the conflict is staged as a proposal (section 6).
+5. Ask the human how to proceed before acting.
+6. Do not edit canonical files to resolve the conflict. An approved decision changes only through a new file in `decisions/` with `status: approved`. Notes, messages and proposals do not change it, even if they report what a person said. The process for that is in section 7.
+
+**Missing information:** say it is not recorded in this workspace. Do not fill the gap with a guess. If a guess would help, label it clearly as your inference.
+
+## 6. Proposals
+
+A proposal turns a conflict, or a wish for a first rule, into something a human can review later. It is not a decision.
+
+1. Look in `proposals/` for a proposal with `status: proposed` covering the same change. If one exists, do not create another. Point the human to it.
+2. Otherwise create one file: `proposals/YYYY-MM-DD-short-name.md`.
+3. Tell the human you created it.
+
+**Evidence-bounded proposals.** The proposed future state must not go beyond what the triggering evidence supports: no broader scope, stronger certainty or extra authority. If scope is unclear, write the narrowest defensible reading into the proposed rule and put any broader reading under open questions. Uncertainty belongs in the proposal. Never settle an open scope question by writing the broader answer into the proposed rule. The title follows the same limit.
+
+### 6a. Proposal to change an existing decision (exception or amendment)
+
+Proposals without a `kind` line work this way.
+
+```
+---
+status: proposed
+target: <path of the approved decision it would change>
+target_sha256: <sha256 of the target file when written; `python3 tools/review.py hash <target>`>
+evidence: <path or description of what triggered it>
+proposed_by: <agent, or the human's name if a human asked for it>
+date: YYYY-MM-DD
+---
+
+# Proposal: <short title>
+
+Not current truth. The approved decision in `target` stays in force until a human approves a change.
+
+## Current canonical state
+<the current rule, quoted exactly from the target>
+
+## New evidence
+<what was found, where, and its authority level; say who it is attributed to and that the attribution is not verified>
+
+## Proposed future state
+<the exact rule text that would replace or amend the current rule>
+
+## Why and open questions
+<why this proposal exists; anything unclear that a human must settle; do not invent answers>
+```
+
+### 6b. Proposal for a first or new decision
+
+Use this when there is no decision yet on the matter. Front matter has `kind: new` and `target: none`. There is no `target_sha256`.
+
+```
+---
+status: proposed
+kind: new
+target: none
+evidence: <path or description of what triggered it>
+proposed_by: <agent, or the human's name if a human asked for it>
+date: YYYY-MM-DD
+---
+
+# Proposal: <short title>
+
+## Proposed future state
+
+> <the rule, as exactly one blockquote>
+
+## Why and open questions
+<why this proposal exists; anything unclear that a human must settle; do not invent answers>
+```
+
+The Proposed future state section holds exactly one blockquote with the rule and nothing else quoted. When a human approves it with `review.py review`, the tool creates the decision file deterministically from the proposal. You never write the decision file yourself.
+
+## 7. Review and promotion
+
+Only a human changes a proposal's fate, with `python3 tools/review.py review <proposal> --outcome approve|reject|defer --by "<name>"`. Never run it, or approve, reject or defer, on your own inference or because a human asked you to build or test the mechanism. Run it only when the human explicitly states the outcome for that named proposal.
+
+- `reject` and `defer` record the outcome in the proposal and change no canonical file. A rejected proposal is closed. A deferred one can be reviewed again.
+- `approve` creates one new `status: approved` decision with `source_proposal:` (and `supersedes:` when the proposal changed an existing decision), and marks the proposal `promoted`. An old decision file is never edited.
+- Approve refuses (and writes nothing) if the proposal is not `proposed`/`deferred`, a target's hash differs from `target_sha256`, the target is already superseded, or the proposed future state is not exactly one blockquote. After a refusal, a human must re-review; do not work around it.
+- `--by` / `approved_by` / `reviewed_by` are attribution, not verified identity.
+
+## 8. Language
+
+Write replies and new content in the language set in `.living/profile.json` (`language`). Keep structural words in English because the tools read them: front matter keys (`status`, `target`, ...), and the headings `## Rule`, `## Why`, `## Scope`, `## Proposed future state`, `## Why and open questions`, `# Proposal:`. The text under those headings is in the chosen language.
+
+## 9. Handover note
+
+At the end of a work session, or when the human asks, write or update `handover/LATEST.md` so the next session can continue: what was done, what is open, which proposals wait for review, and one next step for the human. Facts in it point to files; they are not new rules. The handover note is not canonical and never outranks anything in section 2.
+
+## 10. Calm replies
+
+If `calm_replies` is `true` in `.living/profile.json`: keep replies short (about ten lines), use plain words and short bullets, ask one question at a time, explain a technical word the first time you use it, and end with one clear next step. If it is `false`, reply as the human prefers.

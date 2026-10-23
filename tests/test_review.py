@@ -1,9 +1,10 @@
 import hashlib, shutil, subprocess, sys, tempfile, unittest
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parent.parent
+TOOLS_REPO = Path(__file__).resolve().parent.parent
+REPO = TOOLS_REPO / "demo" / "moss-and-circuit"  # the demo sandbox holds the governed content
 FIX = Path(__file__).resolve().parent / "fixtures"  # frozen pre-promotion state
-sys.path.insert(0, str(REPO / "tools"))
+sys.path.insert(0, str(TOOLS_REPO / "tools"))
 import review as R
 
 PROPOSAL = "proposals/2026-09-28-leo-signs-off-riverside-rota-updates.md"
@@ -266,7 +267,7 @@ class TestSlice4(unittest.TestCase):
 
 class TestCLI(Fixture):
     def cli(self, *args):
-        return subprocess.run([sys.executable, str(REPO / "tools/review.py"), "--root", str(self.root), *args],
+        return subprocess.run([sys.executable, str(TOOLS_REPO / "tools/review.py"), "--root", str(self.root), *args],
                               capture_output=True, text=True)
 
     def test_cli_defer_and_refusal_codes(self):
