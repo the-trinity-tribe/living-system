@@ -19,6 +19,8 @@ Plain words first. Exact commands are under the heading that needs them. Every f
 - [Doctor](features/doctor.md): a read-only check that lists problems in your workspace in plain words.
 - [Workflow generator](features/workflow-generator.md): create the folders for a staged workflow with a stop for you after each step.
 - [Modules](features/modules.md): add and remove optional ready-made workflows, always with a plan first.
+- [Status](features/status.md): a read-only list of what needs your attention.
+- [Upgrade](features/upgrade.md): bring a workspace up to date without overwriting your own edits.
 
 ## Modules
 
@@ -28,5 +30,7 @@ Plain words first. Exact commands are under the heading that needs them. Every f
 
 ## For contributors
 
+- [Manual test checklist](testing-checklist.md): a step-by-step check of a release on a real computer, Windows first.
+- [Changelog](../CHANGELOG.md): what changed in each version.
 - [Feature template](features/_template.md): the ten headings every feature page keeps, in this order.
 - [Credits](../CREDITS.md): who the ideas come from, including the Interpretable Context Methodology.

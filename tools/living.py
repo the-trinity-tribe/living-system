@@ -759,7 +759,11 @@ def review_tool():
     import importlib.util
     spec = importlib.util.spec_from_file_location("living_review", HERE / "review.py")
     mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
+    saved, sys.dont_write_bytecode = sys.dont_write_bytecode, True  # read-only commands leave no cache files
+    try:
+        spec.loader.exec_module(mod)
+    finally:
+        sys.dont_write_bytecode = saved
     return mod
 
 
