@@ -8,7 +8,8 @@ explaining why on stderr, when the change would:
 - write, move or delete anything in decisions/ (only `tools/review.py review` creates decisions);
 - mark SYSTEM.md or PRINCIPLES.md as `status: approved` (only the human approves them);
 - set a proposal's outcome by hand (`status: promoted|rejected|deferred` is written by review.py);
-- change or remove the guard, its hook settings or the review tool (or a folder that holds them).
+- change or remove the guard, its hook settings or the review tool (or a folder that holds them);
+- write something that looks like a password, key or token into any workspace file.
 
 Anything else exits 0, and the agent's normal permission prompts apply. This is a guard rail, not a
 security boundary: shell commands are read the way a shell would split them, but a script file or an
@@ -48,6 +49,30 @@ DECISIONS_MSG = ("decisions are created only by `python3 tools/review.py review`
                  "edited or deleted. Write a proposal instead (AGENTS.md section 6)")
 GUARD_MSG = "this keeps the review rules and this guard working; only the human changes it"
 STATUS_MSG = "only the human approves drafts, and only `python3 tools/review.py review` records a proposal's outcome"
+SECRET_MSG = ("this looks like a password, key or token ({}). Secrets never go into the workspace (AGENTS.md section "
+              "4): keep them in a password manager and write only where to find them")
+# High-precision shapes of real keys, plus "password: <long mixed value>". Never printed back in full.
+SECRETS = [(name, re.compile(p)) for name, p in (
+    ("an API key", r"\bsk-(?:proj-|ant-)?[A-Za-z0-9_-]{20,}"), ("a GitHub token", r"\bgh[pousr]_[A-Za-z0-9]{30,}"),
+    ("a GitHub token", r"\bgithub_pat_[A-Za-z0-9_]{30,}"), ("an AWS key", r"\bAKIA[0-9A-Z]{16}\b"),
+    ("a private key", r"-----BEGIN [A-Z ]*PRIVATE " + "KEY-----"), ("a Slack token", r"\bxox[abprs]-[A-Za-z0-9-]{10,}"),
+    ("a Google API key", r"\bAIza[0-9A-Za-z_-]{35}\b"), ("a payment key", r"\b[sr]k_live_[0-9A-Za-z]{20,}"),
+)]
+ASSIGNED = re.compile(r"(?i)\b(api[_-]?key|secret|password|passwd|passwort|has(?:ł|l)o|token|access[_-]?key)\b[\"']?"
+                      r"\s*[:=]\s*[\"']?([A-Za-z0-9_+/=.!@#$%^&*\-]{8,})")
+
+
+def secrets_in(text):
+    """{matched text: what it looks like} for everything in text that looks like a secret."""
+    found = {}
+    for name, pat in SECRETS:
+        for m in pat.finditer(text or ""):
+            found[m.group(0)] = name
+    for m in ASSIGNED.finditer(text or ""):
+        value = m.group(2)
+        if re.search(r"\d", value) and re.search(r"[A-Za-z]", value):
+            found[m.group(0)] = f"a {m.group(1).lower()} written out"
+    return found
 
 
 class Blocked(Exception):
@@ -87,7 +112,7 @@ def protected_reason(path, removing=False):
 
 
 def status_of(text):
-    m = re.match(r"﻿?---\r?\n(.*?)\r?\n---", text or "", re.S)
+    m = re.match(r"\ufeff?---\r?\n(.*?)\r?\n---", text or "", re.S)
     s = re.search(r"^status:\s*(\S+)", m.group(1), re.M) if m else None
     return s.group(1) if s else None
 
@@ -117,6 +142,9 @@ def check_change(paths, new_text=None, removing=False):
                           f"status line")
         if path.startswith("proposals/") and new in OUTCOMES and new != old:
             raise Blocked(STATUS_MSG + " (AGENTS.md section 7)")
+        added = set(secrets_in(new_text)) - set(secrets_in(current(path)))
+        if added:
+            raise Blocked(SECRET_MSG.format(secrets_in(new_text)[sorted(added)[0]]))
 
 
 # ---------- Claude Code file tools ----------

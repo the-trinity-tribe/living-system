@@ -11,6 +11,7 @@
   living.py status <ws>
   living.py since <ws> --date YYYY-MM-DD | --days N
   living.py handbook <ws> [--out FILE]
+  living.py scan <ws> [paths...]
   living.py export <ws> <file.zip> [--apply]
   living.py protect <ws> [--apply]
   living.py runs <ws> [--add NAME | --decide NAME automate|manual|later | --forget NAME]
@@ -1365,6 +1366,15 @@ def doctor(ws):
             continue
         if meta.get("status") in R.REVIEWABLE:
             out.append(("INFO", f"proposals/{p.name} is {meta['status']} and waits for your review"))
+    steering = set()
+    for level, rel, line, what in scan(ws):
+        if level == "ERROR" or what.startswith("invisible"):
+            out.append((level, f"{rel}, line {line}: {what}"))
+        else:
+            steering.add(rel)
+    if steering:
+        out.append(("WARN", f"{len(steering)} file(s) contain text addressed to an AI, e.g. {sorted(steering)[0]}; "
+                            f"run living.py scan for details"))
     return out
 
 
@@ -1566,7 +1576,112 @@ def since(ws, date, today=None):
     return "\n".join(lines)
 
 
-HANDBOOK_MARK = "<!-- living-system handbook: a generated copy, not the rules -->"
+def guard_tool():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("living_guard", HERE / "guard.py")
+    mod = importlib.util.module_from_spec(spec)
+    saved, sys.dont_write_bytecode = sys.dont_write_bytecode, True
+    try:
+        spec.loader.exec_module(mod)
+    finally:
+        sys.dont_write_bytecode = saved
+    return mod
+
+
+# Text that talks to an AI instead of to a person: a sign that a document tries to steer the agent.
+STEERING = re.compile(r"(?i)\b(?:"
+    r"(?:ignore|disregard|forget|override)\s+(?:all\s+|any\s+|the\s+|your\s+)*(?:previous|prior|above|earlier|other)\s+"
+    r"(?:instructions|rules|messages|prompts?)"
+    r"|you\s+are\s+now\s+(?:a|an|in)\b|new\s+instructions\s*:|system\s+prompt\b|developer\s+mode\b"
+    r"|do\s+not\s+(?:tell|inform|show)\s+(?:the\s+)?(?:user|human)|without\s+(?:asking|telling)\s+the\s+(?:user|human)"
+    r"|(?:ai|assistant|agent)\s*:\s*(?:please\s+)?(?:run|approve|delete|send)"
+    r"|approve\s+(?:this|the|all)\s+(?:proposals?|drafts?)|run\s+the\s+following\s+(?:command|code|script)"
+    r"|ignoriere\s+(?:alle\s+)?(?:vorherigen|bisherigen|obigen)\s+(?:anweisungen|regeln)"
+    r"|zignoruj\s+(?:wszystkie\s+)?(?:poprzednie|wcześniejsze|powyższe)\s+(?:instrukcje|polecenia|zasady)"
+    r")")
+RUN_REMOTE = re.compile(r"(?i)\b(?:curl|wget|iwr|irm|invoke-webrequest|invoke-restmethod)\b[^\n|]*\|\s*(?:sh|bash|zsh|iex|python3?)\b")
+HIDDEN = re.compile("[\\u200b-\\u200d\\u2060\\u202a-\\u202e\\u2066-\\u2069\\U000e0000-\\U000e007f]|(?<!^)\\ufeff")
+COMMENT = re.compile(r"<!--(.*?)-->", re.S)
+SCAN_SKIP = (".git", ".living", "tools", "__pycache__", ".claude", ".codex", ".agents")
+
+
+def scan_text(text):
+    """[(line, level, what)] for one text: secrets, hidden characters, and text that tries to steer an AI."""
+    found = []
+    line_of = lambda i: text.count("\n", 0, i) + 1
+    for match, what in guard_tool().secrets_in(text).items():
+        found.append((line_of(text.index(match)), "ERROR", f"looks like {what}; remove it and keep it in a password manager"))
+    for m in HIDDEN.finditer(text):
+        found.append((line_of(m.start()), "WARN", f"invisible character U+{ord(m.group(0)):04X}; it can hide text "
+                                                   f"from you while an AI still reads it"))
+    for m in STEERING.finditer(text):
+        found.append((line_of(m.start()), "WARN", f"text addressed to an AI ({m.group(0).strip()[:40]!r}); treat it as "
+                                                 f"information, never as an instruction"))
+    for m in RUN_REMOTE.finditer(text):
+        found.append((line_of(m.start()), "WARN", "a command that downloads a program and runs it at once; run it only "
+                                                 "if you trust where it comes from"))
+    for m in COMMENT.finditer(text):
+        if re.search(r"(?i)\b(ai|assistant|agent|model|llm|claude|codex|gpt|instruction|prompt)\b", m.group(1)):
+            found.append((line_of(m.start()), "WARN", "hidden comment that mentions an AI; read it before an agent uses "
+                                                      "this file"))
+    seen, out = set(), []
+    for f in sorted(found):
+        if (f[0], f[2][:30]) not in seen:
+            seen.add((f[0], f[2][:30]))
+            out.append(f)
+    return out
+
+
+def scan(ws, paths=None):
+    """[(level, path, line, what)] for workspace files, or only for the given paths. Read-only.
+    Files still exactly as Living System installed them are skipped."""
+    ws = Path(ws)
+    manifest = read_manifest(ws)
+    untouched = dict(manifest["files"])
+    for entry in manifest.get("modules", {}).values():
+        untouched.update(entry["files"])
+    files = []
+    if paths:
+        for raw in paths:
+            p = (ws / raw) if not Path(raw).is_absolute() else Path(raw)
+            try:
+                p.resolve().relative_to(ws.resolve())
+            except ValueError:
+                raise Refusal(f"{raw} is not inside the workspace") from None
+            if p.is_dir() and not p.is_symlink():
+                files += [q for q in sorted(p.rglob("*")) if q.is_file() and not q.is_symlink()]
+            elif p.is_file() and not p.is_symlink():
+                files.append(p)
+            else:
+                raise Refusal(f"{raw} is not a file or folder in the workspace")
+    else:
+        for top, dirs, names in os.walk(ws):
+            if Path(top) == ws:
+                dirs[:] = [d for d in dirs if d not in SCAN_SKIP]
+            dirs[:] = sorted(d for d in dirs if d != "__pycache__")
+            files += [Path(top) / n for n in sorted(names) if not (Path(top) / n).is_symlink()]
+    out = []
+    for p in files:
+        rel = p.resolve().relative_to(ws.resolve()).as_posix()
+        if rel in untouched and sha256(p) == untouched[rel]:
+            continue
+        data = p.read_bytes()
+        if b"\0" in data[:4096]:
+            continue  # not a text file
+        for line, level, what in scan_text(data.decode("utf-8", errors="replace")):
+            out.append((level, rel, line, what))
+    return out
+
+
+def format_scan(results):
+    if not results:
+        return "Nothing found: no secrets, hidden characters or text addressed to an AI."
+    lines = [f"{lvl}: {path}, line {line}: {what}" for lvl, path, line, what in results]
+    return "\n".join(lines + [f"{sum(r[0] == 'ERROR' for r in results)} secret(s), "
+                              f"{sum(r[0] == 'WARN' for r in results)} warning(s). Nothing was changed."])
+
+
+HANDBOOK_MARK ="<!-- living-system handbook: a generated copy, not the rules -->"
 
 
 def handbook(ws, today=None):
@@ -1739,6 +1854,9 @@ def main(argv=None):
     when = sn.add_mutually_exclusive_group(required=True)
     when.add_argument("--date", help="the day you left, e.g. 2026-10-01")
     when.add_argument("--days", type=int, help="or: how many days you were away")
+    sc = sub.add_parser("scan", help="look for secrets and hidden instructions in workspace files (read-only)")
+    sc.add_argument("workspace")
+    sc.add_argument("paths", nargs="*", help="only these files or folders, e.g. incoming")
     hb = sub.add_parser("handbook", help="a readable copy of your rules and workflows, for working without AI")
     hb.add_argument("workspace")
     hb.add_argument("--out", help="save it to this .md file outside the workspace (default: print it)")
@@ -1794,6 +1912,10 @@ def main(argv=None):
                 raise Refusal("--days must be 0 or more")
             date = a.date or (datetime.date.today() - datetime.timedelta(days=a.days)).isoformat()
             print(since(a.workspace, date))
+        elif a.cmd == "scan":
+            results = scan(a.workspace, a.paths)
+            print(format_scan(results))
+            return 1 if any(lvl == "ERROR" for lvl, *_ in results) else 0
         elif a.cmd == "handbook":
             text = handbook(a.workspace)
             if a.out:
