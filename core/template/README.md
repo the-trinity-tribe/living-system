@@ -11,6 +11,8 @@ This is your own workspace. It was created by `tools/living.py init`. It is plai
 3. Run the value check (`value-check/README.md`) before you rely on it.
 4. Check the structure any time: `python3 tools/review.py check` (prints `ok` when fine). To see what is waiting for you, run `python3 <Living System folder>/tools/living.py status .`. For a fuller check in plain words, run `python3 <Living System folder>/tools/living.py doctor .`
 
+**Reading the files:** any Markdown editor works. Obsidian can open this folder as a vault: the `status` line appears as a property you can change when you approve a draft. Do not edit files in `decisions/` by hand; change rules through a proposal. See the Obsidian guide in the Living System docs (`docs/features/obsidian.md`).
+
 ## What is in here
 
 | Folder or file | What it is |

@@ -4,3 +4,7 @@ me/
 # This computer only.
 .living/local.json
 .living/.lock
+
+# Obsidian's window layout (your own settings in .obsidian/ are kept)
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json

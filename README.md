@@ -87,6 +87,8 @@ python3 tools/living.py new-workflow ~/my-workspace launch-post --stages researc
 
 **Automate only what really repeats:** your agent counts repeated work (`python3 tools/living.py runs ~/my-workspace` shows the count) and asks you at the third time whether to automate it, keep it manual or decide later.
 
+**Read it like notes:** open your workspace in any Markdown editor; Obsidian works as a vault, and you approve a draft by changing its `status` property ([guide](docs/features/obsidian.md)).
+
 **Your rules stay yours:** a small guard stops the agent from editing your decisions or approving your drafts directly ([write guard](docs/features/write-guard.md)).
 
 **What needs my attention?** `python3 tools/living.py status ~/my-workspace` lists the proposals waiting for your review, lesson suggestions, drafts you have not approved, and where the last session stopped. It changes nothing.

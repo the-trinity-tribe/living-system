@@ -13,6 +13,8 @@ Das ist dein eigener Arbeitsbereich. Er wurde mit `tools/living.py init` erstell
 
 Unter Windows schreibst du `py` statt `python3`.
 
+**Dateien lesen:** Jeder Markdown-Editor funktioniert. Obsidian kann diesen Ordner als Vault öffnen: Die Zeile `status` erscheint als Eigenschaft, die du änderst, wenn du einem Entwurf zustimmst. Bearbeite Dateien in `decisions/` nicht von Hand; Regeln änderst du über einen Vorschlag. Mehr dazu in der Obsidian-Anleitung in den Living-System-Docs (`docs/features/obsidian.md`).
+
 ## Was hier drin ist
 
 | Ordner oder Datei | Was es ist |

@@ -51,5 +51,21 @@ class TestSkills(unittest.TestCase):
             self.assertTrue((ws / ".agents/skills/first-decision/SKILL.md").is_file())
 
 
+
+class TestObsidian(unittest.TestCase):
+    def test_an_obsidian_vault_is_fine_and_its_layout_stays_out_of_git(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            for profile in ("student", "employee"):
+                ws = L.init(Path(tmp) / profile, profile, "en")
+                (ws / ".obsidian").mkdir()
+                (ws / ".obsidian/app.json").write_text("{}", encoding="utf-8")
+                (ws / ".obsidian/workspace.json").write_text("{}", encoding="utf-8")
+                self.assertEqual([lvl for lvl, _ in L.doctor(ws)], ["WARN", "WARN"])
+                self.assertEqual(L.format_upgrade_plan(L.upgrade(ws)), "Already up to date.")
+                ignored = (ws / ".gitignore").read_text(encoding="utf-8").splitlines()
+                self.assertIn(".obsidian/workspace.json", ignored)
+                self.assertNotIn(".obsidian/", ignored, "the human's own Obsidian settings are kept")
+                self.assertIn(".obsidian/app.json", L.export_files(ws))
+
 if __name__ == "__main__":
     unittest.main()

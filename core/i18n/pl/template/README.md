@@ -13,6 +13,8 @@ To jest twoja własna przestrzeń robocza. Została utworzona poleceniem `tools/
 
 W systemie Windows wpisz `py` zamiast `python3`.
 
+**Czytanie plików:** działa każdy edytor Markdown. Obsidian może otworzyć ten folder jako vault: linia `status` pojawia się jako właściwość, którą zmieniasz, gdy zatwierdzasz szkic. Nie edytuj ręcznie plików w `decisions/`; zasady zmieniasz przez propozycję. Więcej w przewodniku o Obsidianie w dokumentacji Living System (`docs/features/obsidian.md`).
+
 ## Co tu jest
 
 | Folder lub plik | Co to jest |

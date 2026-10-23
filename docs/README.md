@@ -21,6 +21,7 @@ Plain words first. Exact commands are under the heading that needs them. Every f
 - [Modules](features/modules.md): add and remove optional ready-made workflows, always with a plan first.
 - [Status](features/status.md): a read-only list of what needs your attention.
 - [Upgrade](features/upgrade.md): bring a workspace up to date without overwriting your own edits.
+- [Obsidian or any editor](features/obsidian.md): read and approve in a note app; what not to edit by hand.
 - [Export](features/export.md): pack your whole workspace into one zip file, and restore it elsewhere.
 - [Write guard](features/write-guard.md): stops the agent from editing your decisions or approving your drafts directly.
 - [Third-Run counter](features/third-run-counter.md): counts repeated work and asks you at the third time whether to automate it.
