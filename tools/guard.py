@@ -30,7 +30,7 @@ WS = Path(__file__).resolve().parent.parent
 def linked_org():
     """The company workspace this personal workspace is linked to, or None."""
     try:
-        folder = json.loads((WS / ".living/local.json").read_text(encoding="utf-8")).get("org_folder")
+        folder = json.loads((WS / ".living/local.json").read_text(encoding="utf-8-sig")).get("org_folder")
         return Path(folder).resolve() if isinstance(folder, str) and folder else None
     except (OSError, ValueError, AttributeError):
         return None
@@ -80,6 +80,23 @@ ASSIGNED = re.compile(r"(?i)\b(api[_-]?key|secret|password|passwd|passwort|has(?
                       r"\s*[:=]\s*[\"']?([A-Za-z0-9_+/=.!@#$%^&*\-]{8,})")
 
 
+PASSWORD_MANAGERS = re.compile(r"(?i)^(?:1password|bitwarden|keepass\w*|lastpass|dashlane|keychain|vault|protonpass|"
+                               r"nordpass|enpass|passbolt|vaultwarden)$")
+SETTINGS = {".living/profile.json": "team", ".living/local.json": "org_folder"}
+SETTINGS_MSG = {"team": "the team setting (whoever proposes a change does not approve it) is changed only by the human",
+                "org_folder": "the link to the company workspace is changed only with `living.py link`, run by the human"}
+SHELL_SECRET = {}  # what in the current shell command looks like a secret
+
+
+def setting(text, key):
+    """The value of key in a settings JSON text, or None. Unreadable text counts as 'unknown'."""
+    try:
+        data = json.loads((text or "").lstrip("\ufeff") or "{}")
+    except ValueError:
+        return "unknown"
+    return data.get(key) if isinstance(data, dict) else "unknown"
+
+
 def secrets_in(text):
     """{matched text: what it looks like} for everything in text that looks like a secret."""
     found = {}
@@ -88,6 +105,8 @@ def secrets_in(text):
             found[m.group(0)] = name
     for m in ASSIGNED.finditer(text or ""):
         value = m.group(2)
+        if PASSWORD_MANAGERS.search(value):
+            continue  # "password: 1Password" says where it is kept, which is what AGENTS.md asks for
         if re.search(r"\d", value) and re.search(r"[A-Za-z]", value):
             found[m.group(0)] = f"a {m.group(1).lower()} written out"
     return found
@@ -160,6 +179,12 @@ def check_change(paths, new_text=None, removing=False):
         why = protected_reason(path, removing)
         if why:
             raise Blocked(why)
+        if path in SETTINGS:
+            key, before = SETTINGS[path], setting(current(path), SETTINGS[path])
+            if (removing or new_text is None) and before not in (None, False):
+                raise Blocked(SETTINGS_MSG[key])
+            if not removing and new_text is not None and setting(new_text, key) != before:
+                raise Blocked(SETTINGS_MSG[key])
         if new_text is None or removing:
             continue
         new, old = status_of(new_text), status_of(current(path))
@@ -233,6 +258,9 @@ def check_patch(patch, cwd):
             check_change(src, removing=True)
         if text is None and status_sensitive(dest) and any(re.match(r"[+-]status:", l) for l in body):
             raise Blocked("this patch changes a status line the guard cannot check; ask the human")
+        added = secrets_in("\n".join(l[1:] for l in body if l.startswith("+")))
+        if text is None and added and dest:
+            raise Blocked(SECRET_MSG.format(next(iter(added.values()))))
         check_change(dest, text)
 
 
@@ -277,6 +305,8 @@ def check_targets(targets, here, removing, status_text):
     for t in targets:
         paths = rel(t, here)
         check_change(paths, removing=removing)
+        if SHELL_SECRET and any(not p.startswith("@org/") for p in paths):
+            raise Blocked(SECRET_MSG.format(next(iter(SHELL_SECRET.values()))))
         if status_sensitive(paths) and STATUS_WORDS.search(status_text):
             raise Blocked(STATUS_MSG)
 
@@ -333,6 +363,15 @@ def check_shell(cmd, cwd, depth=0):
                     raise Blocked(GUARD_MSG)
                 if (any(f in code for f in APPROVAL_FILES) or "proposals/" in code) and STATUS_WORDS.search(code):
                     raise Blocked(STATUS_MSG)
+                if ORG and (str(ORG) in code or ORG.as_posix() in code.replace("\\\\", "/").replace("\\", "/")):
+                    raise Blocked(ORG_MSG)
+                if re.search(r"roles[/\\][^/\\'\"]+[/\\](?:inbox|knowledge)", code):
+                    raise Blocked(ROLE_MSG)
+                for f, key in SETTINGS.items():
+                    if Path(f).name in code:
+                        raise Blocked(SETTINGS_MSG[key])
+                if SHELL_SECRET:
+                    raise Blocked(SECRET_MSG.format(next(iter(SHELL_SECRET.values()))))
             continue
         if name in CHANGING:
             check_targets(operands(args), here, name in REMOVING, " ".join(args))
@@ -344,7 +383,12 @@ def check_shell(cmd, cwd, depth=0):
                 elif a.startswith("--target-directory="):
                     dest = a.split("=", 1)[1]
             ops = [a for a in operands(args) if a != dest]
-            check_targets([dest] if dest else ops[-1:] if len(ops) >= 2 else [], here, False, " ".join(args))
+            sources, dest = (ops, dest) if dest else (ops[:-1], ops[-1] if len(ops) >= 2 else None)
+            if dest:
+                check_targets([dest], here, False, " ".join(args))
+                # copying into a folder writes dest/<name>, and a folder copy replaces what is inside it
+                inner = [str(Path(dest) / Path(s.rstrip("/\\")).name) for s in sources if Path(s.rstrip("/\\")).name]
+                check_targets(inner, here, True, " ".join(args))
         elif name in IN_PLACE and any(re.fullmatch(r"-[a-zA-Z]*i\S*|--in-place\S*", a) for a in args):
             ops = operands(args)
             files = ops[1:] if name == "sed" and not any(a in ("-e", "-f") for a in args) else ops
@@ -367,7 +411,10 @@ def check(event):
         check_patch(cmd if isinstance(cmd, str) else "\n".join(cmd), cwd)
     elif tool in SHELL_TOOLS:
         cmd = data.get("command", "")
-        check_shell(cmd if isinstance(cmd, str) else " ".join(map(str, cmd)), cwd)
+        cmd = cmd if isinstance(cmd, str) else " ".join(map(str, cmd))
+        SHELL_SECRET.clear()
+        SHELL_SECRET.update(secrets_in(cmd))
+        check_shell(cmd, cwd)
 
 
 def main():

@@ -15,6 +15,7 @@ The agent rules already say "never edit an approved decision". Rules are instruc
 - Your decisions change only through a proposal and your review, not through a quick edit.
 - Only you mark `SYSTEM.md` and `PRINCIPLES.md` as approved, and only `tools/review.py` records a proposal's outcome.
 - The agent cannot quietly switch the guard off.
+- The agent cannot switch off the team rule (`team` in `.living/profile.json`) or the company link (`org_folder` in `.living/local.json`); only you change those.
 - The agent cannot write a password, key or token into a workspace file (see [material from outside, and keeping secrets out](outside-material-and-secrets.md)).
 
 ## What does it require?

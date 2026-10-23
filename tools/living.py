@@ -588,7 +588,7 @@ UPGRADE_COPIES = ".living/upgrade"
 def read_local(ws):
     """.living/local.json as a dict, or {} if it is missing or damaged."""
     try:
-        data = json.loads((Path(ws) / ".living/local.json").read_text(encoding="utf-8"))
+        data = json.loads((Path(ws) / ".living/local.json").read_text(encoding="utf-8-sig"))
     except (OSError, ValueError, UnicodeDecodeError):
         return {}
     return data if isinstance(data, dict) else {}
@@ -597,7 +597,7 @@ def read_local(ws):
 def local_folder(ws):
     """product_folder from .living/local.json, or None if the file is missing or damaged."""
     try:
-        data = json.loads((Path(ws) / ".living/local.json").read_text(encoding="utf-8"))
+        data = json.loads((Path(ws) / ".living/local.json").read_text(encoding="utf-8-sig"))
     except (OSError, ValueError, UnicodeDecodeError):
         return None
     folder = data.get("product_folder") if isinstance(data, dict) else None
@@ -1503,7 +1503,7 @@ def status(ws):
         lines.append(f"Last session's next step: {step}")
     path = ws / ONBOARD_FILE
     if path.is_file():
-        marks = [m for m, _ in ONBOARD_ITEM.findall(path.read_text(encoding="utf-8", errors="replace"))]
+        marks = [m for m, *_ in ONBOARD_ITEM.findall(path.read_text(encoding="utf-8", errors="replace"))]
         if marks and " " in marks:
             lines.append(f"Onboarding: {marks.count(' ')} of {len(marks)} item(s) still to read "
                          f"(living.py onboard . shows the next ones)")
@@ -1653,7 +1653,8 @@ def guard_tool():
 STEERING = re.compile(r"(?i)\b(?:"
     r"(?:ignore|disregard|forget|override)\s+(?:all\s+|any\s+|the\s+|your\s+)*(?:previous|prior|above|earlier|other)\s+"
     r"(?:instructions|rules|messages|prompts?)"
-    r"|you\s+are\s+now\s+(?:a|an|in)\b|new\s+instructions\s*:|system\s+prompt\b|developer\s+mode\b"
+    r"|you\s+are\s+now\s+(?:in\s+)?(?:an?\s+)?(?:unrestricted|jailbroken|jailbreak|dan|developer|admin|ai|assistant|model)\b"
+    r"|new\s+instructions\s*:|system\s+prompt\b|developer\s+mode\b"
     r"|do\s+not\s+(?:tell|inform|show)\s+(?:the\s+)?(?:user|human)|without\s+(?:asking|telling)\s+the\s+(?:user|human)"
     r"|(?:ai|assistant|agent)\s*:\s*(?:please\s+)?(?:run|approve|delete|send)"
     r"|approve\s+(?:this|the|all)\s+(?:proposals?|drafts?)|run\s+the\s+following\s+(?:command|code|script)"
@@ -1727,9 +1728,13 @@ def scan(ws, paths=None):
         if rel in untouched and sha256(p) == untouched[rel]:
             continue
         data = p.read_bytes()
-        if b"\0" in data[:4096]:
+        if data[:2] in (b"\xff\xfe", b"\xfe\xff"):  # UTF-16, as some Windows tools save text
+            text = data.decode("utf-16", errors="replace")
+        elif b"\0" in data[:4096]:
             continue  # not a text file
-        for line, level, what in scan_text(data.decode("utf-8", errors="replace")):
+        else:
+            text = data.decode("utf-8", errors="replace")
+        for line, level, what in scan_text(text):
             out.append((level, rel, line, what))
     return out
 
@@ -1747,7 +1752,9 @@ def format_scan(results):
 SHARE_FROM = ("knowledge/", "lessons/active.md", "workflows/")
 EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 EMAIL_OK = re.compile(r"@(example\.(com|org|net))$", re.I)
-PERSONAL = (("a phone number", re.compile(r"(?<![\w.])(?:\+|00)[1-9][\d \-/().]{7,}\d|(?<![\w.])0\d{2,4}[ /-]?\d{5,}")),
+PERSONAL = (("a phone number", re.compile(r"(?<![\w.])(?:\+|00)[1-9][\d \-/().]{7,}\d|(?<![\w.])0\d{2,4}[ /-]?\d{5,}"
+                                          r"|(?<![\w.:-])\(?\d{3}\)?[ .-]\d{3}[ .-]\d{4}(?![\w.:-])"
+                                          r"|(?<![\w.:-])0\d{2,4}[ .-]\d{3,4}[ .-]\d{3,4}(?![\w.:-])")),
             ("a bank account number", re.compile(r"\b[A-Z]{2}\d{2}(?: ?[A-Z0-9]{4}){3,7}(?: ?[A-Z0-9]{1,3})?\b")))
 SHARE_NOTE = ("<!-- Shared role knowledge: a suggestion, not a rule. A person in the company accepts or rejects it "
               "with living.py role-review. -->")
@@ -1767,7 +1774,7 @@ def org_folder(ws):
 
 def read_profile(ws):
     try:
-        prof = json.loads((Path(ws) / ".living/profile.json").read_text(encoding="utf-8"))
+        prof = json.loads((Path(ws) / ".living/profile.json").read_text(encoding="utf-8-sig"))
     except (OSError, ValueError, UnicodeDecodeError):
         raise Refusal(".living/profile.json is missing or damaged") from None
     if not isinstance(prof, dict):
@@ -1795,12 +1802,13 @@ def link(ws, org=None, role=None, remove=False):
             raise Refusal("give the company workspace folder with --org")
         target = Path(org).expanduser().resolve()
         read_manifest(target)
+        team = read_profile(target).get("team")
         if target == ws or ws in target.parents or target in ws.parents:
             raise Refusal("the company workspace must be a separate folder, not inside this one or around it")
         local["org_folder"], prof["role"] = str(target), role
         write_json(ws / ".living/local.json", local)
         write_json(ws / ".living/profile.json", prof)
-    team = "a team workspace" if read_profile(target).get("team") else "not marked as a team workspace (init --team)"
+    team = "a team workspace" if team else "not marked as a team workspace (init --team)"
     return (f"Linked to {target} as {role} ({team}). Its approved decisions now apply to work for the company; "
             f"nothing is copied or sent. Undo: living.py link . --remove")
 
@@ -1828,7 +1836,8 @@ def share(ws, rel, shared_as=None, apply=False, today=None):
     if not role or not re.fullmatch(MODULE_ID, str(role)):
         raise Refusal("no role recorded for this workspace; link again with --role <role>")
     rel = Path(str(rel).replace("\\", "/")).as_posix()
-    if not rel.startswith(SHARE_FROM) or not rel.endswith(".md") or unsafe_rel(rel):
+    if not (rel == "lessons/active.md" or rel.startswith(("knowledge/", "workflows/"))) or not rel.endswith(".md") \
+            or unsafe_rel(rel):
         raise Refusal(f"{rel}: only Markdown files from knowledge/, workflows/ or lessons/active.md can be shared; "
                       f"never me/, handover/, incoming/, decisions/ or proposals/")
     refuse_links(ws, [rel])
@@ -1839,15 +1848,18 @@ def share(ws, rel, shared_as=None, apply=False, today=None):
     body, carried = text, {}
     if text.startswith("---\n"):
         meta, _, body = review_tool().split_frontmatter(text, rel)
-        carried = {k: meta[k] for k in ("last_verified",) if k in meta}
+        carried = {k: meta[k] for k in ("last_verified",) if re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(meta.get(k, "")))}
     problems = [f"line {n}: {what}" for n, what in personal_data(body)]
     problems += [f"line {n}: {what.split(';')[0]}" for n, level, what in scan_text(body)]
+    label = shared_as or ""
+    if personal_data(label) or scan_text(label):
+        problems.append("--as: contact details, a secret or text addressed to an AI")
     if problems:
         raise Refusal(f"{rel} cannot be shared as it is. Remove these first (the next person in the role does not "
                       f"need them):\n  " + "\n  ".join(problems))
     shared_as = shared_as or role
-    if not shared_as.strip() or re.search(r"[\x00-\x1f\x7f]", shared_as) or EMAIL.search(shared_as):
-        raise Refusal("--as must be a short label on one line, e.g. your role; no e-mail addresses")
+    if not shared_as.strip() or len(shared_as) > 60 or re.search(r"[\x00-\x1f\x7f]", shared_as) or EMAIL.search(shared_as):
+        raise Refusal("--as must be a short label on one line (at most 60 characters), e.g. your role; no e-mail addresses")
     today = (today or datetime.date.today()).isoformat()
     slug = re.sub(r"[^a-z0-9]+", "-", Path(rel).stem.lower()).strip("-") or "shared"
     if rel.startswith("workflows/"):
@@ -1926,7 +1938,11 @@ def role_review(ws, rel, outcome, by, today=None):
                 f.write(f"---\n{front}---\n\n{text}")
         except FileExistsError:
             raise Refusal(f"{dest_rel} already exists; rename the file in the inbox and try again") from None
-        src.unlink()
+        try:
+            src.unlink()
+        except BaseException:
+            (ws / dest_rel).unlink(missing_ok=True)  # all or nothing: it stays waiting in the inbox
+            raise
     return (f"Accepted: {dest_rel}. It is background knowledge for the {role} role (`AGENTS.md` section 2, level 4), "
             f"not a rule. accepted_by is attribution, not verified identity.")
 
@@ -1934,14 +1950,15 @@ def role_review(ws, rel, outcome, by, today=None):
 # ---------- onboarding: a personal reading path, a few items at a time ----------
 
 ONBOARD_FILE = "me/onboarding.md"
-ONBOARD_ITEM = re.compile(r"^- \[([ xX])\] .*<!-- onboard:(\S+) -->\s*$", re.M)
+ONBOARD_ITEM = re.compile(r"^- \[([ xX])\] .*<!-- onboard:(\S+)(?: (\w+))? -->\s*$", re.M)
 ONBOARD_SECTIONS = ("Company rules (read these first)", "How the company works",
                     "What earlier people in your role handed on", "Company workflows", "Your own rules",
                     "Your workflows", "Lessons")
 
 
 def onboarding_items(ws):
-    """[(section, id, line text)] in reading order. Company items first when the workspace is linked."""
+    """[(section, id, line text, fingerprint)] in reading order. Company items first when the workspace is linked.
+    The fingerprint is of the file's content, so an item that changes comes back unticked."""
     R = review_tool()
     ws = Path(ws)
     items = []
@@ -1964,6 +1981,7 @@ def onboarding_items(ws):
 
     org = org_folder(ws)
     role = read_profile(ws).get("role")
+    roots = {"company": org, "here": ws}
     if org is not None:
         there = " in the company workspace"
         add_rules(org, ONBOARD_SECTIONS[0], "company", there)
@@ -1983,7 +2001,11 @@ def onboarding_items(ws):
     add_workflows(ws, ONBOARD_SECTIONS[5], "here", "")
     if (ws / "lessons/active.md").is_file():
         items.append((ONBOARD_SECTIONS[6], "here:lessons/active.md", "Approved lessons: read `lessons/active.md`"))
-    return items
+    out = []
+    for section, i, line in items:
+        where, rel = i.split(":", 1)
+        out.append((section, i, line, R.text_sha((roots[where] / rel).read_bytes())[:12]))
+    return out
 
 
 def onboarding_text(items, ticked):
@@ -1991,10 +2013,10 @@ def onboarding_text(items, ticked):
            "Private to you, and not a rule. Made by `living.py onboard`, which adds new items when rules or role "
            "knowledge change. Tick an item (`[x]`) when you have read and understood it; there is no hurry.", ""]
     for section in ONBOARD_SECTIONS:
-        rows = [(i, line) for s, i, line in items if s == section]
+        rows = [(i, line, fp) for s, i, line, fp in items if s == section]
         if rows:
-            out += [f"## {section}", ""] + [f"- [{'x' if i in ticked else ' '}] {line} <!-- onboard:{i} -->"
-                                            for i, line in rows] + [""]
+            out += [f"## {section}", ""] + [f"- [{'x' if (i, fp) in ticked else ' '}] {line} <!-- onboard:{i} {fp} -->"
+                                            for i, line, fp in rows] + [""]
     if not items:
         out += ["Nothing to read yet: no approved rules, role knowledge or workflows.", ""]
     return "\n".join(out)
@@ -2010,16 +2032,15 @@ def onboard(ws, done=None, per=3):
     with workspace_lock(ws):
         path = ws / ONBOARD_FILE
         old = path.read_text(encoding="utf-8") if path.is_file() else None
-        ticked = {i for mark, i in ONBOARD_ITEM.findall(old or "") if mark in "xX"}
+        ticked = {(i, fp) for mark, i, fp in ONBOARD_ITEM.findall(old or "") if mark in "xX"}
         items = onboarding_items(ws)
-        ids = [i for _, i, _ in items]
         message = ""
         if done:
-            match = [i for i in ids if i == done or i.split(":", 1)[1] == done]
+            match = [(i, fp) for _, i, _, fp in items if i == done or i.split(":", 1)[1] == done]
             if not match:
                 raise Refusal(f"{done!r} is not on your onboarding path; use an id shown by living.py onboard")
             ticked.add(match[0])
-            message = f"Ticked: {match[0]}."
+            message = f"Ticked: {match[0][0]}."
         text = onboarding_text(items, ticked)
         if text != old:
             path.parent.mkdir(exist_ok=True)
@@ -2031,7 +2052,7 @@ def onboard(ws, done=None, per=3):
             except BaseException:
                 Path(tmp).unlink(missing_ok=True)
                 raise
-    left = [(s, i, line) for s, i, line in items if i not in ticked]
+    left = [(s, i, line) for s, i, line, fp in items if (i, fp) not in ticked]
     return left[:per], len(items) - len(left), len(items), message
 
 
@@ -2062,27 +2083,47 @@ def handbook(ws, today=None):
     out = [HANDBOOK_MARK, f"# Working without AI: {ws.resolve().name}", "",
            f"Made on {today} with `living.py handbook`. This is a copy for reading, not the rules. If it differs "
            f"from the files in `decisions/`, the files win. Make it again after a rule changes.", ""]
-    decs = R.decisions(ws) if (ws / "decisions").is_dir() else {}
-    current = R.current_decisions(ws) if decs else []
-    out += [f"## The rules in force ({len(current)})", ""]
-    for k in sorted(current, key=lambda k: (decs[k].get("date", ""), k)):
-        body = R.split_frontmatter((ws / k).read_text(encoding="utf-8"), k)[2]
-        title = (re.search(r"^# (.+)$", body, re.M) or re.match("(.*)", Path(k).stem)).group(1).strip()
-        try:
-            rule = R.section(body, "Rule", k)
-        except R.Refusal:
-            rule = "(no Rule section; read the file)"
-        out += [f"### {title}", "", rule, "",
-                f"Approved by {decs[k].get('approved_by', '?')} on {decs[k].get('date', '?')}. File: `{k}`", ""]
-    if not current:
-        out += ["No approved rules yet. Until there are, nothing here is a rule.", ""]
-    for f in ("SYSTEM.md", "PRINCIPLES.md"):
-        if (ws / f).is_file():
+    def rules(root, heading, where):
+        """The rule text of every current decision in root, plus approved SYSTEM.md and PRINCIPLES.md."""
+        decs = R.decisions(root) if (root / "decisions").is_dir() else {}
+        current = R.current_decisions(root) if decs else []
+        part = [f"## {heading} ({len(current)})", ""]
+        for k in sorted(current, key=lambda k: (decs[k].get("date", ""), k)):
+            body = R.split_frontmatter((root / k).read_text(encoding="utf-8"), k)[2]
+            title = (re.search(r"^# (.+)$", body, re.M) or re.match("(.*)", Path(k).stem)).group(1).strip()
             try:
-                approved = R.split_frontmatter((ws / f).read_text(encoding="utf-8"), f)[0].get("status") == "approved"
+                rule = R.section(body, "Rule", k)
             except R.Refusal:
-                approved = False
-            out.append(f"- `{f}`: {'approved, so it counts as your rules' if approved else 'a draft, not a rule yet'}.")
+                rule = "(no Rule section; read the file)"
+            part += [f"### {title}", "", rule, "",
+                     f"Approved by {decs[k].get('approved_by', '?')} on {decs[k].get('date', '?')}. File: `{k}`{where}", ""]
+        approved = 0
+        for f in ("SYSTEM.md", "PRINCIPLES.md"):
+            if not (root / f).is_file():
+                continue
+            try:
+                meta, _, body = R.split_frontmatter((root / f).read_text(encoding="utf-8"), f)
+            except R.Refusal:
+                meta, body = {}, ""
+            if meta.get("status") == "approved":
+                approved += 1
+                part += [f"### `{f}`{where} (approved)", "", re.sub(r"^#", "####", body.strip(), flags=re.M), ""]
+            else:
+                part += [f"- `{f}`{where}: a draft, not a rule yet.", ""]
+        return part, len(current) + approved
+
+    part, n = rules(ws, "The rules in force", "")
+    out += part
+    try:
+        org = org_folder(ws)
+    except Refusal:
+        org = None
+    if org is not None:
+        company, m = rules(org, "Company rules in force; they come first for company work", " in the company workspace")
+        out += company
+        n += m
+    if not n:
+        out += ["No approved rules yet. Until there are, nothing here is a rule.", ""]
     out.append("")
     waiting = []
     for p in sorted((ws / "proposals").glob("*.md")) if (ws / "proposals").is_dir() else []:
@@ -2159,7 +2200,8 @@ def evidence(ws, today=None):
     decs = R.decisions(ws) if (ws / "decisions").is_dir() else {}
     current = R.current_decisions(ws) if decs else []
     outcomes = {"promoted": 0, "rejected": 0, "deferred": 0, "proposed": 0}
-    dates = [str(m.get("date")) for m in decs.values() if m.get("date")]
+    is_date = lambda v: bool(re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(v)))
+    dates = [str(m["date"]) for m in decs.values() if is_date(m.get("date"))]
     for p in sorted((ws / "proposals").glob("*.md")) if (ws / "proposals").is_dir() else []:
         try:
             meta = R.split_frontmatter(p.read_text(encoding="utf-8"), p.name)[0]
@@ -2167,7 +2209,7 @@ def evidence(ws, today=None):
             continue
         if meta.get("status") in outcomes:
             outcomes[meta["status"]] += 1
-        if meta.get("date"):
+        if is_date(meta.get("date")):
             dates.append(str(meta["date"]))
     checks = R.verify(ws) if (ws / "decisions").is_dir() else []
     lines_ = R.record_lines(ws) if (ws / R.RECORD).is_file() else []
@@ -2209,6 +2251,8 @@ def write_handbook(ws, target, text, mark=None, what="handbook"):
     """Save a generated copy (the handbook, the evidence summary) outside the workspace.
     Only an earlier copy of the same kind (same first line) is ever replaced."""
     mark = mark or HANDBOOK_MARK
+    if Path(target).expanduser().is_symlink():
+        raise Refusal(f"{target} is a link; choose a plain file name")
     ws, target = Path(ws).resolve(), Path(target).expanduser().resolve()
     if target.suffix.lower() not in (".md", ".txt"):
         raise Refusal(f"the {what} file name must end in .md or .txt")

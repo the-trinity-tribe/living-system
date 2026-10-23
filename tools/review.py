@@ -46,7 +46,7 @@ def sha256(path):
 
 
 RECORD = "decisions/review-record.jsonl"
-RECORD_KEYS = ("n", "date", "outcome", "by", "files", "prev")
+RECORD_KEYS = ("n", "date", "outcome", "by", "files", "prev", "check")
 
 
 def text_sha(data):
@@ -57,11 +57,18 @@ def text_sha(data):
 
 
 def team_workspace(root):
-    """True for a shared company workspace (`"team": true` in .living/profile.json)."""
-    try:
-        return json.loads((Path(root) / ".living/profile.json").read_text(encoding="utf-8")).get("team") is True
-    except (OSError, ValueError, AttributeError):
+    """True for a shared company workspace (`"team": true` in .living/profile.json).
+    A settings file that exists but cannot be read is refused, so damage never switches the team rule off."""
+    path = Path(root) / ".living/profile.json"
+    if not path.is_file():
         return False
+    try:
+        data = json.loads(path.read_text(encoding="utf-8-sig"))
+    except (OSError, ValueError):
+        data = None
+    if not isinstance(data, dict):
+        raise Refusal(".living/profile.json cannot be read; fix it (or restore it from git) before reviewing")
+    return data.get("team") is True
 
 
 def same_person(a, b):
@@ -72,8 +79,8 @@ def same_person(a, b):
 
 def record_lines(root):
     path = Path(root) / RECORD
-    if path.is_symlink():
-        raise Refusal(f"{RECORD} is a link; nothing was written")
+    if path.is_symlink() or path.parent.is_symlink():
+        raise Refusal(f"{RECORD} or its folder is a link; nothing was written")
     if not path.is_file():
         return []
     return [l.rstrip("\r") for l in path.read_text(encoding="utf-8").split("\n") if l.strip()]
@@ -84,7 +91,13 @@ def record_entry(lines, date, outcome, by, files):
     entry = {"n": len(lines) + 1, "date": date, "outcome": outcome, "by": by,
              "files": {rel: text_sha(text) for rel, text in sorted(files.items())},
              "prev": text_sha(lines[-1]) if lines else "start"}
+    entry["check"] = entry_check(entry)
     return json.dumps(entry, ensure_ascii=False, sort_keys=True)
+
+
+def entry_check(entry):
+    """Fingerprint of one record line without its own check field, so an edit to any line shows up."""
+    return text_sha(json.dumps({k: v for k, v in entry.items() if k != "check"}, ensure_ascii=False, sort_keys=True))
 
 
 def split_frontmatter(text, name):
@@ -490,6 +503,8 @@ def start_record(root, by, date=None):
 def verify(root):
     """[(level, message)] comparing decisions and reviewed proposals with the review record. Read-only."""
     root = Path(root)
+    if (root / ".review.lock").exists():
+        return [("INFO", "a review is running right now; run verify again when it has finished")]
     try:
         lines = record_lines(root)
     except Refusal as e:
@@ -506,7 +521,7 @@ def verify(root):
             ok = isinstance(e, dict) and all(k in e for k in RECORD_KEYS) and isinstance(e["files"], dict)
         except ValueError:
             ok = False
-        if not ok or e["n"] != i or e["prev"] != prev:
+        if not ok or e["n"] != i or e["prev"] != prev or e["check"] != entry_check(e):
             return [("ERROR", f"{RECORD} line {i} was edited, removed or added by hand; the record cannot be "
                               f"trusted from there on. Restore it from git or a backup")]
         prev = text_sha(line)
@@ -524,6 +539,15 @@ def verify(root):
         if rel not in latest:
             out.append(("WARN", f"{rel}: not written by the review tool (by hand, or before the record started); "
                                 f"check who wrote it"))
+    for p in sorted((root / "proposals").glob("*.md")) if (root / "proposals").is_dir() else []:
+        rel = p.relative_to(root).as_posix()
+        try:
+            status = split_frontmatter(p.read_text(encoding="utf-8"), rel)[0].get("status")
+        except (Refusal, UnicodeDecodeError):
+            continue
+        if rel not in latest and status in TERMINAL | {"deferred"}:
+            out.append(("WARN", f"{rel}: marked {status}, but no review of it is in the record (set by hand, or "
+                                f"before the record started); check who changed it"))
     return out
 
 

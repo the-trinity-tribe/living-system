@@ -37,7 +37,7 @@ class TestOnboard(unittest.TestCase):
         self.tmp.cleanup()
 
     def ids(self):
-        return [i for _, i, _ in L.onboarding_items(self.me)]
+        return [i for _, i, *_ in L.onboarding_items(self.me)]
 
     def test_unlinked_path_has_only_own_items(self):
         self.assertEqual(self.ids(), ["here:decisions/2026-10-20-mine.md"])

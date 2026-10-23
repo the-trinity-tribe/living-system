@@ -12,7 +12,7 @@ It gives a person a private reading path through what matters for their work, an
 4. Company workflows.
 5. Your own rules, your workflows and your approved lessons.
 
-When a rule changes, the new version comes back on the path by itself.
+When a rule, or any other item on the path, changes, it comes back on the path by itself, unticked.
 
 ## Why would someone need it?
 
