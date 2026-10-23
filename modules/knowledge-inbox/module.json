@@ -1,0 +1,10 @@
+{
+  "id": "knowledge-inbox",
+  "version": "0.1.0",
+  "kind": "knowledge",
+  "summary": "Collect reusable knowledge with its source; only what you approve is kept, and old facts get flagged for a re-check.",
+  "requires": [],
+  "routing": [["How knowledge is collected and checked (read before adding any)", "knowledge/README.md"], ["Knowledge suggestions waiting for your review", "knowledge/inbox.md"]],
+  "needs_approval": ["Moving an item from the inbox into knowledge/", "Changing the last_verified date of a knowledge file"],
+  "signals": ["save this for later", "useful article", "remember this source", "research notes", "where did we read that"]
+}

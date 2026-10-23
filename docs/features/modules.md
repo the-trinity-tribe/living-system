@@ -6,13 +6,14 @@ Status: EXPERIMENTAL. Version: 0.2.0.
 
 Modules are optional add-ons for your workspace. Each one adds a ready-made workflow or knowledge area. You add them one at a time, and you can remove them again. Nothing is installed unless you ask, and every command shows a plan first.
 
-Three modules ship today:
+Four modules ship today:
 
 | Module | Kind | What it gives you | Docs |
 | --- | --- | --- | --- |
 | `weekly-update` | workflow | A three-step weekly update. You send it. | [README](../../modules/weekly-update/README.md) |
 | `meeting-notes` | workflow | Meeting notes become clean notes, actions and proposals. Nothing becomes a rule without your review. | [README](../../modules/meeting-notes/README.md) |
 | `staged-learning` | knowledge | Your agent suggests lessons from its mistakes. Only lessons you approve are used next time. | [README](../../modules/staged-learning/README.md) |
+| `knowledge-inbox` | knowledge | Your agent suggests knowledge worth keeping, with its source. Only what you approve is kept, and `doctor` flags files not checked for 90 days. | [README](../../modules/knowledge-inbox/README.md) |
 
 ## Why would someone need it?
 

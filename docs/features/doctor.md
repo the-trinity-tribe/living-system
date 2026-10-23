@@ -60,6 +60,7 @@ A clean workspace prints `All good: no problems found.` A fresh one prints two w
 - A workflow `CONTEXT.md` has 80 lines or more (keep stage files under 80).
 - A workflow `CONTEXT.md` still contains `<fill in: ...>` parts.
 - `lessons/active.md` (from the staged-learning module) has more than 20 lessons.
+- A file in `knowledge/` was last verified more than 90 days ago, or its `last_verified` date is not a date or lies in the future. With the knowledge-inbox module installed, a knowledge file without a date is listed as a note (INFO).
 
 **Notes**
 

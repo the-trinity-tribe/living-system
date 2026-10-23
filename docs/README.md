@@ -27,6 +27,7 @@ Plain words first. Exact commands are under the heading that needs them. Every f
 - [Weekly update](../modules/weekly-update/README.md): a three-step weekly update where you do the sending.
 - [Meeting notes](../modules/meeting-notes/README.md): turns meeting notes into clean notes, actions and proposals.
 - [Staged learning](../modules/staged-learning/README.md): lets your agent suggest lessons, and uses only the ones you approve.
+- [Knowledge inbox](../modules/knowledge-inbox/README.md): keeps reusable knowledge with its source and reminds you to re-check old facts.
 
 ## For contributors
 

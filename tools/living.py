@@ -925,6 +925,39 @@ def new_workflow(ws, slug, stages, goal="", apply=False):
 
 
 DEMO_BANNER = "DEMO — fictional sandbox"
+STALE_DAYS = 90  # knowledge files last verified longer ago than this get a re-check reminder
+KNOWLEDGE_SKIP = ("README.md", "inbox.md", "_template.md")
+
+
+def knowledge_ages(ws, today=None):
+    """(path, days since last_verified or None if missing, error or None) for each knowledge file."""
+    import datetime
+    R = review_tool()
+    today = today or datetime.date.today()
+    out = []
+    for p in sorted((Path(ws) / "knowledge").rglob("*.md")) if (Path(ws) / "knowledge").is_dir() else []:
+        if p.name in KNOWLEDGE_SKIP and p.parent == Path(ws) / "knowledge":
+            continue
+        rel = p.relative_to(ws).as_posix()
+        text = p.read_text(encoding="utf-8", errors="replace")
+        if not text.startswith("---\n"):
+            out.append((rel, None, None))
+            continue
+        try:
+            value = R.split_frontmatter(text, rel)[0].get("last_verified")
+        except Refusal as e:
+            out.append((rel, None, str(e)))
+            continue
+        if value is None:
+            out.append((rel, None, None))
+            continue
+        try:
+            days = (today - datetime.date.fromisoformat(value)).days
+        except ValueError:
+            out.append((rel, None, f"last_verified {value!r} is not a date like 2026-10-24"))
+            continue
+        out.append((rel, days, "in the future" if days < 0 else None))
+    return out
 MAX_LESSONS = 20
 
 
@@ -1020,6 +1053,14 @@ def doctor(ws):
             out.append(("WARN", f"{rel} has {len(text.splitlines())} lines; keep stage files under 80"))
         if FILL in text:
             out.append(("WARN", f"{rel} still has {text.count(FILL)} '{FILL} ...>' part(s) to write"))
+    knowledge_module = "knowledge-inbox" in installed
+    for rel, days, problem in knowledge_ages(ws):
+        if problem:
+            out.append(("WARN", f"{rel}: {problem}"))
+        elif days is not None and days > STALE_DAYS:
+            out.append(("WARN", f"{rel} was last verified {days} days ago; check it is still true, then update last_verified"))
+        elif days is None and knowledge_module:
+            out.append(("INFO", f"{rel} has no last_verified date; add one after you check it"))
     active = ws / "lessons/active.md"
     if active.is_file():
         body = active.read_text(encoding="utf-8", errors="replace").split("## Active lessons", 1)[-1]
@@ -1083,6 +1124,14 @@ def status(ws):
             todo.append(f"Review proposals/{p.name} ({what}): {title.group(1).strip() if title else 'no title'}")
             todo.append(f"    when you have decided, run in the workspace: python3 tools/review.py review "
                         f"proposals/{p.name} --outcome approve|reject|defer --by \"Your Name\"")
+    kinbox = ws / "knowledge/inbox.md"
+    if kinbox.is_file():
+        n = kinbox.read_text(encoding="utf-8", errors="replace").count("---knowledge---")
+        if n:
+            todo.append(f"{n} knowledge suggestion(s) in knowledge/inbox.md to keep or delete")
+    due = [rel for rel, days, problem in knowledge_ages(ws) if problem or (days is not None and days > STALE_DAYS)]
+    if due:
+        todo.append(f"{len(due)} knowledge file(s) due for a re-check, e.g. {due[0]}")
     inbox = ws / "lessons/inbox.md"
     if inbox.is_file():
         n = inbox.read_text(encoding="utf-8", errors="replace").count("---lesson---")

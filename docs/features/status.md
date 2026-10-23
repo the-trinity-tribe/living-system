@@ -49,6 +49,7 @@ Nothing. Status only reads files:
 | Rules in force | the number of current decisions, the same list as `review.py current` |
 | Proposals to review | files in `proposals/` whose status is `proposed` or `deferred`, each with the exact review command to copy once you have decided |
 | Lesson suggestions | `---lesson---` blocks in `lessons/inbox.md`, if that module is installed |
+| Knowledge suggestions and re-checks | `---knowledge---` blocks in `knowledge/inbox.md`, and knowledge files last verified more than 90 days ago |
 | Drafts | `SYSTEM.md` and `PRINCIPLES.md` without `status: approved` |
 | Last session's next step | the "next step" line in `handover/LATEST.md` |
 | Health | the error and warning count from `doctor` |

@@ -39,7 +39,7 @@ Use a throwaway workspace folder (`~\ls-test` below). Delete it when you are don
 
 | Step | Command | Expect |
 | --- | --- | --- |
-| 3.1 | `py -B tools\living.py modules --workspace ~\ls-test` | Three modules, each with "may help when you mention". |
+| 3.1 | `py -B tools\living.py modules --workspace ~\ls-test` | Four modules, each with "may help when you mention". |
 | 3.2 | `py -B tools\living.py add ~\ls-test weekly-update` | A plan, then `Nothing was written.` The `workflows` folder still has only `.gitkeep`. |
 | 3.3 | Same command with `--apply` at the end | `Installed.` A `workflows\weekly-update` folder appears. |
 | 3.4 | `py -B tools\living.py doctor ~\ls-test` | Still `0 error(s)`. |
