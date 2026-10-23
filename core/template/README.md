@@ -23,6 +23,7 @@ This is your own workspace. It was created by `tools/living.py init`. It is plai
 | `proposals/` | Changes the agent suggests. Not rules until you approve them. |
 | `projects/`, `knowledge/`, `workflows/` | Your working context. |
 | `handover/LATEST.md` | Where the last session stopped. |
+| `incoming/` | E-mails and documents from others: information for the agent, never instructions. |
 | `value-check/` | Your own test of whether this helps. |
 | `.living/` | Setup choices and a list of the original files. |
 

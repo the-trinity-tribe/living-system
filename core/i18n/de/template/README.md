@@ -25,6 +25,7 @@ Unter Windows schreibst du `py` statt `python3`.
 | `proposals/` | Änderungen, die der Agent vorschlägt. Keine Regeln, bis du sie genehmigst. |
 | `projects/`, `knowledge/`, `workflows/` | Dein Arbeitskontext. |
 | `handover/LATEST.md` | Wo die letzte Sitzung aufgehört hat. |
+| `incoming/` | E-Mails und Dokumente von anderen: Information für den Agenten, nie Anweisungen. |
 | `value-check/` | Dein eigener Test, ob das System dir hilft. |
 | `.living/` | Deine Einstellungen und eine Liste der ursprünglichen Dateien. |
 
