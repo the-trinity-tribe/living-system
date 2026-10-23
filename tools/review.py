@@ -3,10 +3,16 @@
 
 Only an explicit `review --outcome approve` can change canonical state.
 `--by` is attribution, not verified identity. Standard library only.
+
+Two proposal kinds:
+- no `kind` (default): adds an Exception to the approved decision in `target`.
+- `kind: new` with `target: none`: creates a new decision from the single
+  blockquote in `## Proposed future state`, titled from `# Proposal: <title>`.
 """
 import argparse
 import datetime
 import hashlib
+import os
 import re
 import sys
 from pathlib import Path
@@ -14,6 +20,7 @@ from pathlib import Path
 TERMINAL = {"promoted", "rejected"}
 REVIEWABLE = {"proposed", "deferred"}
 OUTCOME_STATUS = {"approve": "promoted", "reject": "rejected", "defer": "deferred"}
+KINDS = {"exception", "new"}
 
 
 class Refusal(Exception):
@@ -113,6 +120,66 @@ def build_decision(root, proposal_rel, pmeta, pbody, reviewer, date):
     return new_rel, text
 
 
+def build_new_decision(root, proposal_rel, pbody, reviewer, date):
+    titles = re.findall(r"^# Proposal: (.+)$", pbody, re.M)
+    if len(titles) != 1 or not titles[0].strip():
+        raise Refusal(f"{proposal_rel}: expected exactly one '# Proposal: <title>' line")
+    quote = single_blockquote(section(pbody, "Proposed future state", proposal_rel), proposal_rel)
+    slug = Path(proposal_rel).stem[len("YYYY-MM-DD-"):]
+    new_rel = f"decisions/{date}-{slug}.md"
+    if (root / new_rel).exists():
+        raise Refusal(f"{new_rel} already exists")
+    text = (
+        f"---\nstatus: approved\napproved_by: {reviewer}\ndate: {date}\n"
+        f"source_proposal: {proposal_rel}\n---\n\n"
+        f"# {titles[0].strip()}\n\n"
+        f"## Rule\n\n{quote}\n\n"
+        f"## Why\n\nSee source proposal.\n\n"
+        f"## Scope\n\nAs stated in the Rule.\n\n"
+        f"## Provenance\n\nCreated from `{proposal_rel}`. "
+        f"`approved_by` is attribution, not verified identity.\n"
+    )
+    return new_rel, text
+
+
+def proposal_kind(meta, name):
+    """Return the proposal kind, or raise if kind and target do not fit together."""
+    kind = meta.get("kind", "exception")
+    if kind not in KINDS:
+        raise Refusal(f"{name}: unknown kind {kind!r}")
+    if kind == "new":
+        if meta.get("target") != "none":
+            raise Refusal(f"{name}: kind: new requires target: none")
+        if "target_sha256" in meta:
+            raise Refusal(f"{name}: kind: new must not carry target_sha256")
+    elif meta.get("target") == "none":
+        raise Refusal(f"{name}: target: none requires kind: new")
+    return kind
+
+
+def write_all(writes):
+    """Write every file or none: stage temp files, then rename; undo on failure."""
+    staged, done = [], []
+    try:
+        for path, text in writes.items():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            tmp = path.with_name(f".{path.name}.tmp")
+            tmp.write_text(text)
+            staged.append((tmp, path, path.read_bytes() if path.exists() else None))
+        for tmp, path, old in staged:
+            os.replace(tmp, path)
+            done.append((path, old))
+    except BaseException:
+        for tmp, _, _ in staged:
+            tmp.unlink(missing_ok=True)
+        for path, old in done:
+            if old is None:
+                path.unlink(missing_ok=True)
+            else:
+                path.write_bytes(old)
+        raise
+
+
 def review(root, proposal_rel, outcome, reviewer, note="", date=None):
     root = Path(root)
     date = date or datetime.date.today().isoformat()
@@ -132,12 +199,17 @@ def review(root, proposal_rel, outcome, reviewer, note="", date=None):
         raise Refusal(f"{proposal_rel} is already {pmeta['status']}; not reviewable again")
     if pmeta["status"] not in REVIEWABLE:
         raise Refusal(f"{proposal_rel} status {pmeta['status']!r} is not reviewable")
-    safe_rel(root, pmeta["target"], "decisions/")
+    kind = proposal_kind(pmeta, proposal_rel)
+    if kind == "exception":
+        safe_rel(root, pmeta["target"], "decisions/")
 
     writes = {}
     result = ""
     if outcome == "approve":
-        new_rel, new_text = build_decision(root, proposal_rel, pmeta, pbody, reviewer, date)
+        if kind == "new":
+            new_rel, new_text = build_new_decision(root, proposal_rel, pbody, reviewer, date)
+        else:
+            new_rel, new_text = build_decision(root, proposal_rel, pmeta, pbody, reviewer, date)
         writes[root / new_rel] = new_text
         result = new_rel
     status = OUTCOME_STATUS[outcome]
@@ -157,9 +229,7 @@ def review(root, proposal_rel, outcome, reviewer, note="", date=None):
         pbody_new += "\n\n## Review log\n"
     pbody_new += f"\n{log}\n"
     writes[pp] = f"---\n{front}\n---\n{pbody_new}"
-    for path, text in writes.items():
-        with open(path, "x" if not path.exists() else "w") as f:
-            f.write(text)
+    write_all(writes)
     return status, result
 
 
@@ -197,7 +267,12 @@ def check(root):
         for k in ("status", "target", "evidence", "proposed_by", "date"):
             if k not in meta:
                 problems.append(f"{rel}: missing {k}")
-        if meta.get("target") not in decs:
+        try:
+            kind = proposal_kind(meta, rel)
+        except Refusal as e:
+            problems.append(str(e))
+            continue
+        if kind == "exception" and meta.get("target") not in decs:
             problems.append(f"{rel}: target missing")
     return problems
 
