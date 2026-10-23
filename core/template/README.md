@@ -30,6 +30,10 @@ Your content can be in any language. A few words must stay **English** because t
 
 The starter files are written in English. Your agent writes new content in the language you chose.
 
+## Updating
+
+When a newer Living System comes out, run `python3 <Living System folder>/tools/living.py upgrade .` here to see what would change, then add `--apply`. It updates only files you never changed. For files you edited, it keeps yours and saves the new version in `.living/upgrade/`. It never touches `decisions/`, `proposals/`, `projects/` or `me/`.
+
 ## Undo
 
 Delete this folder. Nothing else was changed on your computer.

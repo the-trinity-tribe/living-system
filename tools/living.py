@@ -8,6 +8,7 @@
   living.py remove <ws> <module> [--apply]
   living.py new-workflow <ws> <name> --stages a,b,c [--goal "..."] [--apply]
   living.py doctor <ws>
+  living.py upgrade <ws> [--apply]
 
 `init` writes into a NEW folder, built in a temporary folder next to it and renamed
 at the end, so a failure never leaves a half-made workspace.
@@ -408,7 +409,7 @@ def add_module(ws, mid, apply=False, root=MODULES):
                 new_routing = routing_with(new_routing, m)
                 manifest.setdefault("modules", {})[m["id"]] = {
                     "version": m["version"], "kind": m["kind"], "requires": m["requires"],
-                    "files": {rel: sha256(ws / rel) for rel in m["files"]}, "dirs": dirs}
+                    "files": {rel: sha256(ws / rel) for rel in m["files"]}, "dirs": dirs, "routing": m["routing"]}
             routing.write_text(new_routing, encoding="utf-8")
             write_json(ws / ".living" / "manifest.json", manifest)
         except BaseException:
@@ -512,6 +513,172 @@ def list_modules(root=MODULES, ws=None):
         if ws and m["id"] not in installed:
             lines.append(f"    may help when you mention: {', '.join(m['signals'])}")
     return "\n".join(lines) or "No modules available."
+
+
+# Folders and files that belong to the human; upgrade never writes them.
+UPGRADE_SKIP_DIRS = ("decisions/", "proposals/", "projects/", "me/", ".living/upgrade/")
+UPGRADE_SKIP_FILES = (".living/profile.json", ".living/manifest.json")
+UPGRADE_COPIES = ".living/upgrade"
+
+
+def without_modules_block(text):
+    """The routing text as the template wrote it: the modules section (owned by add/remove) taken out."""
+    if ROUTING_START in text and ROUTING_END in text:
+        head, rest = text.split(ROUTING_START, 1)
+        return head.rstrip("\n") + "\n" + rest.split(ROUTING_END, 1)[1].lstrip("\n")
+    return text
+
+
+def modules_block(text):
+    if ROUTING_START in text and ROUTING_END in text:
+        return ROUTING_START + text.split(ROUTING_START, 1)[1].split(ROUTING_END, 1)[0] + ROUTING_END + "\n"
+    return ""
+
+
+def compare(ws, rel, new_bytes, installed_hash, current=None):
+    """What upgrade should do with one product-owned file: same, add, update, keep (edited) or gone (deleted)."""
+    p = ws / rel
+    if current is None:
+        if not p.is_file():
+            return "gone" if installed_hash else "add"
+        current = p.read_bytes()
+    if current == new_bytes:
+        return "same"
+    return "update" if installed_hash and sha256_bytes(current) == installed_hash else "keep"
+
+
+def plan_upgrade(ws):
+    """Every product-owned file the current Living System would change, and how."""
+    ws = Path(ws)
+    manifest = read_manifest(ws)
+    try:
+        prof = json.loads((ws / ".living/profile.json").read_text(encoding="utf-8"))
+        profile, language, calm = prof["profile"], prof["language"], bool(prof.get("calm_replies"))
+    except (OSError, ValueError, KeyError, TypeError):
+        raise Refusal(".living/profile.json is missing or damaged; upgrade needs it to know your profile") from None
+    if profile not in PROFILES:
+        raise Refusal(f".living/profile.json names an unknown profile {profile!r}")
+    with tempfile.TemporaryDirectory() as tmp:
+        fresh = Path(tmp) / "ws"
+        fresh.mkdir()
+        build(fresh, profile, language, calm)
+        template = {p.relative_to(fresh).as_posix(): p.read_bytes() for p in sorted(fresh.rglob("*")) if p.is_file()}
+    plan = []  # (action, rel, new_bytes, owner) where owner is None for kernel files or a module id
+    for rel, data in template.items():
+        if rel in UPGRADE_SKIP_FILES or rel.startswith(UPGRADE_SKIP_DIRS):
+            continue
+        refuse_links(ws, [rel])
+        installed = manifest["files"].get(rel)
+        if rel == "CONTEXT-ROUTING.md" and (ws / rel).is_file():
+            current = (ws / rel).read_text(encoding="utf-8")
+            action = compare(ws, rel, data, installed, without_modules_block(current).encode("utf-8"))
+            if action == "update":
+                block = modules_block(current)
+                data = (data.decode("utf-8").rstrip("\n") + ("\n\n" + block if block else "\n")).encode("utf-8")
+        else:
+            action = compare(ws, rel, data, installed)
+        plan.append((action, rel, data, None))
+    for mid, entry in sorted(manifest.get("modules", {}).items()):
+        try:
+            m = load_module(mid)
+        except Refusal as e:
+            plan.append(("module-gone", mid, None, mid))
+            continue
+        refuse_links(ws, m["files"])
+        for rel in m["files"]:
+            data = (m["dir"] / "files" / rel).read_bytes()
+            action = compare(ws, rel, data, entry["files"].get(rel))
+            if action == "add" and (ws / rel).exists():
+                action = "keep"
+            plan.append((action, rel, data, mid))
+        routing = (ws / "CONTEXT-ROUTING.md").read_text(encoding="utf-8") if (ws / "CONTEXT-ROUTING.md").is_file() else ""
+        have = [l for l in routing.splitlines() if f"<!-- module:{mid} -->" in l]
+        want = [f"| {need} | `{path}` <!-- module:{mid} --> |" for need, path in m["routing"]]
+        if have != want:
+            plan.append(("routing", mid, None, mid))
+    return plan
+
+
+def format_upgrade_plan(plan):
+    groups = [("update", "Updates (you never changed these)"), ("add", "Adds (new in this version)"),
+              ("keep", f"Keeps your edited version; the new one is saved in {UPGRADE_COPIES}/ to compare"),
+              ("gone", "You deleted these; they stay deleted"), ("routing", "Refreshes routing rows for module"),
+              ("module-gone", "Installed module no longer available here; left as it is")]
+    lines = []
+    for action, title in groups:
+        items = [rel for a, rel, _, _ in plan if a == action]
+        if items:
+            lines += [f"{title}:", *(f"  {r}" for r in items)]
+    if not lines:
+        return "Already up to date."
+    return "\n".join(lines + ["Never touched: decisions/, proposals/, projects/, me/ and your setup choices."])
+
+
+def upgrade(ws, apply=False):
+    ws = Path(ws)
+    if not apply:
+        return plan_upgrade(ws)
+    read_manifest(ws)
+    with workspace_lock(ws):
+        plan = plan_upgrade(ws)
+        manifest = read_manifest(ws)
+        backups, created = {}, []
+
+        def write(rel, data):
+            p = ws / rel
+            if p.exists():
+                backups.setdefault(p, p.read_bytes())
+            else:
+                for d in reversed([p.parent, *p.parent.parents]):
+                    if ws in d.parents and not d.exists():
+                        d.mkdir()
+                        created.append(d)
+                created.append(p)
+            fd, tmp = tempfile.mkstemp(prefix=f".{p.name}.", suffix=".tmp", dir=p.parent)
+            try:
+                with os.fdopen(fd, "wb") as f:
+                    f.write(data)
+                os.replace(tmp, p)
+            except BaseException:
+                Path(tmp).unlink(missing_ok=True)
+                raise
+
+        try:
+            for action, rel, data, owner in plan:
+                files = manifest["files"] if owner is None else manifest["modules"][owner]["files"]
+                if action in ("update", "add"):
+                    write(rel, data)
+                    stored = without_modules_block(data.decode("utf-8")).encode("utf-8") \
+                        if rel == "CONTEXT-ROUTING.md" else data
+                    files[rel] = sha256_bytes(stored)
+                elif action == "same":
+                    files[rel] = sha256_bytes(data)
+                elif action == "keep":
+                    write(f"{UPGRADE_COPIES}/{rel}", data)
+            for action, mid, _, _ in plan:
+                if action == "routing":
+                    m = load_module(mid)
+                    routing = routing_file(ws)
+                    write("CONTEXT-ROUTING.md", routing_with(routing_without(
+                        routing.read_text(encoding="utf-8"), mid), m).encode("utf-8"))
+            for mid, entry in manifest.get("modules", {}).items():
+                try:
+                    m = load_module(mid)
+                except Refusal:
+                    continue
+                entry.update(version=m["version"], kind=m["kind"], requires=m["requires"], routing=m["routing"])
+            manifest["kernel_version"] = KERNEL_VERSION
+            write_json(ws / ".living" / "manifest.json", manifest)
+        except BaseException:
+            for p, data in backups.items():
+                p.write_bytes(data)
+            for p in reversed(created):
+                if p.is_file():
+                    p.unlink()
+                elif p.is_dir() and not any(p.iterdir()):
+                    p.rmdir()
+            raise
+    return plan
 
 
 FILL = "<fill in:"  # marks text the agent and human still have to write; `doctor` lists what is left
@@ -713,6 +880,9 @@ def main(argv=None):
         p.add_argument("workspace")
         p.add_argument("module")
         p.add_argument("--apply", action="store_true")
+    u = sub.add_parser("upgrade", help="plan (or with --apply, apply) updates from this Living System version")
+    u.add_argument("workspace")
+    u.add_argument("--apply", action="store_true")
     w = sub.add_parser("new-workflow", help="plan (or with --apply, create) a staged workflow folder")
     w.add_argument("workspace")
     w.add_argument("name")
@@ -738,6 +908,11 @@ def main(argv=None):
         elif a.cmd == "remove":
             print(format_remove_plan(a.module, *remove_module(a.workspace, a.module, a.apply)))
             print("Removed." if a.apply else "Nothing was changed. Run again with --apply to remove.")
+        elif a.cmd == "upgrade":
+            plan = upgrade(a.workspace, a.apply)
+            print(format_upgrade_plan(plan))
+            if any(act not in ("same",) for act, *_ in plan):
+                print("Upgraded." if a.apply else "Nothing was written. Run again with --apply to upgrade.")
         elif a.cmd == "doctor":
             results = doctor(a.workspace)
             print(format_doctor(results))
