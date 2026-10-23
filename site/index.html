@@ -417,6 +417,7 @@ footer.site{margin-top:4rem;padding-block:2rem 4rem;border-top:1px solid var(--l
         <summary>How it works: what the review tool does</summary>
         <div>
           <p>The review command records the outcome on the proposal. Approving creates one new decision file with <code>supersedes:</code> and <code>source_proposal:</code> and never edits the old file. It refuses if the target changed since the proposal was written, or if the proposed text is not exactly one quoted block.</p>
+          <p>A proposal can add a first rule, add an exception, replace a rule completely, or retire it so no rule applies. In every case the old decision file stays unchanged as history.</p>
           <p>The name given with <code>--by</code> is a label. It is not a login and it is not checked.</p>
         </div>
       </details>
@@ -601,7 +602,7 @@ footer.site{margin-top:4rem;padding-block:2rem 4rem;border-top:1px solid var(--l
     <section class="chapter" id="ch11" aria-labelledby="h11-11">
       <h2 id="h11-11">Try it</h2>
       <div class="prose">
-        <p>You need Git and Python 3. No accounts and no extra Python packages.</p>
+        <p>You need Git and Python 3.10 or newer. No accounts and no extra Python packages. On Windows, type <code>py</code> where the commands say <code>python3</code>.</p>
       </div>
       <div class="chiprow"><span data-status="init"></span></div>
       <h3>1. Get the code</h3>
@@ -611,6 +612,9 @@ footer.site{margin-top:4rem;padding-block:2rem 4rem;border-top:1px solid var(--l
       <div class="cmd"><pre><code>python3 -B tools/living.py init ~/my-workspace --profile manager --language en</code></pre><button class="btn small" type="button" data-copy-text="python3 -B tools/living.py init ~/my-workspace --profile manager --language en" data-md="skip">Copy command</button></div>
       <h3>3. Open it in an agent</h3>
       <p class="prose">Open <code>~/my-workspace</code> in Claude Code or Codex and ask the agent to start at <code>AGENTS.md</code>.</p>
+      <h3>4. See what needs your attention</h3>
+      <p class="prose">Any time, this lists proposals waiting for your review, drafts you have not approved and where the last session stopped. It changes nothing. When a newer Living System comes out, <code>upgrade</code> updates only the files you never changed.</p>
+      <div class="cmd"><pre><code>python3 -B tools/living.py status ~/my-workspace</code></pre><button class="btn small" type="button" data-copy-text="python3 -B tools/living.py status ~/my-workspace" data-md="skip">Copy command</button></div>
       <p><a class="btn primary" href="https://github.com/the-trinity-tribe/living-system">Living System on GitHub</a></p>
     </section>
 
