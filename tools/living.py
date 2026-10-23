@@ -16,6 +16,7 @@
   living.py share <ws> <file> [--as LABEL] [--apply]
   living.py onboard <ws> [--done ID] [--next N]
   living.py park <ws> ["idea"] [--done N]
+  living.py focus <ws> on|off
   living.py evidence <ws> [--out FILE]
   living.py role-review <company ws> <file> --outcome accept|reject --by NAME
   living.py export <ws> <file.zip> [--apply]
@@ -1503,6 +1504,17 @@ def status(ws):
     step = handover_next_step(ws)
     if step:
         lines.append(f"Last session's next step: {step}")
+        import datetime
+        note = ws / "handover/LATEST.md"
+        written = datetime.date.fromtimestamp(note.stat().st_mtime)
+        later = [rel for day, rel in changed_files(ws, written + datetime.timedelta(days=1),
+                                                  installed_files(read_manifest(ws)))
+                 if not rel.startswith(("handover/", "me/"))]
+        if later:
+            lines.append(f"    (that note is from {written}; {len(later)} file(s) changed after it, e.g. {later[0]}, so "
+                         f"check it is still where things stand)")
+    if prof.get("focus"):
+        lines.append("Focus mode: on (no suggestions; living.py focus . off to end it)")
     parked = ws / PARKED_FILE
     if parked.is_file():
         n = sum(1 for m in PARKED_ITEM.finditer(parked.read_text(encoding="utf-8", errors="replace")) if m.group(1) == " ")
@@ -1524,6 +1536,14 @@ def status(ws):
 SINCE_COVERED = ("decisions", "proposals", "knowledge", "lessons", "handover", "SYSTEM.md", "PRINCIPLES.md")
 SINCE_SKIP = (".git", ".living", ".claude", ".codex", ".agents", "tools", "__pycache__")
 SINCE_SHOWN = 15
+
+
+def installed_files(manifest):
+    """{path: hash} of every file Living System installed (kernel and modules), to tell untouched files apart."""
+    out = dict(manifest["files"])
+    for entry in manifest.get("modules", {}).values():
+        out.update(entry["files"])
+    return out
 
 
 def changed_files(ws, since, untouched=()):
@@ -1573,9 +1593,7 @@ def since(ws, date, today=None):
     import datetime
     ws = Path(ws)
     manifest = read_manifest(ws)
-    untouched = dict(manifest["files"])
-    for entry in manifest.get("modules", {}).values():
-        untouched.update(entry["files"])
+    untouched = installed_files(manifest)
     R = review_tool()
     today = today or datetime.date.today()
     try:
@@ -1706,9 +1724,7 @@ def scan(ws, paths=None):
     Files still exactly as Living System installed them are skipped."""
     ws = Path(ws)
     manifest = read_manifest(ws)
-    untouched = dict(manifest["files"])
-    for entry in manifest.get("modules", {}).values():
-        untouched.update(entry["files"])
+    untouched = installed_files(manifest)
     files = []
     if paths:
         for raw in paths:
@@ -1960,6 +1976,21 @@ PARKED_FILE = "me/parked.md"
 PARKED_ITEM = re.compile(r"^- \[([ xX])\] (\d{4}-\d{2}-\d{2}) (.+)$", re.M)
 PARKED_HEAD = ("# Parked ideas\n\nPrivate to you, and not a rule. Ideas you wanted to keep without switching task. Look at "
                "them when you have time (the `tend` skill goes through them one by one). Ticked = dealt with.\n\n")
+
+
+def focus(ws, state):
+    """Switch focus mode on or off in .living/profile.json. Returns a plain message."""
+    if state not in ("on", "off"):
+        raise Refusal("say on or off")
+    ws = Path(ws)
+    read_manifest(ws)
+    refuse_links(ws, [".living/profile.json"])
+    with workspace_lock(ws):
+        prof = read_profile(ws)
+        prof["focus"] = state == "on"
+        write_json(ws / ".living/profile.json", prof)
+    return ("Focus mode is on: the agent does what you ask and makes no other suggestions. Undo: focus . off"
+            if state == "on" else "Focus mode is off: suggestions are welcome again.")
 
 
 def park(ws, idea=None, done=None, today=None):
@@ -2429,6 +2460,9 @@ def main(argv=None):
     rr.add_argument("file", help="roles/<role>/inbox/<file>.md")
     rr.add_argument("--outcome", required=True, choices=("accept", "reject"))
     rr.add_argument("--by", required=True)
+    fo = sub.add_parser("focus", help="focus mode: the agent does what you ask and suggests nothing else")
+    fo.add_argument("workspace")
+    fo.add_argument("state", choices=("on", "off"))
     pk = sub.add_parser("park", help="write an idea down without switching task, or list and tick off parked ideas")
     pk.add_argument("workspace")
     pk.add_argument("idea", nargs="?", help="the idea, in one line (leave out to list)")
@@ -2512,6 +2546,8 @@ def main(argv=None):
                       "Nothing was written. Run again with --apply to share it.")
         elif a.cmd == "role-review":
             print(role_review(a.workspace, a.file, a.outcome, a.by))
+        elif a.cmd == "focus":
+            print(focus(a.workspace, a.state))
         elif a.cmd == "park":
             print(format_park(*park(a.workspace, a.idea, a.done)))
         elif a.cmd == "onboard":

@@ -4,7 +4,9 @@ Status: EXPERIMENTAL. Version: 0.2.0.
 
 ## What does this feature do?
 
-Three small helpers that protect your attention:
+Small helpers that protect your attention:
+
+- **Focus mode:** while it is on, the agent does what you ask and suggests nothing else. `python3 tools/living.py focus ~/my-workspace on` (or `off`), or just say "focus mode on".
 
 - **Park:** an idea that pops up mid-task is written down in one line, and the work carries on.
 - **Tend:** when you have a few minutes, the agent walks you through everything that is waiting, one item at a time.

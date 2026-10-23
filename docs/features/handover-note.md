@@ -4,6 +4,8 @@ Status: EXPERIMENTAL. Version: 0.2.0.
 
 ## What does this feature do?
 
+The note holds the date, the goal in one line, what was done, what is open (with one open question if there is one), proposals waiting, and one next step. `status` points out when the note is older than later changes in the workspace.
+
 It is one file, `handover/LATEST.md`, where your agent writes down where the last work session stopped. The next session reads it and can continue.
 
 ## Why would someone need it?

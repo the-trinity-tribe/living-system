@@ -6,7 +6,7 @@ Shared entry point for any AI agent working in this workspace. Read this file fi
 
 This is a personal or team working context, kept as plain Markdown files. Humans own it. Agents help with work, reason and propose. Agents do not decide what is true for the owner.
 
-Settings chosen at setup are in `.living/profile.json` (profile, language, calm replies, coach). Read it once at the start of a session.
+Settings chosen at setup are in `.living/profile.json` (profile, language, calm replies, coach, focus). Read it once at the start of a session.
 
 ## 2. Authority order
 
@@ -175,6 +175,10 @@ When the human was away (holiday, sick leave, a long break) or asks what changed
 ## 10. Calm replies
 
 If `calm_replies` is `true` in `.living/profile.json`: keep replies short (about ten lines), use plain words and short bullets, ask one question at a time, explain a technical word the first time you use it, and end with one clear next step. If it is `false`, reply as the human prefers.
+
+## 10a. Focus mode
+
+If `focus` is `true` in `.living/profile.json`, the human is protecting their attention. Do the task they ask for and nothing else: no suggestions of modules, workflows, sharing, coaching or onboarding items, no catch-up summaries, and no "you could also...". Still count repeated work, park ideas when asked, and always say when something conflicts with a rule or cannot be done. Switch it with `python3 <product folder>/tools/living.py focus . on|off` when the human asks; tell them once that it is on when a session starts.
 
 ## 11. Optional modules
 

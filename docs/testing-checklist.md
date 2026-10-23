@@ -37,6 +37,7 @@ Use a throwaway workspace folder (`~\ls-test` below). Delete it when you are don
 | 2.8 | `py -B tools\living.py since ~\ls-test --days 1` | `Rules: no changes.` and `Proposals: no changes.` (a fresh workspace has nothing new). |
 | 2.8a | `py -B tools\living.py scan ~\ls-test` | `Nothing found: ...`. |
 | 2.9 | `py -B tools\living.py handbook ~\ls-test --out ~\ls-handbook.md`, then open that file | `Saved ...`. The file has the heading "Working without AI" and says there are no rules yet. Delete it at the end. |
+| 2.9b | `py -B tools\living.py focus ~\ls-test on`, then `py -B tools\living.py status ~\ls-test` | `Focus mode is on ...`; status shows `Focus mode: on`. Then `focus ~\ls-test off`. |
 | 2.9a | `py -B tools\living.py evidence ~\ls-test` | A summary with counts only; no file contents or names. "Value check: Not done yet". |
 
 ## 3. Modules
