@@ -119,7 +119,7 @@ main{min-width:0}
 .btn{font:700 .95rem/1.2 var(--sans);display:inline-flex;align-items:center;gap:.5rem;padding:.65rem 1rem;min-height:44px;border-radius:8px;border:1.5px solid var(--ink);background:transparent;color:var(--ink);cursor:pointer;text-decoration:none}
 .btn:hover{background:var(--moss-soft)}
 .btn.primary{background:var(--ink);color:var(--bg)}
-.btn.primary:hover{background:var(--moss);border-color:var(--moss);color:#fff}
+.btn.primary:hover{background:var(--moss);border-color:var(--moss);color:var(--bg)}
 .btn[disabled]{opacity:.45;cursor:not-allowed}
 .btn.small{min-height:36px;padding:.4rem .7rem;font-size:.85rem}
 
@@ -273,6 +273,7 @@ th{font-weight:700}
 .planned{display:grid;gap:.4rem;border:1.5px dashed var(--road);border-radius:10px;padding:1rem;margin:1.25rem 0;background:transparent;max-width:62ch}
 .planned h3{margin:0}
 .planned p{margin:0}
+.planned.built{border-style:solid;border-color:var(--live)}
 
 /* agents */
 .agent-flow{list-style:none;margin:0 0 1rem;padding:0;display:grid;gap:.5rem}
@@ -282,6 +283,7 @@ th{font-weight:700}
 /* code block with copy */
 .cmd{position:relative;margin:0 0 1rem}
 .cmd pre{margin:0;padding:.9rem 1rem;background:#101815;color:#DCEBE2;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.55}
+.cmd pre code{background:none;color:inherit;padding:0}
 .cmd .btn{margin-top:.4rem}
 
 .skills td:first-child{font-weight:700;min-width:11rem}
@@ -465,9 +467,10 @@ footer.site{margin-top:4rem;padding-block:2rem 4rem;border-top:1px solid var(--l
         </div>
         <p class="small" style="margin:1rem 0 0">Personal goals stay separate from company truth, in every profile.</p>
       </div>
-      <div class="planned" id="module-picker">
-        <h3>Module picker and suggestions <span data-status="modulePicker"></span></h3>
-        <p>Planned: choose extra building blocks for your workspace and get suggestions for which ones fit your work. Not available yet.</p>
+      <div class="planned built" id="module-picker">
+        <h3>Add only what you need <span data-status="modulePicker"></span></h3>
+        <p>Three optional modules to start: a weekly update, meeting notes that turn remarks into proposals, and lessons the agent may suggest but only you approve. Every command shows its plan first and writes nothing until you say yes. Removing a module keeps the files you edited and never touches your decisions.</p>
+        <p class="small">Suggestions are an instruction to the agent: it mentions a fitting module when the same need keeps coming up. Nothing watches or counts your work.</p>
       </div>
     </section>
 
@@ -536,9 +539,9 @@ footer.site{margin-top:4rem;padding-block:2rem 4rem;border-top:1px solid var(--l
         </div>
       </div>
       <div class="callout note"><p><strong>Credit:</strong> the idea of using folders and plain files as the structure of a workflow comes from the Interpretable Context Methodology (ICM) by Jake Van Clief and David McDermott. Living System reimplements the idea in its own way. No endorsement by the ICM authors is implied.</p></div>
-      <div class="planned" id="icm-generator">
+      <div class="planned built" id="icm-generator">
         <h3>Workflow generator <span data-status="icmGenerator"></span></h3>
-        <p>Planned: describe a task and get a stage-by-stage folder like the one above. Not available yet.</p>
+        <p>Ask your agent for a workflow, for example "a workflow for planning a launch post". It suggests the stages and shows the plan. After your yes it creates the stage-by-stage folders, with every part still to write clearly marked, and fills them in with you.</p>
       </div>
     </section>
 
@@ -665,8 +668,8 @@ const STATUS = {
   icmExample:  "REPLAY",
   jobScenario: "REPLAY",
   crossAgent:  "REPLAY",
-  modulePicker:"ROADMAP",
-  icmGenerator:"ROADMAP"
+  modulePicker:"LIVE",
+  icmGenerator:"LIVE"
 };
 const CHIP_INFO = {
   LIVE:    {tip:"Runs today",                       text:"You can run this today."},
@@ -939,6 +942,11 @@ function mdText(){
       else if(t==="DETAILS"){ const s=n.querySelector("summary"); out.push("**"+clean(inl(s))+"**"); blk(n); }
       else if(t==="BLOCKQUOTE") out.push("> "+clean(inl(n)));
       else if(t==="FIELDSET" && n.querySelector("legend") && !n.querySelector("fieldset")) out.push(clean(inl(n)));
+      else if(n.getAttribute("role")==="tabpanel"){
+        const label = document.getElementById(n.getAttribute("aria-labelledby"));
+        if(label) out.push("#### "+clean(label.textContent));
+        blk(n);
+      }
       else blk(n);
     });
     flush();
