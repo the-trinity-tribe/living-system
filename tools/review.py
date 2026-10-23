@@ -114,6 +114,8 @@ def safe_rel(root, rel, prefix):
     p = root / rel
     if folder.is_symlink() or p.is_symlink() or not p.is_file():
         raise Refusal(f"{rel} does not exist, or it or its folder is a link")
+    if parts[1] not in os.listdir(folder):  # Windows and macOS ignore case; the recorded name must match exactly
+        raise Refusal(f"{rel} is spelled differently from the file on disk (check capital letters)")
     return p
 
 

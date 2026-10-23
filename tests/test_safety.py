@@ -29,7 +29,7 @@ def snapshot(root):
     """File bytes, folders and links, so leftover folders or replaced links count as changes."""
     out = {}
     for p in sorted(Path(root).rglob("*")):
-        rel = str(p.relative_to(root))
+        rel = p.relative_to(root).as_posix()
         if p.is_symlink():
             out[rel + "@"] = os.readlink(p).encode()
         elif p.is_dir():

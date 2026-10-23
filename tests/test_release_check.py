@@ -39,6 +39,20 @@ class TestReleaseCheck(unittest.TestCase):
                                               ("ERROR", "core/template/SYSTEM.md"), ("ERROR", "docs/a.md"),
                                               ("ERROR", "modules/m/README.md"), ("ERROR", "tools/x.py")])
 
+    def test_finds_ordinary_windows_paths_config_secrets_key_files_and_test_files(self):
+        value = "LongRealistic" + "SecretValue1"
+        key_header = "-----BEGIN PRIVATE " + "KEY-----"
+        found = self.scan({
+            "docs/win.md": "Saved in C:" + "\\Users\\Alice\\Documents\\private\n",
+            "config/settings.json": '{"pass' + 'word": "' + value + '"}\n',
+            ".env": "API" + "_KEY=" + value + "\n",
+            "certs/private.pem": key_header + "\nabc\n",
+            "tests/live.py": 'TOKEN = "' + "sk-" + "b" * 30 + '"\n',
+        })
+        self.assertEqual(self.levels(found), [("ERROR", ".env"), ("ERROR", "certs/private.pem"),
+                                              ("ERROR", "config/settings.json"), ("ERROR", "docs/win.md"),
+                                              ("ERROR", "tests/live.py")])
+
     def test_overclaims_warn_unless_the_line_says_what_is_not_promised(self):
         found = self.scan({"site/index.html": "<p>A secure, compliant system.</p>\n<p>It is not a secure vault.</p>\n"})
         self.assertEqual([(lvl, where) for lvl, where, _ in found], [("WARN", "site/index.html:1")])

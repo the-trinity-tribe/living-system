@@ -389,7 +389,7 @@ def add_module(ws, mid, apply=False, root=MODULES):
     with workspace_lock(ws):
         order = plan_add(ws, mid, root)
         routing = routing_file(ws)
-        old_routing = routing.read_text(encoding="utf-8")
+        old_routing = check_markers(routing.read_text(encoding="utf-8"))
         manifest = read_manifest(ws)
         created, made = [], []
         try:
@@ -470,7 +470,7 @@ def remove_module(ws, mid, apply=False):
         manifest = read_manifest(ws)
         entry = manifest["modules"][mid]
         routing = routing_file(ws)
-        old_routing = routing.read_text(encoding="utf-8")
+        old_routing = check_markers(routing.read_text(encoding="utf-8"))
         backups, removed_dirs = {}, []
         try:
             routing.write_text(routing_without(old_routing, mid), encoding="utf-8", newline="\n")
@@ -522,6 +522,15 @@ UPGRADE_SKIP_FILES = (".living/profile.json", ".living/manifest.json")
 UPGRADE_COPIES = ".living/upgrade"
 
 
+def check_markers(text):
+    """Refuse a routing file whose modules section markers are damaged, so nothing makes it worse."""
+    s, e = text.count(ROUTING_START), text.count(ROUTING_END)
+    if (s, e) not in ((0, 0), (1, 1)) or (s and text.index(ROUTING_START) > text.index(ROUTING_END)):
+        raise Refusal(f"CONTEXT-ROUTING.md has damaged module markers ({ROUTING_START} and {ROUTING_END} must "
+                      f"appear once each, start first). Fix them and try again; nothing was changed")
+    return text
+
+
 def without_modules_block(text):
     """The routing text as the template wrote it: the modules section (owned by add/remove) taken out."""
     if ROUTING_START in text and ROUTING_END in text:
@@ -536,20 +545,30 @@ def modules_block(text):
     return ""
 
 
-def compare(ws, rel, new_bytes, installed_hash, current=None):
-    """What upgrade should do with one product-owned file: same, add, update, keep (edited) or gone (deleted)."""
-    p = ws / rel
+def module_rows(mid, routing):
+    return [f"| {need} | `{path}` <!-- module:{mid} --> |" for need, path in routing]
+
+
+class Plan(list):
+    """Upgrade steps as (action, path, new bytes, owner) plus what each file looked like when planned."""
+    def __init__(self):
+        super().__init__()
+        self.expect = {}         # path -> sha256 of the file when planned, or None if it did not exist
+        self.routing_hash = None  # sha256 of CONTEXT-ROUTING.md when planned
+
+
+def classify(current, new_bytes, installed_hash):
+    """What upgrade does with one file: add, gone (you deleted it), same, unowned (yours, already equal),
+    update (you never changed it) or keep (you changed it, or it was never ours)."""
     if current is None:
-        if not p.is_file():
-            return "gone" if installed_hash else "add"
-        current = p.read_bytes()
+        return "gone" if installed_hash else "add"
     if current == new_bytes:
-        return "same"
+        return "same" if installed_hash else "unowned"
     return "update" if installed_hash and sha256_bytes(current) == installed_hash else "keep"
 
 
 def plan_upgrade(ws):
-    """Every product-owned file the current Living System would change, and how."""
+    """Every product-owned file the current Living System would change, and how. Read-only."""
     ws = Path(ws)
     manifest = read_manifest(ws)
     try:
@@ -559,51 +578,64 @@ def plan_upgrade(ws):
         raise Refusal(".living/profile.json is missing or damaged; upgrade needs it to know your profile") from None
     if profile not in PROFILES:
         raise Refusal(f".living/profile.json names an unknown profile {profile!r}")
+    routing_path = ws / "CONTEXT-ROUTING.md"
+    routing = check_markers(routing_path.read_text(encoding="utf-8")) if routing_path.is_file() else ""
     with tempfile.TemporaryDirectory() as tmp:
         fresh = Path(tmp) / "ws"
         fresh.mkdir()
         build(fresh, profile, language, calm)
         template = {p.relative_to(fresh).as_posix(): p.read_bytes() for p in sorted(fresh.rglob("*")) if p.is_file()}
-    plan = []  # (action, rel, new_bytes, owner) where owner is None for kernel files or a module id
+    plan = Plan()
+    plan.routing_hash = sha256_bytes(routing.encode("utf-8")) if routing_path.is_file() else None
+
+    def step(rel, data, installed, owner, current=None, exists=None):
+        p = ws / rel
+        if exists is None:
+            exists = p.is_file()
+            current = p.read_bytes() if exists else None
+        action = classify(current if exists else None, data, installed)
+        if action == "add" and (p.exists() or p.is_symlink()):
+            action = "keep"
+        plan.expect[rel] = sha256_bytes(p.read_bytes()) if p.is_file() else None
+        plan.append((action, rel, data, owner))
+
     for rel, data in template.items():
         if rel in UPGRADE_SKIP_FILES or rel.startswith(UPGRADE_SKIP_DIRS):
             continue
-        refuse_links(ws, [rel])
-        installed = manifest["files"].get(rel)
-        if rel == "CONTEXT-ROUTING.md" and (ws / rel).is_file():
-            current = (ws / rel).read_text(encoding="utf-8")
-            action = compare(ws, rel, data, installed, without_modules_block(current).encode("utf-8"))
-            if action == "update":
-                block = modules_block(current)
-                data = (data.decode("utf-8").rstrip("\n") + ("\n\n" + block if block else "\n")).encode("utf-8")
+        refuse_links(ws, [rel, f"{UPGRADE_COPIES}/{rel}"])
+        if rel == "CONTEXT-ROUTING.md" and routing_path.is_file():
+            step(rel, data, manifest["files"].get(rel), None,
+                 without_modules_block(routing).encode("utf-8"), exists=True)
         else:
-            action = compare(ws, rel, data, installed)
-        plan.append((action, rel, data, None))
-    for mid, entry in sorted(manifest.get("modules", {}).items()):
+            step(rel, data, manifest["files"].get(rel), None)
+    installed_mods = manifest.get("modules", {})
+    for mid, entry in sorted(installed_mods.items()):
         try:
             m = load_module(mid)
-        except Refusal as e:
+        except Refusal:
             plan.append(("module-gone", mid, None, mid))
             continue
-        refuse_links(ws, m["files"])
+        missing = [d for d in m["requires"] if d not in installed_mods]
+        if missing:
+            raise Refusal(f"module {mid} now requires {', '.join(missing)}, which is not installed. Add it first "
+                          f"(living.py add <workspace> {missing[0]}), then run upgrade again; nothing was changed")
+        refuse_links(ws, m["files"] + [f"{UPGRADE_COPIES}/{r}" for r in m["files"]])
         for rel in m["files"]:
-            data = (m["dir"] / "files" / rel).read_bytes()
-            action = compare(ws, rel, data, entry["files"].get(rel))
-            if action == "add" and (ws / rel).exists():
-                action = "keep"
-            plan.append((action, rel, data, mid))
-        routing = (ws / "CONTEXT-ROUTING.md").read_text(encoding="utf-8") if (ws / "CONTEXT-ROUTING.md").is_file() else ""
+            step(rel, (m["dir"] / "files" / rel).read_bytes(), entry["files"].get(rel), mid)
         have = [l for l in routing.splitlines() if f"<!-- module:{mid} -->" in l]
-        want = [f"| {need} | `{path}` <!-- module:{mid} --> |" for need, path in m["routing"]]
+        want = module_rows(mid, m["routing"])
         if have != want:
-            plan.append(("routing", mid, None, mid))
+            old = module_rows(mid, entry["routing"]) if "routing" in entry else None
+            plan.append(("routing" if old is None or have == old else "routing-kept", mid, None, mid))
     return plan
 
 
 def format_upgrade_plan(plan):
     groups = [("update", "Updates (you never changed these)"), ("add", "Adds (new in this version)"),
-              ("keep", f"Keeps your edited version; the new one is saved in {UPGRADE_COPIES}/ to compare"),
+              ("keep", f"Keeps your version; the new one is saved in {UPGRADE_COPIES}/ to compare"),
               ("gone", "You deleted these; they stay deleted"), ("routing", "Refreshes routing rows for module"),
+              ("routing-kept", f"Keeps your edited routing rows for module; the new rows are saved in "
+                               f"{UPGRADE_COPIES}/CONTEXT-ROUTING.<module>.md"),
               ("module-gone", "Installed module no longer available here; left as it is")]
     lines = []
     for action, title in groups:
@@ -623,61 +655,98 @@ def upgrade(ws, apply=False):
     with workspace_lock(ws):
         plan = plan_upgrade(ws)
         manifest = read_manifest(ws)
-        backups, created = {}, []
+        written, made = {}, []  # path -> (bytes before, bytes we wrote); folders we created
 
-        def write(rel, data):
+        def changed_meanwhile(rel):
+            raise Refusal(f"{rel} changed while upgrading. Nothing was changed; run upgrade again")
+
+        def put(rel, data, expect, owner=None):
             p = ws / rel
-            if p.exists():
-                backups.setdefault(p, p.read_bytes())
-            else:
-                for d in reversed([p.parent, *p.parent.parents]):
-                    if ws in d.parents and not d.exists():
-                        d.mkdir()
-                        created.append(d)
-                created.append(p)
+            now = p.read_bytes() if p.is_file() else None
+            if (None if now is None else sha256_bytes(now)) != expect or (now is None and p.is_symlink()):
+                changed_meanwhile(rel)
+            for d in reversed([p.parent, *p.parent.parents]):
+                if ws in d.parents and not d.exists():
+                    d.mkdir()
+                    made.append(d)
+                    if owner:
+                        manifest["modules"][owner].setdefault("dirs", []).append(d.relative_to(ws).as_posix())
+            if now is None:
+                fd = os.open(p, os.O_CREAT | os.O_EXCL | os.O_WRONLY | getattr(os, "O_BINARY", 0))
+                written[p] = (None, data)
+                with os.fdopen(fd, "wb") as f:
+                    f.write(data)
+                return
             fd, tmp = tempfile.mkstemp(prefix=f".{p.name}.", suffix=".tmp", dir=p.parent)
             try:
                 with os.fdopen(fd, "wb") as f:
                     f.write(data)
+                written.setdefault(p, (now, data))
                 os.replace(tmp, p)
+                written[p] = (written[p][0], data)
             except BaseException:
                 Path(tmp).unlink(missing_ok=True)
                 raise
 
+        def put_copy(rel, data):
+            p = ws / rel
+            put(rel, data, sha256_bytes(p.read_bytes()) if p.is_file() else None)
+
         try:
+            routing_update = None
             for action, rel, data, owner in plan:
-                files = manifest["files"] if owner is None else manifest["modules"][owner]["files"]
-                if action in ("update", "add"):
-                    write(rel, data)
-                    stored = without_modules_block(data.decode("utf-8")).encode("utf-8") \
-                        if rel == "CONTEXT-ROUTING.md" else data
-                    files[rel] = sha256_bytes(stored)
+                files = manifest["files"] if owner is None else manifest["modules"].get(owner, {}).get("files", {})
+                if rel == "CONTEXT-ROUTING.md" and owner is None:
+                    if action == "update":
+                        routing_update = data
+                    if action in ("update", "same"):
+                        files[rel] = sha256_bytes(data)
+                    elif action == "keep":
+                        put_copy(f"{UPGRADE_COPIES}/{rel}", data)
+                elif action in ("update", "add"):
+                    put(rel, data, plan.expect[rel], owner)
+                    files[rel] = sha256_bytes(data)
                 elif action == "same":
                     files[rel] = sha256_bytes(data)
                 elif action == "keep":
-                    write(f"{UPGRADE_COPIES}/{rel}", data)
-            for action, mid, _, _ in plan:
-                if action == "routing":
-                    m = load_module(mid)
-                    routing = routing_file(ws)
-                    write("CONTEXT-ROUTING.md", routing_with(routing_without(
-                        routing.read_text(encoding="utf-8"), mid), m).encode("utf-8"))
+                    put_copy(f"{UPGRADE_COPIES}/{rel}", data)
+            refresh = [mid for a, mid, _, _ in plan if a == "routing"]
+            for mid in [m for a, m, _, _ in plan if a == "routing-kept"]:
+                rows = module_rows(mid, load_module(mid)["routing"])
+                put_copy(f"{UPGRADE_COPIES}/CONTEXT-ROUTING.{mid}.md", ("\n".join(rows) + "\n").encode("utf-8"))
+            if routing_update is not None or refresh:
+                routing = routing_file(ws)
+                text = routing.read_text(encoding="utf-8")
+                if sha256_bytes(text.encode("utf-8")) != plan.routing_hash:
+                    changed_meanwhile("CONTEXT-ROUTING.md")
+                if routing_update is not None:
+                    block = modules_block(text)
+                    text = routing_update.decode("utf-8").rstrip("\n") + ("\n\n" + block if block else "\n")
+                for mid in refresh:
+                    text = routing_with(routing_without(text, mid), load_module(mid))
+                put("CONTEXT-ROUTING.md", text.encode("utf-8"), plan.routing_hash)
             for mid, entry in manifest.get("modules", {}).items():
                 try:
                     m = load_module(mid)
                 except Refusal:
                     continue
-                entry.update(version=m["version"], kind=m["kind"], requires=m["requires"], routing=m["routing"])
+                entry.update(version=m["version"], kind=m["kind"], requires=m["requires"])
+                if mid in refresh or "routing" not in entry:
+                    entry["routing"] = m["routing"]
             manifest["kernel_version"] = KERNEL_VERSION
             write_json(ws / ".living" / "manifest.json", manifest)
         except BaseException:
-            for p, data in backups.items():
-                p.write_bytes(data)
-            for p in reversed(created):
-                if p.is_file():
+            for p, (before, ours) in written.items():
+                now = p.read_bytes() if p.is_file() else None
+                if now != ours:
+                    continue  # the human changed it after we wrote it: leave their version
+                if before is None:
                     p.unlink()
-                elif p.is_dir() and not any(p.iterdir()):
-                    p.rmdir()
+                else:
+                    p.write_bytes(before)
+            for d in reversed(made):
+                if d.is_dir() and not any(d.iterdir()):
+                    d.rmdir()
             raise
     return plan
 
@@ -812,6 +881,10 @@ def doctor(ws):
         out.append(("WARN", "tools/review.py differs from the version installed; the review rules may not "
                             "behave as documented"))
     routing = (ws / "CONTEXT-ROUTING.md").read_text(encoding="utf-8") if (ws / "CONTEXT-ROUTING.md").is_file() else ""
+    try:
+        check_markers(routing)
+    except Refusal as e:
+        out.append(("ERROR", str(e).replace("Fix them and try again; nothing was changed", "Fix them before add, remove or upgrade")))
     installed = manifest.get("modules", {})
     routed = {}
     for need, path, mid in re.findall(r"^\|([^|]*)\|\s*`([^`]+)`\s*<!-- module:([a-z0-9-]+) -->\s*\|", routing, re.M):
@@ -869,8 +942,8 @@ def handover_next_step(ws):
     for i, line in enumerate(lines):
         if re.search(r"(?i)next step", line):
             text = re.sub(r"(?i)^[\s*#-]*(\*\*)?[^:*]*next step[^:*]*(\*\*)?\s*:?\s*(\*\*)?\s*", "", line).strip(" *")
-            if not text and i + 1 < len(lines):
-                text = lines[i + 1].strip(" -*")
+            if not text:  # a heading or label: the step is the next line with text
+                text = next((l.strip(" -*") for l in lines[i + 1:] if l.strip(" -*")), "")
             return text or None
     return None
 

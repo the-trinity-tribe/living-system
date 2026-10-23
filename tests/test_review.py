@@ -13,7 +13,7 @@ NEW = "decisions/2026-10-08-leo-signs-off-riverside-rota-updates.md"
 
 
 def snapshot(root):
-    return {str(p.relative_to(root)): p.read_bytes() for p in sorted(Path(root).rglob("*")) if p.is_file()}
+    return {p.relative_to(root).as_posix(): p.read_bytes() for p in sorted(Path(root).rglob("*")) if p.is_file()}
 
 
 class Fixture(unittest.TestCase):

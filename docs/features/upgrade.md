@@ -54,9 +54,10 @@ Upgrade rebuilds, in a temporary folder, what a new workspace with your profile,
 | You changed the file | Keeps yours; saves the new version in `.living/upgrade/` |
 | You deleted the file | Leaves it deleted |
 | The file is new in this version | Adds it |
+| A file with that name is already yours (Living System never installed it) | Leaves it as yours, even if it matches |
 | Nothing changed | Nothing |
 
-In `CONTEXT-ROUTING.md`, the "Installed modules" section is kept as it is while the rest is updated. The manifest records the new fingerprints, so the next upgrade knows what you have changed since.
+In `CONTEXT-ROUTING.md`, the "Installed modules" section is kept as it is while the rest is updated. A module's routing rows are refreshed only if you never edited them; otherwise yours stay and the new rows are saved in `.living/upgrade/CONTEXT-ROUTING.<module>.md`. The manifest records the new fingerprints, so the next upgrade knows what you have changed since.
 
 ## Where does the human keep control?
 
@@ -66,7 +67,10 @@ In `CONTEXT-ROUTING.md`, the "Installed modules" section is kept as it is while 
 
 ## What can go wrong, and how do you undo it?
 
-- **It stops with an error halfway:** every file it had changed is put back, so the workspace is as it was.
+- **It stops with an error halfway:** every file it had changed is put back, so the workspace is as it was. A file you edited in the meantime is left as you saved it.
+- **"changed while upgrading":** you (or a program) saved one of its files while it ran. Nothing was changed; run it again.
+- **"module ... now requires ...":** a newer module needs another module first. Add that one with `add`, then run upgrade again.
+- **"damaged module markers":** the `modules:start` / `modules:end` lines in `CONTEXT-ROUTING.md` were changed. Put back one of each, start first. `doctor` reports this too.
 - **"another Living System command is changing this workspace":** another `add`, `remove` or `upgrade` is running. If none is, delete `.living/.lock` and try again.
 - **`.living/profile.json` is missing or damaged:** upgrade refuses, because it needs your profile. Restore the file from a backup or git.
 - **You want the old version of a file back:** use your backup or `git` if the workspace is a git repository. Upgrade does not keep the old version of files it replaced, because you had never changed them.

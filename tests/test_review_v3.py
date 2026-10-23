@@ -34,7 +34,7 @@ Created from `proposals/2026-09-30-weekly-update-owner.md`. `approved_by` is att
 
 
 def snapshot(root):
-    return {str(p.relative_to(root)): p.read_bytes() for p in sorted(Path(root).rglob("*")) if p.is_file()}
+    return {p.relative_to(root).as_posix(): p.read_bytes() for p in sorted(Path(root).rglob("*")) if p.is_file()}
 
 
 def proposal(kind, target, digest, title="Sam owns the weekly client update",
@@ -104,6 +104,10 @@ class TestReplace(Case):
         for name, text in cases.items():
             with self.subTest(case=name):
                 self.refused(self.put(f"2026-10-20-{name}", text))
+
+    def test_target_spelled_with_other_capitals_is_refused(self):
+        self.refused(self.put("2026-10-20-caps.md", proposal("retire", OLD.replace("owner", "OWNER"), self.digest)))
+        self.assertEqual(R.current_decisions(self.root), [OLD])
 
     def test_reject_and_defer_change_no_decision(self):
         for outcome in ("reject", "defer"):

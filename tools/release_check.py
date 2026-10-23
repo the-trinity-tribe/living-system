@@ -18,21 +18,23 @@ SELF = Path(__file__).resolve()
 
 # Patterns are assembled from parts so this file does not match itself.
 PRIVATE = [re.compile(p, re.I) for p in (
-    "TTT" + r"[- ]System", r"/home/[a-z_][a-z0-9_-]*/", r"[A-Z]:\\\\Users\\\\", r"/Users/[A-Za-z0-9_-]+/",
+    "TTT" + r"[- ]System", r"/home/[a-z_][a-z0-9_-]*/", r"[A-Za-z]:\\{1,2}Users\\{1,2}[A-Za-z0-9._-]+",
+    r"/Users/[A-Za-z0-9_-]+/",
 )]
 EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 EMAIL_OK = re.compile(r"@(example\.(com|org|net)|users\.noreply\.github\.com)$", re.I)
 SECRET = [re.compile(p) for p in (
     r"\bsk-[A-Za-z0-9_-]{20,}", r"\bgh[pousr]_[A-Za-z0-9]{30,}", r"\bAKIA[0-9A-Z]{16}\b",
     r"-----BEGIN [A-Z ]*PRIVATE " + "KEY-----", r"\bxox[abpr]-[A-Za-z0-9-]{10,}",
-    r"(?i)\b(api[_-]?key|secret|password|token)\s*[:=]\s*['\"][^'\"\s]{8,}['\"]",
+    r"(?i)[\"']?\b(api[_-]?key|secret|password|passwd|token|access[_-]?key)[\"']?\s*[:=]\s*[\"']?[A-Za-z0-9_+/=.\-]{16,}",
 )]
 DEMO_NAMES = re.compile(r"\b(Moss & Circuit|Moss and Circuit|Riverside|Maya Chen|Leo Martin|Sam Okafor)\b")
 OVERCLAIM = re.compile(r"(?i)\b(production[- ]ready|enterprise[- ]grade|secure|compliant|guarantee[sd]?|"
                        r"bank[- ]grade|military[- ]grade|unhackable)\b")
 NEGATION = re.compile(r"(?i)\b(not|no|never|without|nothing|cannot|isn't|doesn't|does not|is not)\b")
 TRAILER = re.compile(r"(?im)^\s*Co-Authored-By:.*\b(claude|anthropic|openai|chatgpt|codex|copilot|gpt)\b")
-TEXT_SUFFIXES = {".md", ".py", ".json", ".html", ".txt", ".cff", ".yml", ".yaml", ".toml", ".cfg", ""}
+TEXT_SUFFIXES = {".md", ".py", ".json", ".html", ".txt", ".cff", ".yml", ".yaml", ".toml", ".cfg", ".ini", ".env",
+                 ".pem", ".key", ".sh", ".ps1", ".js", ".css", ".csv", ""}
 
 
 def tracked_files(root):
@@ -48,11 +50,11 @@ def scan(root, files=None, commit_messages=None):
     root = Path(root)
     findings = []
     for p in files if files is not None else tracked_files(root):
-        if p.resolve() == SELF or not p.is_file() or p.suffix.lower() not in TEXT_SUFFIXES:
+        if p.resolve() == SELF or not p.is_file() or (p.suffix.lower() not in TEXT_SUFFIXES
+                                                       and not p.name.startswith(".env")):
             continue
         rel = p.relative_to(root).as_posix()
         text = p.read_text(encoding="utf-8", errors="replace")
-        is_test = rel.startswith("tests/")
         for n, line in enumerate(text.splitlines(), 1):
             where = f"{rel}:{n}"
             for pat in PRIVATE:
@@ -61,10 +63,9 @@ def scan(root, files=None, commit_messages=None):
             for m in EMAIL.finditer(line):
                 if not EMAIL_OK.search(m.group(0)):
                     findings.append(("ERROR", where, f"e-mail address {m.group(0)!r}"))
-            if not is_test:
-                for pat in SECRET:
-                    if pat.search(line):
-                        findings.append(("ERROR", where, "looks like a secret or key"))
+            for pat in SECRET:
+                if pat.search(line):
+                    findings.append(("ERROR", where, "looks like a secret or key"))
             if rel.startswith(("core/", "modules/")) and DEMO_NAMES.search(line):
                 findings.append(("ERROR", where, "demo name inside a product template or module"))
             if p.suffix.lower() in (".md", ".html") and OVERCLAIM.search(line) and not NEGATION.search(line):

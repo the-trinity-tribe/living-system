@@ -78,7 +78,7 @@ CAN_LINK = can_link()
 
 def snapshot(root):
     """Every file's bytes, and every folder (so leftover folders count as changes)."""
-    return {str(p.relative_to(root)) + ("/" if p.is_dir() else ""): p.read_bytes() if p.is_file() else b""
+    return {p.relative_to(root).as_posix() + ("/" if p.is_dir() else ""): p.read_bytes() if p.is_file() else b""
             for p in sorted(Path(root).rglob("*"))}
 
 

@@ -120,7 +120,7 @@ class TestInit(InitCase):
 
     def test_student_has_no_team_files(self):
         ws = self.ws("student")
-        names = [str(p.relative_to(ws)) for p in ws.rglob("*")]
+        names = [p.relative_to(ws).as_posix() for p in ws.rglob("*")]
         self.assertEqual([n for n in names if "team" in n.lower()], [])
         self.assertTrue((ws / "me/goals.md").is_file())
         self.assertTrue((ws / "projects/study-project-template.md").is_file())
@@ -151,7 +151,7 @@ class TestInit(InitCase):
         m = json.loads((ws / ".living/manifest.json").read_text())
         self.assertEqual(m["kernel_version"], L.KERNEL_VERSION)
         self.assertEqual(m["files"]["tools/review.py"], L.sha256(REPO / "tools/review.py"))
-        on_disk = {str(p.relative_to(ws)) for p in ws.rglob("*") if p.is_file()} - {".living/manifest.json"}
+        on_disk = {p.relative_to(ws).as_posix() for p in ws.rglob("*") if p.is_file()} - {".living/manifest.json"}
         self.assertEqual(set(m["files"]), on_disk)
         for rel, h in m["files"].items():
             self.assertEqual(L.sha256(ws / rel), h)

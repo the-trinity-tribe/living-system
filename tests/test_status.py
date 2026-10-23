@@ -8,7 +8,7 @@ import living as L
 
 
 def snapshot(root):
-    return {str(p.relative_to(root)): p.read_bytes() for p in sorted(Path(root).rglob("*")) if p.is_file()}
+    return {p.relative_to(root).as_posix(): p.read_bytes() for p in sorted(Path(root).rglob("*")) if p.is_file()}
 
 
 def write(path, text):
@@ -53,6 +53,10 @@ class TestStatus(unittest.TestCase):
         self.assertNotIn("SYSTEM.md", text)
         self.assertIn("Last session's next step: review the report proposal", text)
         self.assertIn("Health: 0 error(s)", text)
+
+    def test_next_step_written_as_a_section(self):
+        write(self.ws / "handover/LATEST.md", "# Handover: latest\n\n## One next step for you\n\n- Review the draft\n")
+        self.assertEqual(L.handover_next_step(self.ws), "Review the draft")
 
     def test_cli(self):
         r = subprocess.run([sys.executable, "-B", str(REPO / "tools/living.py"), "status", str(self.ws)],
