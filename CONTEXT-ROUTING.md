@@ -1,18 +1,20 @@
 # CONTEXT-ROUTING.md
 
-**Start with the smallest route. Expand context only when the task requires it.**
+This is the **product** folder. It holds no organisation's rules. **Start with the smallest route. Expand context only when the task requires it.**
 
 | Need | Read |
 | --- | --- |
-| Organisation identity, people, roles | `SYSTEM.md` |
-| Governing principle | `PRINCIPLES.md` |
-| Approved organisational choice (who approves what, how things must be done) | The relevant **current** file in `decisions/` (skip any decision named in another approved decision's `supersedes:`; `python3 tools/review.py current` lists them) |
-| Reusable service knowledge | The relevant file in `knowledge/` |
-| Current project | The relevant file in `projects/` |
-| Suggested changes waiting for human review (not current truth) | `proposals/`: read when asked what is pending, or before creating a proposal |
-| Narrative background for humans new to the example | `examples/moss-and-circuit.md` (optional, not authoritative) |
+| What this project is and how to try it | `README.md` |
+| Set up a person's own workspace (guided) | `INSTALL.md` |
+| Explore the fictional demo organisation | `demo/moss-and-circuit/AGENTS.md`, then its `CONTEXT-ROUTING.md` (run its tools with `--root demo/moss-and-circuit`) |
+| Show the system live | `demo/WALKTHROUGH.md` (keep it out of folders you give to a test agent) |
+| Optional modules and what each does | `modules/<id>/README.md` and `modules/<id>/module.json` |
+| What a new workspace starts with | `core/template/` and `core/profiles/<profile>/` |
+| The tools | `tools/review.py` (decisions and proposals), `tools/living.py` (workspaces, modules, workflows, doctor) |
+| Documenting a feature | `docs/features/_template.md` |
+| Credits and influences | `CREDITS.md` |
 
 Tips:
 
-- For a project task, start with the project file. It links to the decisions that apply.
-- Anything about approvals is a decision question. Check `decisions/`, not role descriptions. If the question names a project, also read that project file: its working notes may contain newer claims that conflict with a decision (see `AGENTS.md` section 5). Notes never override the decision.
+- Questions about an organisation's rules belong in that organisation's workspace or in the demo, never here.
+- To change how the tools behave, read the matching tests in `tests/` first.

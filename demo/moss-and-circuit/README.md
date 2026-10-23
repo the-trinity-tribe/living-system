@@ -79,7 +79,7 @@ The second line illustrates the CLI syntax (`approve|reject|defer` means choose 
 
 ## Licensing, community and credit
 
-Living System's repository files are distributed under the **[Mozilla Public License 2.0](LICENSE)** (`MPL-2.0`). Covered modifications distributed to others are subject to the licence's obligations. Independently created files or organisational data are **not automatically MPL-covered merely because someone uses Living System**, though copying covered template material into them may affect the analysis. Read the licence for exact terms.
+Living System's repository files are distributed under the **[Mozilla Public License 2.0](../../LICENSE)** (`MPL-2.0`). Covered modifications distributed to others are subject to the licence's obligations. Independently created files or organisational data are **not automatically MPL-covered merely because someone uses Living System**, though copying covered template material into them may affect the analysis. Read the licence for exact terms.
 
 Copyright © 2026 Adrianna Mamczarz, for copyrightable original material to which she holds rights. The Trinity Tribe is the project home. Contributions are welcome under the repository licence; see [CONTRIBUTING.md](../../CONTRIBUTING.md). Please credit the creator and other contributors when discussing or building upon this work.
 

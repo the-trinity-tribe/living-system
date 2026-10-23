@@ -19,7 +19,7 @@ Run one stage at a time. Open only that stage's `CONTEXT.md`. A human looks at t
 ## Decisions that apply
 
 - Updates sent to the garden are client-facing. The approval rule is in the current decision: `decisions/2026-10-07-leo-signs-off-riverside-rota-updates.md`.
-- Always confirm it is still current with `python3 -B tools/review.py --root demo/moss-and-circuit current` (from the repository root). If the output differs, use what the command prints.
+- Always confirm it is still current with `python3 -B tools/review.py current` from inside this demo folder or a copy of it that has `tools/review.py` (from the product repository root: `python3 -B tools/review.py --root demo/moss-and-circuit current`). If the output differs, use what the command prints.
 
 ## Never do
 

@@ -12,7 +12,7 @@ Say who must approve this update before it is sent. Do not send it.
 
 ## Process
 
-1. Run `python3 -B tools/review.py --root demo/moss-and-circuit current` (from the repository root). Note the file it prints.
+1. Run `python3 -B tools/review.py current` inside the demo folder you are working in (from the product root: add `--root demo/moss-and-circuit`). Note the file it prints.
 2. Read that decision's "Rule" and "Exception". Do not use a file the command did not print.
 3. Decide which case the draft is: a routine schedule update (such as a revised rota), or anything else. If the draft contains pricing, unusual commitments, or anything that could affect the studio's reputation, it is **not** routine.
 4. Write who must approve before sending, quote the sentence from the decision, and name the file.
