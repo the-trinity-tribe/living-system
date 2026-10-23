@@ -17,6 +17,7 @@ From a governance demo to a workspace you can install and grow.
 - **Optional modules:** `modules`, `add`, `remove`, with four modules: `weekly-update`, `meeting-notes`, `staged-learning`, `knowledge-inbox`. Plans are shown before anything is written; removal keeps files you edited and never touches decisions, proposals or projects. New workspaces list the available modules in `.living/catalog.md`.
 - **Workflow generator:** `new-workflow` creates a staged workflow folder in the style of Interpretable Context Methodology (see `CREDITS.md`).
 - **`doctor`:** a read-only health check in plain words.
+- **Decision history:** `review.py history` shows every decision, what is in force, and what amended, replaced or retired each older one.
 - **`status`:** what needs your attention (proposals to review, drafts, the last next step), with the exact review command for each waiting proposal.
 - **Write guard:** `tools/guard.py`, wired into Claude Code (`.claude/settings.json`) and Codex (`.codex/hooks.json`), blocks agent edits to `decisions/`, approvals of `SYSTEM.md`/`PRINCIPLES.md`, hand-set proposal outcomes and changes to the guard itself. Live-tested in Claude Code; in Codex it needs your trust first.
 - **Third-Run counter:** `runs` keeps a visible count of repeated work in `.living/runs.json` (short names and dates only); at the third run the agent offers a module, a workflow or keeping it manual, and records your decision. Workspaces record the Living System folder in `.living/local.json`, which a new `.gitignore` keeps out of shared repositories.

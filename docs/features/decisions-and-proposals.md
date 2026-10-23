@@ -41,6 +41,10 @@ Plain steps:
 3. Decide. Tell your agent the outcome for that named proposal, or run the review yourself.
 4. If you approve, a new decision file appears. The proposal is marked `promoted`.
 
+### Seeing the whole history
+
+`python3 tools/review.py history` lists every decision, oldest first: which ones are in force, and for each older one whether it was amended, replaced or retired, by which decision and when. It changes nothing.
+
 ### Writing a proposal without typing the format
 
 `python3 tools/living.py propose ~/my-workspace --kind new --title "Only I send things to clients" --rule "Nothing goes to a client without my OK." --evidence "setup answer"` shows a correctly formatted proposal; add `--apply` to write it. For `exception`, `replace` and `retire`, add `--target decisions/<file>.md`: the tool copies the current rule into the proposal and records the fingerprint for you. It never approves anything; it prints the review command for you to run.

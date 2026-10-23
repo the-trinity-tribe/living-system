@@ -7,6 +7,7 @@
 | Wer die Besitzerin oder der Besitzer ist, Rollen | `SYSTEM.md` (nur verbindlich mit `status: approved`) |
 | Leitende Grundsätze | `PRINCIPLES.md` (nur verbindlich mit `status: approved`) |
 | Genehmigte Festlegung (wer was genehmigt, wie etwas zu tun ist) | Die passende **aktuelle** Datei in `decisions/` (überspringe jede Entscheidung, die eine andere genehmigte Entscheidung unter `supersedes:` nennt; `python3 tools/review.py current` listet sie auf) |
+| Wie sich eine Regel mit der Zeit geändert hat | `python3 tools/review.py history` |
 | Wiederverwendbares Wissen | Die passende Datei in `knowledge/` |
 | Aktuelles Projekt | Die passende Datei in `projects/` |
 | Wiederkehrende Arbeit mit einem Ablauf in Stufen | Der passende Ordner in `workflows/` |

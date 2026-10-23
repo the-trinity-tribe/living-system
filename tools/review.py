@@ -104,6 +104,40 @@ def current_decisions(root):
             if m.get("status") == "approved" and k not in gone and m.get("kind") != RETIREMENT]
 
 
+def history(root):
+    """Every decision with its state, oldest first: (path, title, date, by, state). Read-only."""
+    root = Path(root)
+    decs = decisions(root)
+    replaced_by = {m["supersedes"]: k for k, m in decs.items() if m.get("status") == "approved" and "supersedes" in m}
+    current = set(current_decisions(root))
+    out = []
+    for k, m in sorted(decs.items(), key=lambda kv: (kv[1].get("date", ""), kv[0])):
+        body = split_frontmatter((root / k).read_text(encoding="utf-8"), k)[2]
+        title = (re.search(r"^# (.+)$", body, re.M) or re.match("(.*)", Path(k).stem)).group(1).strip()
+        if m.get("kind") == RETIREMENT:
+            state = f"retirement record for {m.get('supersedes', '?')}"
+        elif k in current:
+            state = "in force"
+        elif k in replaced_by:
+            later = decs[replaced_by[k]]
+            how = ("retired" if later.get("kind") == RETIREMENT else
+                   "amended" if "\n### Exception\n" in (root / replaced_by[k]).read_text(encoding="utf-8") else "replaced")
+            state = f"{how} by {replaced_by[k]} on {later.get('date', '?')}"
+        else:
+            state = f"not in force (status: {m.get('status')})"
+        out.append((k, title, m.get("date", "?"), m.get("approved_by", "?"), state))
+    return out
+
+
+def format_history(rows):
+    if not rows:
+        return "No decisions yet."
+    lines = []
+    for k, title, date, by, state in rows:
+        lines.append(f"{date}  {title}\n            {k}\n            {state}; approved by {by} (attribution, not verified)")
+    return "\n".join(lines)
+
+
 def safe_rel(root, rel, prefix):
     one_line(rel, "a path")
     parts = rel.split("/")
@@ -431,6 +465,7 @@ def main(argv=None):
     r.add_argument("--note", default="")
     r.add_argument("--date")
     sub.add_parser("current")
+    sub.add_parser("history", help="every decision, oldest first, with what changed it")
     h = sub.add_parser("hash")
     h.add_argument("file")
     sub.add_parser("check")
@@ -439,11 +474,13 @@ def main(argv=None):
     try:
         if not Path(a.root).is_dir():
             raise Refusal(f"{a.root} is not a folder")
-        if a.cmd == "current" and not (Path(a.root) / "decisions").is_dir():
+        if a.cmd in ("current", "history") and not (Path(a.root) / "decisions").is_dir():
             raise Refusal(f"{a.root} has no decisions/ folder; is it a Living System workspace?")
         if a.cmd == "review":
             status, result = review(a.root, a.proposal, a.outcome, a.by, a.note, a.date)
             print(f"{a.proposal}: {status}" + (f"; created {result}" if result else "; canonical state unchanged"))
+        elif a.cmd == "history":
+            print(format_history(history(Path(a.root))))
         elif a.cmd == "current":
             print("\n".join(current_decisions(Path(a.root))))
         elif a.cmd == "hash":

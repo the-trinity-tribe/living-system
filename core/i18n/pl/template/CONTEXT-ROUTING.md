@@ -7,6 +7,7 @@
 | Kto jest właścicielką lub właścicielem, role | `SYSTEM.md` (wiążące tylko ze `status: approved`) |
 | Zasady przewodnie | `PRINCIPLES.md` (wiążące tylko ze `status: approved`) |
 | Zatwierdzone ustalenie (kto co zatwierdza, jak coś ma być zrobione) | Właściwy **aktualny** plik w `decisions/` (pomiń każdą decyzję, którą inna zatwierdzona decyzja wymienia w `supersedes:`; `python3 tools/review.py current` je wypisuje) |
+| Jak zasada zmieniała się w czasie | `python3 tools/review.py history` |
 | Wiedza do ponownego użycia | Właściwy plik w `knowledge/` |
 | Bieżący projekt | Właściwy plik w `projects/` |
 | Powtarzalna praca z przebiegiem etapowym | Właściwy folder w `workflows/` |

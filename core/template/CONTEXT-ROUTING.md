@@ -7,6 +7,7 @@
 | Who the owner is, roles | `SYSTEM.md` (only canonical if `status: approved`) |
 | Governing principles | `PRINCIPLES.md` (only canonical if `status: approved`) |
 | Approved choice (who approves what, how things must be done) | The relevant **current** file in `decisions/` (skip any decision named in another approved decision's `supersedes:`; `python3 tools/review.py current` lists them) |
+| How a rule changed over time | `python3 tools/review.py history` |
 | Reusable knowledge | The relevant file in `knowledge/` |
 | Current project | The relevant file in `projects/` |
 | Repeated work that has a staged workflow | The relevant folder in `workflows/` |
