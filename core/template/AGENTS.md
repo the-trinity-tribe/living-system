@@ -216,6 +216,8 @@ Never keep scores, grades or judgements about the human. Progress notes go in `m
 
 **Onboarding.** For someone new to a role or a company (or anyone who asks "what should I know?"), `python3 <product folder>/tools/living.py onboard .` keeps a private reading path in `me/onboarding.md`: company rules first, then how the company works, what earlier people in the role handed on, workflows, own rules and lessons. Use the `onboarding` skill. Introduce at most three items per session, in plain words, only when the human has time, and tick an item only after the human says they understood it. When a rule changes, it comes back on the path by itself.
 
+**Parking and tending.** When the human has an idea or worry that is not about the current task, or says "park this", run `python3 <product folder>/tools/living.py park . "<the idea in one line>"` and carry on with the task; do not start on the idea. Never park names of people or clients, or secrets. When the human has time for upkeep ("tend", "let's tidy up", "what's piling up?"), use the `tend` skill. To judge an idea before building anything, use the `idea-check` skill.
+
 **Working without AI.** `python3 <product folder>/tools/living.py handbook . --out <file outside the workspace>` writes a readable copy of the rules in force, waiting proposals, workflows, and how to do the review steps by hand. Suggest it when the human worries about the system or the AI failing, before a long absence, or when a new person takes over the work. The copy is not the rules: the files in `decisions/` win.
 
 ## 14. Connected workspaces: personal and company

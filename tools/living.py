@@ -15,6 +15,7 @@
   living.py link <ws> --org <company ws> --role <role> | --remove
   living.py share <ws> <file> [--as LABEL] [--apply]
   living.py onboard <ws> [--done ID] [--next N]
+  living.py park <ws> ["idea"] [--done N]
   living.py evidence <ws> [--out FILE]
   living.py role-review <company ws> <file> --outcome accept|reject --by NAME
   living.py export <ws> <file.zip> [--apply]
@@ -1502,6 +1503,11 @@ def status(ws):
     step = handover_next_step(ws)
     if step:
         lines.append(f"Last session's next step: {step}")
+    parked = ws / PARKED_FILE
+    if parked.is_file():
+        n = sum(1 for m in PARKED_ITEM.finditer(parked.read_text(encoding="utf-8", errors="replace")) if m.group(1) == " ")
+        if n:
+            lines.append(f"Parked ideas: {n} (living.py park . lists them; the tend skill goes through them)")
     path = ws / ONBOARD_FILE
     if path.is_file():
         marks = [m for m, *_ in ONBOARD_ITEM.findall(path.read_text(encoding="utf-8", errors="replace"))]
@@ -1948,6 +1954,61 @@ def role_review(ws, rel, outcome, by, today=None):
             f"not a rule. accepted_by is attribution, not verified identity.")
 
 
+# ---------- parked ideas: write it down, keep working ----------
+
+PARKED_FILE = "me/parked.md"
+PARKED_ITEM = re.compile(r"^- \[([ xX])\] (\d{4}-\d{2}-\d{2}) (.+)$", re.M)
+PARKED_HEAD = ("# Parked ideas\n\nPrivate to you, and not a rule. Ideas you wanted to keep without switching task. Look at "
+               "them when you have time (the `tend` skill goes through them one by one). Ticked = dealt with.\n\n")
+
+
+def park(ws, idea=None, done=None, today=None):
+    """Add an idea to me/parked.md, tick one off (done = its number), or list the open ones. Returns (open, message)."""
+    import datetime
+    ws = Path(ws)
+    read_manifest(ws)
+    refuse_links(ws, ["me", PARKED_FILE])
+    path = ws / PARKED_FILE
+    with workspace_lock(ws):
+        text = path.read_text(encoding="utf-8") if path.is_file() else PARKED_HEAD
+        message = ""
+        if idea is not None:
+            idea = " ".join(idea.split())
+            if not idea or len(idea) > 300:
+                raise Refusal("an idea is one line of at most 300 characters")
+            if guard_tool().secrets_in(idea):
+                raise Refusal("that looks like a password, key or token; park where to find it instead")
+            text = text.rstrip("\n") + f"\n- [ ] {(today or datetime.date.today()).isoformat()} {idea}\n"
+            message = "Parked. Carry on with what you were doing."
+        if done is not None:
+            items = [m for m in PARKED_ITEM.finditer(text) if m.group(1) == " "]
+            if not 1 <= done <= len(items):
+                raise Refusal(f"there is no open idea number {done}; run park . to see the list")
+            m = items[done - 1]
+            text = text[:m.start()] + "- [x]" + text[m.start() + 5:]
+            message = f"Ticked off: {m.group(3)}"
+        if idea is not None or done is not None:
+            path.parent.mkdir(exist_ok=True)
+            fd, tmp = tempfile.mkstemp(prefix=".parked.", suffix=".tmp", dir=path.parent)
+            try:
+                with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as f:
+                    f.write(text)
+                os.replace(tmp, path)
+            except BaseException:
+                Path(tmp).unlink(missing_ok=True)
+                raise
+    return [(m.group(2), m.group(3)) for m in PARKED_ITEM.finditer(text) if m.group(1) == " "], message
+
+
+def format_park(open_ideas, message):
+    lines = [message] if message else []
+    if not open_ideas:
+        return "\n".join(lines + ["No parked ideas."])
+    return "\n".join(lines + [f"{len(open_ideas)} parked idea(s):"] +
+                     [f"  {n}. {day}  {idea}" for n, (day, idea) in enumerate(open_ideas, 1)] +
+                     ["Tick one off with: living.py park . --done <number>"])
+
+
 # ---------- onboarding: a personal reading path, a few items at a time ----------
 
 ONBOARD_FILE = "me/onboarding.md"
@@ -2368,6 +2429,10 @@ def main(argv=None):
     rr.add_argument("file", help="roles/<role>/inbox/<file>.md")
     rr.add_argument("--outcome", required=True, choices=("accept", "reject"))
     rr.add_argument("--by", required=True)
+    pk = sub.add_parser("park", help="write an idea down without switching task, or list and tick off parked ideas")
+    pk.add_argument("workspace")
+    pk.add_argument("idea", nargs="?", help="the idea, in one line (leave out to list)")
+    pk.add_argument("--done", type=int, metavar="N", help="tick off parked idea number N")
     ob = sub.add_parser("onboard", help="your reading path: company rules, role knowledge, workflows, a few at a time")
     ob.add_argument("workspace")
     ob.add_argument("--done", metavar="ID", help="tick one item you have understood")
@@ -2447,6 +2512,8 @@ def main(argv=None):
                       "Nothing was written. Run again with --apply to share it.")
         elif a.cmd == "role-review":
             print(role_review(a.workspace, a.file, a.outcome, a.by))
+        elif a.cmd == "park":
+            print(format_park(*park(a.workspace, a.idea, a.done)))
         elif a.cmd == "onboard":
             print(format_onboard(*onboard(a.workspace, a.done, a.next)))
         elif a.cmd == "evidence":
