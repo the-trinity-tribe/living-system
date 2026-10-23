@@ -34,6 +34,7 @@ Use a throwaway workspace folder (`~\ls-test` below). Delete it when you are don
 | 2.5 | `py -B tools\living.py doctor ~\ls-test` | Two warnings: `SYSTEM.md` and `PRINCIPLES.md` are not approved yet. `0 error(s)`. |
 | 2.6 | `py -B tools\living.py status ~\ls-test` | "Waiting for you" lists the two drafts. |
 | 2.7 | `py -B tools\living.py upgrade ~\ls-test` | `Already up to date.` |
+| 2.8 | `py -B tools\living.py since ~\ls-test --days 1` | `Rules: no changes.` and `Proposals: no changes.` (a fresh workspace has nothing new). |
 
 ## 3. Modules
 
@@ -76,6 +77,7 @@ Testing.
 | 4.2 | `py -B tools\review.py --root ~\ls-test review proposals/2026-10-25-weekly-report.md --outcome approve --by "Your Name"` | `...: promoted; created decisions/<today>-weekly-report.md` |
 | 4.3 | `py -B tools\review.py --root ~\ls-test current` | That one decision. |
 | 4.4 | Run 4.2 again | `REFUSED: ... is already promoted`. |
+| 4.4a | `py -B tools\living.py since ~\ls-test --days 1` | Under "Rules (read these first)": `New rule: I send the weekly report on Fridays`. Under "Proposals": `approved on <today>`. |
 | 4.5a | `py -B tools\living.py propose ~\ls-test --kind new --title "Clients get answers within two days" --rule "I answer client e-mails within two working days." --evidence "my own test" --apply` | The proposal text, then `Written proposals/<today>-clients-get-answers-within-two-days.md` and the review command to copy. `current` still shows only the first decision. |
 | 4.5 | Open the new decision file. Add an umlaut or "ł" somewhere in a new proposal and repeat 4.1 to 4.2 with a new file name. | Special characters appear correctly in the new decision. |
 

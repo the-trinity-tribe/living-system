@@ -109,6 +109,16 @@ class EmptyWorkspace(unittest.TestCase):
 
 
 class TestNewDecision(EmptyWorkspace):
+    def test_decision_name_keeps_short_proposal_names(self):
+        rel = "proposals/fridays.md"
+        self.write_proposal(FRONT + BODY, rel)
+        self.assertEqual(self.run_review("approve", rel), ("promoted", "decisions/2026-10-21-fridays.md"))
+
+    def test_proposal_name_with_nothing_left_after_the_date_is_refused(self):
+        rel = "proposals/2026-10-20-.md"
+        self.write_proposal(FRONT + BODY, rel)
+        self.assertRefused(rel=rel)
+
     def test_check_accepts_new_proposal(self):
         self.assertEqual(R.check(self.root), [])
 

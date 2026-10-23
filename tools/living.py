@@ -1453,6 +1453,116 @@ def status(ws):
     return "\n".join(lines)
 
 
+SINCE_COVERED = ("decisions", "proposals", "knowledge", "lessons", "handover", "SYSTEM.md", "PRINCIPLES.md")
+SINCE_SKIP = (".git", ".living", ".claude", ".codex", ".agents", "tools", "__pycache__")
+SINCE_SHOWN = 15
+
+
+def changed_files(ws, since, untouched=()):
+    """Workspace files whose file date on this computer is on or after since, newest first.
+    Files still exactly as Living System installed them are left out: nobody changed their content."""
+    import datetime
+    ws = Path(ws)
+    out = []
+    for top, dirs, files in os.walk(ws):
+        rel_top = Path(top).relative_to(ws)
+        dirs[:] = sorted(d for d in dirs if not (rel_top == Path(".") and d in SINCE_SKIP) and d != "__pycache__")
+        for name in files:
+            p = Path(top) / name
+            if p.is_symlink() or name in (".gitkeep", ".review.lock"):
+                continue
+            day = datetime.date.fromtimestamp(p.stat().st_mtime)
+            rel = p.relative_to(ws).as_posix()
+            if day >= since and not (rel in untouched and sha256(p) == untouched[rel]):
+                out.append((day.isoformat(), rel))
+    return sorted(out, key=lambda r: (r[0], r[1]), reverse=True)
+
+
+def since(ws, date, today=None):
+    """What changed in the workspace on or after date, in plain words, rules first. Read-only."""
+    import datetime
+    ws = Path(ws)
+    manifest = read_manifest(ws)
+    untouched = dict(manifest["files"])
+    for entry in manifest.get("modules", {}).values():
+        untouched.update(entry["files"])
+    R = review_tool()
+    today = today or datetime.date.today()
+    try:
+        start = datetime.date.fromisoformat(date)
+    except (TypeError, ValueError):
+        raise Refusal(f"{date!r} is not a date like 2026-10-01") from None
+    if start > today:
+        raise Refusal(f"{date} is in the future; give the day you left")
+    lines = [f"What changed since {start} ({(today - start).days} day(s) ago). Read-only: nothing was changed."]
+
+    rules = []
+    if (ws / "decisions").is_dir():
+        decs = R.decisions(ws)
+        titles = {k: title for k, title, *_ in R.history(ws)}
+        for k, m in sorted(decs.items(), key=lambda kv: (kv[1].get("date", ""), kv[0])):
+            if m.get("status") != "approved" or str(m.get("date", "")) < start.isoformat():
+                continue
+            by = f"approved by {m.get('approved_by', '?')} on {m.get('date')}"
+            old = m.get("supersedes")
+            if m.get("kind") == R.RETIREMENT:
+                rules.append(f"Retired: {titles.get(old, old)} ({old}); no rule replaces it. {by}")
+            elif old:
+                how = "Amended" if "\n### Exception\n" in (ws / k).read_text(encoding="utf-8") else "Replaced"
+                rules.append(f"{how}: {titles.get(old, old)}. Now read {k} ({titles[k]}). {by}")
+            else:
+                rules.append(f"New rule: {titles[k]} ({k}). {by}")
+    files = changed_files(ws, start, untouched)
+    for f in ("SYSTEM.md", "PRINCIPLES.md"):
+        if f in (rel for _, rel in files):
+            rules.append(f"{f} was edited (file date); read it again")
+    lines += ["Rules (read these first):", *(f"  - {x}" for x in rules)] if rules else ["Rules: no changes."]
+
+    props = []
+    for p in sorted((ws / "proposals").glob("*.md")) if (ws / "proposals").is_dir() else []:
+        try:
+            meta, _, body = R.split_frontmatter(p.read_text(encoding="utf-8"), p.name)
+        except (R.Refusal, UnicodeDecodeError):
+            continue
+        title = (re.search(r"^# Proposal: (.+)$", body, re.M) or re.match("(.*)", p.stem)).group(1).strip()
+        reviewed, made = str(meta.get("reviewed_on", "")), str(meta.get("date", ""))
+        if reviewed >= start.isoformat():
+            outcome = {"promoted": "approved", "rejected": "rejected", "deferred": "deferred"}.get(
+                meta.get("status"), meta.get("status"))
+            props.append(f"{outcome} on {reviewed}: {title} (proposals/{p.name})")
+        elif made >= start.isoformat() and meta.get("status") in R.REVIEWABLE:
+            props.append(f"new, waits for review: {title} (proposals/{p.name})")
+    lines += ["Proposals:", *(f"  - {x}" for x in props)] if props else ["Proposals: no changes."]
+
+    other = []
+    if "handover/LATEST.md" in (rel for _, rel in files):
+        step = handover_next_step(ws)
+        other.append("handover/LATEST.md was updated" + (f"; its next step: {step}" if step else ""))
+    try:
+        counted = read_runs(ws)["work"]
+    except Refusal:
+        counted = {}
+    for name, e in sorted(counted.items()):
+        if e["last"] >= start.isoformat():
+            other.append(f"repeated work '{name}': {e['count']} run(s) in total, last on {e['last']}"
+                         + (", now waits for your decision" if run_is_due(e) else ""))
+    for area, label in (("knowledge/", "knowledge"), ("lessons/", "lessons")):
+        hits = [rel for _, rel in files if rel.startswith(area)]
+        if hits:
+            other.append(f"{len(hits)} {label} file(s) changed, e.g. {hits[0]}")
+    lines += ["Other changes:", *(f"  - {x}" for x in other)] if other else ["Other changes: none recorded."]
+
+    rest = [(day, rel) for day, rel in files if rel.split("/", 1)[0] not in SINCE_COVERED]
+    if rest:
+        lines.append("Other files changed (file dates on this computer; a copy or git pull can change them):")
+        lines += [f"  - {day}  {rel}" for day, rel in rest[:SINCE_SHOWN]]
+        if len(rest) > SINCE_SHOWN:
+            lines.append(f"  - and {len(rest) - SINCE_SHOWN} more")
+    lines.append("Next: " + ("read the changed rules first; then run status for what waits for you." if rules else
+                             "run status for what waits for you."))
+    return "\n".join(lines)
+
+
 def format_doctor(results):
     if not results:
         return "All good: no problems found."
@@ -1517,6 +1627,11 @@ def main(argv=None):
     d.add_argument("workspace")
     s = sub.add_parser("status", help="what needs your attention, in plain words (read-only)")
     s.add_argument("workspace")
+    sn = sub.add_parser("since", help="what changed while you were away, rules first (read-only)")
+    sn.add_argument("workspace")
+    when = sn.add_mutually_exclusive_group(required=True)
+    when.add_argument("--date", help="the day you left, e.g. 2026-10-01")
+    when.add_argument("--days", type=int, help="or: how many days you were away")
     a = ap.parse_args(argv)
     for name in ("workspace", "dir"):  # PowerShell passes ~ through unexpanded
         if getattr(a, name, None):
@@ -1563,6 +1678,12 @@ def main(argv=None):
                   if a.apply else f"Nothing was written. Run again with --apply to create {rel}.")
         elif a.cmd == "status":
             print(status(a.workspace))
+        elif a.cmd == "since":
+            import datetime
+            if a.days is not None and a.days < 0:
+                raise Refusal("--days must be 0 or more")
+            date = a.date or (datetime.date.today() - datetime.timedelta(days=a.days)).isoformat()
+            print(since(a.workspace, date))
         elif a.cmd == "doctor":
             results = doctor(a.workspace)
             print(format_doctor(results))

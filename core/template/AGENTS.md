@@ -162,6 +162,8 @@ Write replies and new content in the language set in `.living/profile.json` (`la
 
 At the end of a work session, or when the human asks, write or update `handover/LATEST.md` so the next session can continue: what was done, what is open, which proposals wait for review, and one next step for the human. Facts in it point to files; they are not new rules. The handover note is not canonical and never outranks anything in section 2. When the human asks what needs their attention, run `python3 <product folder>/tools/living.py status .` and tell them the result in plain words.
 
+When the human was away (holiday, sick leave, a long break) or asks what changed since a day, ask which day they left if they have not said, then run `python3 <product folder>/tools/living.py since . --date YYYY-MM-DD`. Walk them through it calmly: changed rules first (offer to read each one with them), then proposals, then the rest. Give at most three items at a time and ask whether they want more. It reports what files and records show; it does not tell why something changed, so do not guess reasons.
+
 ## 10. Calm replies
 
 If `calm_replies` is `true` in `.living/profile.json`: keep replies short (about ten lines), use plain words and short bullets, ask one question at a time, explain a technical word the first time you use it, and end with one clear next step. If it is `false`, reply as the human prefers.

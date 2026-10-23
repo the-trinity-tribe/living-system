@@ -169,7 +169,11 @@ def checked_target(root, pmeta):
 
 
 def new_decision_path(root, proposal_rel, date):
-    slug = Path(proposal_rel).stem[len("YYYY-MM-DD-"):]
+    # Proposals are named YYYY-MM-DD-short-name.md; the decision keeps the short name. Other names keep the whole stem.
+    stem = Path(proposal_rel).stem
+    slug = re.sub(r"^\d{4}-\d{2}-\d{2}-", "", stem)
+    if not slug or slug.startswith("."):
+        raise Refusal(f"{proposal_rel}: rename it to YYYY-MM-DD-short-name.md so the decision gets a name")
     new_rel = f"decisions/{date}-{slug}.md"
     if (root / new_rel).exists() or (root / new_rel).is_symlink():
         raise Refusal(f"{new_rel} already exists")
@@ -191,10 +195,7 @@ def build_decision(root, proposal_rel, pmeta, pbody, reviewer, date):
     if not title:
         raise Refusal(f"{target_rel}: no title")
     rule, why, scope = (section(tbody, h, target_rel) for h in ("Rule", "Why", "Scope"))
-    slug = Path(proposal_rel).stem[len("YYYY-MM-DD-"):]
-    new_rel = f"decisions/{date}-{slug}.md"
-    if (root / new_rel).exists():
-        raise Refusal(f"{new_rel} already exists")
+    new_rel = new_decision_path(root, proposal_rel, date)
     text = (
         f"---\nstatus: approved\napproved_by: {reviewer}\ndate: {date}\n"
         f"supersedes: {target_rel}\nsource_proposal: {proposal_rel}\n---\n\n"
