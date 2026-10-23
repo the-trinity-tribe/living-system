@@ -79,6 +79,8 @@ python3 tools/living.py remove ~/my-workspace weekly-update       # see what rem
 python3 tools/living.py new-workflow ~/my-workspace launch-post --stages research,draft,review --goal "A launch post ready for my review"
 ```
 
+**What needs my attention?** `python3 tools/living.py status ~/my-workspace` lists the proposals waiting for your review, lesson suggestions, drafts you have not approved, and where the last session stopped. It changes nothing.
+
 **Health check:** `python3 tools/living.py doctor ~/my-workspace` reads your workspace and lists problems in plain words (for example a draft you have not approved yet, a workflow step left unfinished, or demo material that slipped in). It changes nothing.
 
 **Getting a newer version:** after you update this folder (for example with `git pull`), run `python3 tools/living.py upgrade ~/my-workspace` to see what would change, then add `--apply`. Files you never changed are updated; files you edited are kept, with the new version saved in `.living/upgrade/` to compare; your decisions, proposals, projects and personal goals are never touched.

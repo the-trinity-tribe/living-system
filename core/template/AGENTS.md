@@ -147,7 +147,7 @@ Write replies and new content in the language set in `.living/profile.json` (`la
 
 ## 9. Handover note
 
-At the end of a work session, or when the human asks, write or update `handover/LATEST.md` so the next session can continue: what was done, what is open, which proposals wait for review, and one next step for the human. Facts in it point to files; they are not new rules. The handover note is not canonical and never outranks anything in section 2.
+At the end of a work session, or when the human asks, write or update `handover/LATEST.md` so the next session can continue: what was done, what is open, which proposals wait for review, and one next step for the human. Facts in it point to files; they are not new rules. The handover note is not canonical and never outranks anything in section 2. When the human asks what needs their attention, run `python3 <product folder>/tools/living.py status .` and tell them the result in plain words.
 
 ## 10. Calm replies
 

@@ -8,6 +8,7 @@
   living.py remove <ws> <module> [--apply]
   living.py new-workflow <ws> <name> --stages a,b,c [--goal "..."] [--apply]
   living.py doctor <ws>
+  living.py status <ws>
   living.py upgrade <ws> [--apply]
 
 `init` writes into a NEW folder, built in a temporary folder next to it and renamed
@@ -853,6 +854,71 @@ def doctor(ws):
     return out
 
 
+def handover_next_step(ws):
+    """The 'next step' line from handover/LATEST.md, or None if the note has none yet."""
+    note = Path(ws) / "handover/LATEST.md"
+    if not note.is_file():
+        return None
+    lines = note.read_text(encoding="utf-8", errors="replace").splitlines()
+    if any("No session has been handed over yet" in l for l in lines):
+        return None
+    for i, line in enumerate(lines):
+        if re.search(r"(?i)next step", line):
+            text = re.sub(r"(?i)^[\s*#-]*(\*\*)?[^:*]*next step[^:*]*(\*\*)?\s*:?\s*(\*\*)?\s*", "", line).strip(" *")
+            if not text and i + 1 < len(lines):
+                text = lines[i + 1].strip(" -*")
+            return text or None
+    return None
+
+
+def status(ws):
+    """What needs the human's attention, in plain words. Read-only."""
+    ws = Path(ws)
+    read_manifest(ws)
+    R = review_tool()
+    try:
+        prof = json.loads((ws / ".living/profile.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        prof = {}
+    current = R.current_decisions(ws) if (ws / "decisions").is_dir() else []
+    lines = [f"Workspace: {ws} (profile: {prof.get('profile', '?')}, language: {prof.get('language', '?')})",
+             f"Rules in force: {len(current)} current decision(s). List them: python3 tools/review.py current"]
+    todo = []
+    for p in sorted((ws / "proposals").glob("*.md")) if (ws / "proposals").is_dir() else []:
+        try:
+            meta, _, body = R.split_frontmatter(p.read_text(encoding="utf-8"), p.name)
+        except (R.Refusal, UnicodeDecodeError):
+            todo.append(f"proposals/{p.name} cannot be read as a proposal; run doctor")
+            continue
+        if meta.get("status") in R.REVIEWABLE:
+            title = re.search(r"^# Proposal: (.+)$", body, re.M)
+            what = {"new": "new rule", "replace": "replaces a rule", "retire": "retires a rule"}.get(
+                meta.get("kind"), "exception to a rule")
+            todo.append(f"Review proposals/{p.name} ({what}): {title.group(1).strip() if title else 'no title'}")
+    inbox = ws / "lessons/inbox.md"
+    if inbox.is_file():
+        n = inbox.read_text(encoding="utf-8", errors="replace").count("---lesson---")
+        if n:
+            todo.append(f"{n} lesson suggestion(s) in lessons/inbox.md to approve or delete")
+    for f in ("SYSTEM.md", "PRINCIPLES.md"):
+        if (ws / f).is_file():
+            try:
+                approved = R.split_frontmatter((ws / f).read_text(encoding="utf-8"), f)[0].get("status") == "approved"
+            except R.Refusal:
+                approved = False
+            if not approved:
+                todo.append(f"Read {f} and change status: draft to status: approved when it is right")
+    lines += ["Waiting for you:", *(f"  - {x}" for x in todo)] if todo else ["Waiting for you: nothing."]
+    step = handover_next_step(ws)
+    if step:
+        lines.append(f"Last session's next step: {step}")
+    health = doctor(ws)
+    errors = sum(1 for lvl, _ in health if lvl == "ERROR")
+    warns = sum(1 for lvl, _ in health if lvl == "WARN")
+    lines.append(f"Health: {errors} error(s), {warns} warning(s)." + (" Details: living.py doctor" if errors or warns else ""))
+    return "\n".join(lines)
+
+
 def format_doctor(results):
     if not results:
         return "All good: no problems found."
@@ -891,6 +957,8 @@ def main(argv=None):
     w.add_argument("--apply", action="store_true")
     d = sub.add_parser("doctor", help="read-only health check of a workspace")
     d.add_argument("workspace")
+    s = sub.add_parser("status", help="what needs your attention, in plain words (read-only)")
+    s.add_argument("workspace")
     a = ap.parse_args(argv)
     for name in ("workspace", "dir"):  # PowerShell passes ~ through unexpanded
         if getattr(a, name, None):
@@ -916,6 +984,8 @@ def main(argv=None):
             print(format_upgrade_plan(plan))
             if any(act not in ("same",) for act, *_ in plan):
                 print("Upgraded." if a.apply else "Nothing was written. Run again with --apply to upgrade.")
+        elif a.cmd == "status":
+            print(status(a.workspace))
         elif a.cmd == "doctor":
             results = doctor(a.workspace)
             print(format_doctor(results))
