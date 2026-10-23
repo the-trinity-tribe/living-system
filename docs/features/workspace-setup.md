@@ -41,11 +41,12 @@ python3 tools/review.py --root ~/my-workspace check
 | `--profile` | Required. One of `student`, `professional`, `employee`, `manager`. |
 | `--language` | Required. A language code such as `en`, `de`, `pl` or `pt-BR`. A name like `English` is refused. |
 | `--calm-replies` | Optional. Asks the agent for short, plain replies. |
+| `--team` | Optional, for a shared company workspace: whoever proposes a change cannot approve it (see [connected workspaces](connected-workspaces.md)). |
 | `--coach` | Optional. The agent also helps you keep your own skills (see [learning mode](learning-mode.md)). |
 
 Success prints the new path, your choices, and `Undo: delete that folder.`
 
-Every workspace also gets six short skills, in `.claude/skills/` for Claude Code and `.agents/skills/` for Codex, both copied from one source: `living-status`, `first-decision`, `propose-change`, `wrap-up`, `catch-up` and `practice`. In Claude Code you can also type them as `/living-status` and so on; both agents pick them up when your request matches.
+Every workspace also gets seven short skills, in `.claude/skills/` for Claude Code and `.agents/skills/` for Codex, both copied from one source: `living-status`, `first-decision`, `propose-change`, `wrap-up`, `catch-up`, `practice` and `share-knowledge`. In Claude Code you can also type them as `/living-status` and so on; both agents pick them up when your request matches.
 
 ## How do you use it?
 

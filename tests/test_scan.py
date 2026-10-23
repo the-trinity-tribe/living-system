@@ -2,6 +2,7 @@
 import subprocess, sys, unittest
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 from test_guard import GuardCase, write, REPO
 import living as L
 

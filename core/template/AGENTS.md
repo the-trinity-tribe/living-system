@@ -209,3 +209,19 @@ If `coach` is `true` in `.living/profile.json` (coach mode), also:
 Never keep scores, grades or judgements about the human. Progress notes go in `me/`, written by the human or by you only after their yes. Turn coach mode on or off when the human asks: change `coach` in `.living/profile.json` after their yes.
 
 **Working without AI.** `python3 <product folder>/tools/living.py handbook . --out <file outside the workspace>` writes a readable copy of the rules in force, waiting proposals, workflows, and how to do the review steps by hand. Suggest it when the human worries about the system or the AI failing, before a long absence, or when a new person takes over the work. The copy is not the rules: the files in `decisions/` win.
+
+## 14. Connected workspaces: personal and company
+
+A company can keep one shared **company workspace** (made with `init --team`), and each person keeps a private personal workspace linked to it. Nothing is synced or sent: the personal workspace only records where the company folder is (`org_folder` in `.living/local.json`) and the person's role (`role` in `.living/profile.json`).
+
+**In a personal workspace that is linked:**
+
+- For work done for the company, the company's current approved decisions are canonical (section 2, level 2) and come before personal decisions. List them with `python3 <company folder>/tools/review.py --root <company folder> current`. A personal decision never overrides a company decision; if they conflict, say so (section 5) and tell the human to raise it in the company workspace.
+- What earlier people in the same role handed on is in `<company folder>/roles/<role>/knowledge/`. It is background knowledge (level 4), not rules.
+- Never write into the company folder. Knowledge reaches it only through `python3 <product folder>/tools/living.py share . <file>`, shown first as a plan and run with `--apply` only after the human read it and said yes. Use the `share-knowledge` skill.
+- When something in `knowledge/`, `workflows/` or `lessons/active.md` would help the next person in this role, you may suggest sharing it, once. Never share from `me/`, `handover/` or `incoming/`, and never anything with names, contact details or other personal information of anyone.
+
+**In the company workspace:**
+
+- `roles/<role>/inbox/` holds knowledge people shared: suggestions, not truth, like proposals. Only a human accepts or rejects them with `python3 <product folder>/tools/living.py role-review . <file> --outcome accept|reject --by "<name>"`. Never run it on your own judgement.
+- Because it is a team workspace, the person who proposed a change or shared knowledge does not approve or accept it. The tools refuse that; do not work around it. Names are attribution, not verified identity.

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Create and inspect a Living System workspace. Standard library only.
 
-  living.py init <dir> --profile <p> --language <code> [--calm-replies] [--coach]
+  living.py init <dir> --profile <p> --language <code> [--calm-replies] [--coach] [--team]
   living.py value-score <workspace>
   living.py modules [--workspace <ws>]
   living.py add <ws> <module> [--apply]
@@ -12,6 +12,9 @@
   living.py since <ws> --date YYYY-MM-DD | --days N
   living.py handbook <ws> [--out FILE]
   living.py scan <ws> [paths...]
+  living.py link <ws> --org <company ws> --role <role> | --remove
+  living.py share <ws> <file> [--as LABEL] [--apply]
+  living.py role-review <company ws> <file> --outcome accept|reject --by NAME
   living.py export <ws> <file.zip> [--apply]
   living.py protect <ws> [--apply]
   living.py runs <ws> [--add NAME | --decide NAME automate|manual|later | --forget NAME]
@@ -117,7 +120,7 @@ def write_manifest(ws):
         json.dumps({"kernel_version": KERNEL_VERSION, "files": files}, indent=2) + "\n", encoding="utf-8", newline="\n")
 
 
-def build(ws, profile, language, calm_replies, coach=False):
+def build(ws, profile, language, calm_replies, coach=False, team=False):
     lang = language_dir(language)
     copy_tree(CORE / "template", ws)
     if lang and (lang / "template").is_dir():
@@ -139,7 +142,8 @@ def build(ws, profile, language, calm_replies, coach=False):
     shutil.copyfile(HERE / "guard.py", ws / "tools" / "guard.py")
     (ws / ".living").mkdir()
     (ws / ".living" / "profile.json").write_text(json.dumps(
-        {"profile": profile, "language": language, "calm_replies": bool(calm_replies), "coach": bool(coach)}, indent=2) + "\n",
+        {"profile": profile, "language": language, "calm_replies": bool(calm_replies), "coach": bool(coach),
+         **({"team": True} if team else {})}, indent=2) + "\n",
         encoding="utf-8", newline="\n")
     (ws / ".living" / "catalog.md").write_text(catalog_text(), encoding="utf-8", newline="\n")
     # Where the tools live on this computer, so agents can run status, runs or doctor without asking.
@@ -165,7 +169,7 @@ def catalog_text(root=None):
             "(`AGENTS.md` section 11).\n")
 
 
-def init(target, profile, language, calm_replies=False, coach=False):
+def init(target, profile, language, calm_replies=False, coach=False, team=False):
     if profile not in PROFILES:
         raise Refusal(f"profile must be one of {', '.join(PROFILES)}")
     if not re.fullmatch(r"[a-z]{2,3}(-[A-Za-z0-9]{2,8})?", language):
@@ -177,7 +181,7 @@ def init(target, profile, language, calm_replies=False, coach=False):
         umask = os.umask(0)
         os.umask(umask)
         os.chmod(tmp, 0o777 & ~umask)
-        build(tmp, profile, language, calm_replies, coach)
+        build(tmp, profile, language, calm_replies, coach, team)
         emptied = target.is_dir()
         if emptied:
             target.rmdir()  # Windows cannot rename onto an existing folder, even an empty one
@@ -254,12 +258,18 @@ ROUTING_INTRO = ("## Installed modules\n\nOptional modules you added. The file e
                  "that module may do.\n\n| Need | Read |\n| --- | --- |\n")
 
 
+def unsafe_rel(rel):
+    """True unless rel is a plain relative path inside the workspace (no .., drive letters or odd characters)."""
+    parts = rel.split("/") if isinstance(rel, str) else [""]
+    return bool(not rel or rel.startswith("/") or "\\" in rel or ":" in rel or UNSAFE.search(rel)
+                or any(part in ("", ".", "..") or part != part.rstrip(". ") for part in parts))
+
+
 def path_problem(rel):
     """Why a module may not own this workspace path, or None. Used for module files and manifest entries."""
     parts = rel.split("/") if isinstance(rel, str) else [""]
     low = [part.lower() for part in parts]
-    if (not rel or rel.startswith("/") or "\\" in rel or ":" in rel or UNSAFE.search(rel)
-            or any(part in ("", ".", "..") or part != part.rstrip(". ") for part in parts)):
+    if unsafe_rel(rel):
         return "is not a plain relative path"
     if low[0] in PROTECTED_DIRS:
         return "is in a folder owned by you or the kernel"
@@ -573,6 +583,15 @@ UPGRADE_SKIP_FILES = (".living/profile.json", ".living/manifest.json", ".living/
 UPGRADE_COPIES = ".living/upgrade"
 
 
+def read_local(ws):
+    """.living/local.json as a dict, or {} if it is missing or damaged."""
+    try:
+        data = json.loads((Path(ws) / ".living/local.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError, UnicodeDecodeError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
 def local_folder(ws):
     """product_folder from .living/local.json, or None if the file is missing or damaged."""
     try:
@@ -635,7 +654,7 @@ def plan_upgrade(ws):
     try:
         prof = json.loads((ws / ".living/profile.json").read_text(encoding="utf-8"))
         profile, language, calm = prof["profile"], prof["language"], bool(prof.get("calm_replies"))
-        coach = bool(prof.get("coach"))
+        coach, team = bool(prof.get("coach")), bool(prof.get("team"))
     except (OSError, ValueError, KeyError, TypeError):
         raise Refusal(".living/profile.json is missing or damaged; upgrade needs it to know your profile") from None
     if profile not in PROFILES:
@@ -645,7 +664,7 @@ def plan_upgrade(ws):
     with tempfile.TemporaryDirectory() as tmp:
         fresh = Path(tmp) / "ws"
         fresh.mkdir()
-        build(fresh, profile, language, calm, coach)
+        build(fresh, profile, language, calm, coach, team)
         template = {p.relative_to(fresh).as_posix(): p.read_bytes() for p in sorted(fresh.rglob("*")) if p.is_file()}
     plan = Plan()
     plan.routing_hash = sha256_bytes(routing.encode("utf-8")) if routing_path.is_file() else None
@@ -670,10 +689,10 @@ def plan_upgrade(ws):
                  without_modules_block(routing).encode("utf-8"), exists=True)
         else:
             step(rel, data, manifest["files"].get(rel), None)
-    local = ws / ".living/local.json"
     known = local_folder(ws)
     if known != str(HERE.parent):  # this computer's Living System folder, not content: always kept current
-        plan.append(("local", ".living/local.json", template[".living/local.json"], None))
+        data = {**read_local(ws), "product_folder": str(HERE.parent)}  # keeps a company link
+        plan.append(("local", ".living/local.json", (json.dumps(data, indent=2) + "\n").encode("utf-8"), None))
     installed_mods = manifest.get("modules", {})
     for mid, entry in sorted(installed_mods.items()):
         try:
@@ -1368,6 +1387,13 @@ def doctor(ws):
             out.append(("INFO", f"proposals/{p.name} is {meta['status']} and waits for your review"))
     if (ws / "decisions").is_dir():
         out += R.verify(ws)
+    try:
+        org = org_folder(ws)
+    except Refusal as e:
+        out.append(("WARN", str(e)))
+    else:
+        if org is not None and not re.fullmatch(MODULE_ID, str(read_profile(ws).get("role", ""))):
+            out.append(("WARN", "linked to a company workspace but no role is recorded; link again with --role <role>"))
     steering = set()
     for level, rel, line, what in scan(ws):
         if level == "ERROR" or what.startswith("invisible"):
@@ -1414,6 +1440,18 @@ def status(ws):
     lines = [f"Workspace: {ws} (profile: {prof.get('profile', '?')}, language: {prof.get('language', '?')})",
              f"Rules in force: {len(current)} current decision(s). List them: python3 tools/review.py current"]
     todo = []
+    try:
+        org = org_folder(ws)
+    except Refusal as e:
+        org = None
+        todo.append(str(e))
+    if org is not None:
+        n = len(R.current_decisions(org)) if (org / "decisions").is_dir() else 0
+        lines.append(f"Company workspace: {org} (your role: {prof.get('role', '?')}; {n} company rule(s) in force, "
+                     f"they come first for company work)")
+    for rel, role, title, shared_as in role_inbox(ws):
+        todo.append(f"Shared knowledge for the {role} role: {title} ({rel}, shared as {shared_as})")
+        todo.append(f"    when you have decided, run: living.py role-review . {rel} --outcome accept|reject --by \"Your Name\"")
     for p in sorted((ws / "proposals").glob("*.md")) if (ws / "proposals").is_dir() else []:
         try:
             meta, _, body = R.split_frontmatter(p.read_text(encoding="utf-8"), p.name)
@@ -1493,6 +1531,28 @@ def changed_files(ws, since, untouched=()):
     return sorted(out, key=lambda r: (r[0], r[1]), reverse=True)
 
 
+def rule_changes(R, root, start):
+    """Plain lines for every decision approved on or after start: new, amended, replaced or retired."""
+    out = []
+    if not (Path(root) / "decisions").is_dir():
+        return out
+    decs = R.decisions(root)
+    titles = {k: title for k, title, *_ in R.history(root)}
+    for k, m in sorted(decs.items(), key=lambda kv: (kv[1].get("date", ""), kv[0])):
+        if m.get("status") != "approved" or str(m.get("date", "")) < start.isoformat():
+            continue
+        by = f"approved by {m.get('approved_by', '?')} on {m.get('date')}"
+        old = m.get("supersedes")
+        if m.get("kind") == R.RETIREMENT:
+            out.append(f"Retired: {titles.get(old, old)} ({old}); no rule replaces it. {by}")
+        elif old:
+            how = "Amended" if "\n### Exception\n" in (Path(root) / k).read_text(encoding="utf-8") else "Replaced"
+            out.append(f"{how}: {titles.get(old, old)}. Now read {k} ({titles[k]}). {by}")
+        else:
+            out.append(f"New rule: {titles[k]} ({k}). {by}")
+    return out
+
+
 def since(ws, date, today=None):
     """What changed in the workspace on or after date, in plain words, rules first. Read-only."""
     import datetime
@@ -1511,22 +1571,13 @@ def since(ws, date, today=None):
         raise Refusal(f"{date} is in the future; give the day you left")
     lines = [f"What changed since {start} ({(today - start).days} day(s) ago). Read-only: nothing was changed."]
 
-    rules = []
-    if (ws / "decisions").is_dir():
-        decs = R.decisions(ws)
-        titles = {k: title for k, title, *_ in R.history(ws)}
-        for k, m in sorted(decs.items(), key=lambda kv: (kv[1].get("date", ""), kv[0])):
-            if m.get("status") != "approved" or str(m.get("date", "")) < start.isoformat():
-                continue
-            by = f"approved by {m.get('approved_by', '?')} on {m.get('date')}"
-            old = m.get("supersedes")
-            if m.get("kind") == R.RETIREMENT:
-                rules.append(f"Retired: {titles.get(old, old)} ({old}); no rule replaces it. {by}")
-            elif old:
-                how = "Amended" if "\n### Exception\n" in (ws / k).read_text(encoding="utf-8") else "Replaced"
-                rules.append(f"{how}: {titles.get(old, old)}. Now read {k} ({titles[k]}). {by}")
-            else:
-                rules.append(f"New rule: {titles[k]} ({k}). {by}")
+    rules = rule_changes(R, ws, start)
+    try:
+        org = org_folder(ws)
+    except Refusal as e:
+        org, rules = None, rules + [str(e)]
+    if org is not None:
+        rules += [f"Company: {x}" for x in rule_changes(R, org, start)]
     files = changed_files(ws, start, untouched)
     for f in ("SYSTEM.md", "PRINCIPLES.md"):
         if f in (rel for _, rel in files):
@@ -1683,7 +1734,196 @@ def format_scan(results):
                               f"{sum(r[0] == 'WARN' for r in results)} warning(s). Nothing was changed."])
 
 
-HANDBOOK_MARK ="<!-- living-system handbook: a generated copy, not the rules -->"
+# ---------- connected workspaces: a personal workspace linked to a company workspace ----------
+
+SHARE_FROM = ("knowledge/", "lessons/active.md", "workflows/")
+EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
+EMAIL_OK = re.compile(r"@(example\.(com|org|net))$", re.I)
+PERSONAL = (("a phone number", re.compile(r"(?<![\w.])(?:\+|00)[1-9][\d \-/().]{7,}\d|(?<![\w.])0\d{2,4}[ /-]?\d{5,}")),
+            ("a bank account number", re.compile(r"\b[A-Z]{2}\d{2}(?: ?[A-Z0-9]{4}){3,7}(?: ?[A-Z0-9]{1,3})?\b")))
+SHARE_NOTE = ("<!-- Shared role knowledge: a suggestion, not a rule. A person in the company accepts or rejects it "
+              "with living.py role-review. -->")
+
+
+def org_folder(ws):
+    """The linked company workspace, or None. Raises if the link points at something that is not a workspace."""
+    folder = read_local(ws).get("org_folder")
+    if not folder:
+        return None
+    org = Path(folder)
+    if not (org / ".living/manifest.json").is_file():
+        raise Refusal(f"the linked company workspace {org} is not there or is not a workspace; link again with: "
+                      f"living.py link . --org <folder> --role <role>")
+    return org
+
+
+def read_profile(ws):
+    try:
+        prof = json.loads((Path(ws) / ".living/profile.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError, UnicodeDecodeError):
+        raise Refusal(".living/profile.json is missing or damaged") from None
+    if not isinstance(prof, dict):
+        raise Refusal(".living/profile.json has an unexpected structure")
+    return prof
+
+
+def link(ws, org=None, role=None, remove=False):
+    """Link this personal workspace to a company workspace, with your role there. Returns a plain message."""
+    ws = Path(ws).resolve()
+    read_manifest(ws)
+    refuse_links(ws, [".living/local.json", ".living/profile.json"])
+    with workspace_lock(ws):
+        local, prof = read_local(ws), read_profile(ws)
+        if remove:
+            local.pop("org_folder", None)
+            prof.pop("role", None)
+            write_json(ws / ".living/local.json", local)
+            write_json(ws / ".living/profile.json", prof)
+            return "Unlinked. Nothing in either workspace was deleted."
+        if not role or not re.fullmatch(MODULE_ID, role):
+            raise Refusal("give your role as a short name, e.g. --role account-manager (lowercase letters, digits, "
+                          "hyphens; no personal names)")
+        if not org:
+            raise Refusal("give the company workspace folder with --org")
+        target = Path(org).expanduser().resolve()
+        read_manifest(target)
+        if target == ws or ws in target.parents or target in ws.parents:
+            raise Refusal("the company workspace must be a separate folder, not inside this one or around it")
+        local["org_folder"], prof["role"] = str(target), role
+        write_json(ws / ".living/local.json", local)
+        write_json(ws / ".living/profile.json", prof)
+    team = "a team workspace" if read_profile(target).get("team") else "not marked as a team workspace (init --team)"
+    return (f"Linked to {target} as {role} ({team}). Its approved decisions now apply to work for the company; "
+            f"nothing is copied or sent. Undo: living.py link . --remove")
+
+
+def personal_data(text):
+    """[(line, what)] for e-mail addresses, phone numbers and bank account numbers in text."""
+    line_of = lambda i: text.count("\n", 0, i) + 1
+    found = [(line_of(m.start()), "an e-mail address") for m in EMAIL.finditer(text) if not EMAIL_OK.search(m.group(0))]
+    for what, pat in PERSONAL:
+        found += [(line_of(m.start()), what) for m in pat.finditer(text) if len(re.findall(r"\d", m.group(0))) >= 7]
+    return sorted(set(found))
+
+
+def share(ws, rel, shared_as=None, apply=False, today=None):
+    """Hand one file of role knowledge to the linked company workspace, for a human there to accept.
+    Returns (path in the company workspace, the exact text). Plan only unless apply."""
+    import datetime
+    ws = Path(ws).resolve()
+    read_manifest(ws)
+    org = org_folder(ws)
+    if org is None:
+        raise Refusal("this workspace is not linked to a company workspace; run: living.py link . --org <folder> "
+                      "--role <role>")
+    role = read_profile(ws).get("role")
+    if not role or not re.fullmatch(MODULE_ID, str(role)):
+        raise Refusal("no role recorded for this workspace; link again with --role <role>")
+    rel = Path(str(rel).replace("\\", "/")).as_posix()
+    if not rel.startswith(SHARE_FROM) or not rel.endswith(".md") or unsafe_rel(rel):
+        raise Refusal(f"{rel}: only Markdown files from knowledge/, workflows/ or lessons/active.md can be shared; "
+                      f"never me/, handover/, incoming/, decisions/ or proposals/")
+    refuse_links(ws, [rel])
+    src = ws / rel
+    if not src.is_file():
+        raise Refusal(f"{rel} does not exist")
+    text = src.read_text(encoding="utf-8")
+    body, carried = text, {}
+    if text.startswith("---\n"):
+        meta, _, body = review_tool().split_frontmatter(text, rel)
+        carried = {k: meta[k] for k in ("last_verified",) if k in meta}
+    problems = [f"line {n}: {what}" for n, what in personal_data(body)]
+    problems += [f"line {n}: {what.split(';')[0]}" for n, level, what in scan_text(body)]
+    if problems:
+        raise Refusal(f"{rel} cannot be shared as it is. Remove these first (the next person in the role does not "
+                      f"need them):\n  " + "\n  ".join(problems))
+    shared_as = shared_as or role
+    if not shared_as.strip() or re.search(r"[\x00-\x1f\x7f]", shared_as) or EMAIL.search(shared_as):
+        raise Refusal("--as must be a short label on one line, e.g. your role; no e-mail addresses")
+    today = (today or datetime.date.today()).isoformat()
+    slug = re.sub(r"[^a-z0-9]+", "-", Path(rel).stem.lower()).strip("-") or "shared"
+    if rel.startswith("workflows/"):
+        slug = "workflow-" + re.sub(r"[^a-z0-9]+", "-", rel[len("workflows/"):-len(".md")].lower()).strip("-")
+    target_rel = f"roles/{role}/inbox/{today}-{slug}.md"
+    if (org / target_rel).exists() or (org / target_rel).is_symlink():
+        raise Refusal(f"{target_rel} already exists in the company workspace; wait until it has been reviewed")
+    front = "".join(f"{k}: {v}\n" for k, v in [("status", "proposed"), ("role", role), ("shared_as", shared_as),
+                                                ("shared_on", today), ("source", rel), *carried.items()])
+    out = f"---\n{front}---\n\n{SHARE_NOTE}\n\n{body.lstrip()}"
+    if apply:
+        refuse_links(org, ["roles", f"roles/{role}", f"roles/{role}/inbox"])
+        with workspace_lock(org):
+            (org / target_rel).parent.mkdir(parents=True, exist_ok=True)
+            try:
+                with open(org / target_rel, "x", encoding="utf-8", newline="\n") as f:
+                    f.write(out)
+            except FileExistsError:
+                raise Refusal(f"{target_rel} appeared meanwhile; nothing was written") from None
+    return target_rel, out
+
+
+def role_inbox(ws):
+    """[(path, role, title, shared_as)] of shared knowledge waiting in a company workspace."""
+    R = review_tool()
+    out = []
+    for p in sorted(Path(ws).glob("roles/*/inbox/*.md")):
+        try:
+            meta, _, body = R.split_frontmatter(p.read_text(encoding="utf-8"), p.name)
+        except (Refusal, UnicodeDecodeError):
+            continue
+        if meta.get("status") == "proposed":
+            title = re.search(r"^# (.+)$", body, re.M)
+            out.append((p.relative_to(ws).as_posix(), p.parts[-3], title.group(1).strip() if title else p.stem,
+                        meta.get("shared_as", "?")))
+    return out
+
+
+def role_review(ws, rel, outcome, by, today=None):
+    """A human accepts shared role knowledge (it moves to roles/<role>/knowledge/) or rejects it (it is deleted)."""
+    import datetime
+    ws = Path(ws).resolve()
+    read_manifest(ws)
+    R = review_tool()
+    rel = Path(str(rel).replace("\\", "/")).as_posix()
+    m = re.fullmatch(rf"roles/({MODULE_ID})/inbox/([^/]+\.md)", rel)
+    if not m or unsafe_rel(rel):
+        raise Refusal(f"{rel} is not shared knowledge waiting in roles/<role>/inbox/")
+    if outcome not in ("accept", "reject"):
+        raise Refusal("outcome must be accept or reject")
+    if not by or not by.strip() or re.search(r"[\x00-\x1f\x7f]", by):
+        raise Refusal("--by is required: your name, on one line")
+    role, name = m.groups()
+    today = (today or datetime.date.today()).isoformat()
+    with workspace_lock(ws):
+        refuse_links(ws, ["roles", f"roles/{role}", f"roles/{role}/inbox", rel, f"roles/{role}/knowledge"])
+        src = ws / rel
+        if not src.is_file():
+            raise Refusal(f"{rel} does not exist")
+        meta, _, body = R.split_frontmatter(src.read_text(encoding="utf-8"), rel)
+        if meta.get("status") != "proposed":
+            raise Refusal(f"{rel} is {meta.get('status')!r}, not waiting for review")
+        if outcome == "reject":
+            src.unlink()
+            return f"Rejected and deleted {rel}. Nothing else changed."
+        if R.team_workspace(ws) and R.same_person(by, meta.get("shared_as", "")):
+            raise Refusal(f"this is a team workspace: it was shared as {by}, so someone else accepts it")
+        dest_rel = f"roles/{role}/knowledge/{re.sub(r'^[0-9]{4}-[0-9]{2}-[0-9]{2}-', '', name)}"
+        front = "".join(f"{k}: {v}\n" for k, v in [
+            ("accepted_by", by), ("accepted_on", today), ("shared_as", meta.get("shared_as", "?")),
+            ("shared_on", meta.get("shared_on", "?")), ("last_verified", meta.get("last_verified", today))])
+        text = body.lstrip().removeprefix(SHARE_NOTE).lstrip()
+        (ws / dest_rel).parent.mkdir(parents=True, exist_ok=True)
+        try:
+            with open(ws / dest_rel, "x", encoding="utf-8", newline="\n") as f:
+                f.write(f"---\n{front}---\n\n{text}")
+        except FileExistsError:
+            raise Refusal(f"{dest_rel} already exists; rename the file in the inbox and try again") from None
+        src.unlink()
+    return (f"Accepted: {dest_rel}. It is background knowledge for the {role} role (`AGENTS.md` section 2, level 4), "
+            f"not a rule. accepted_by is attribution, not verified identity.")
+
+
+HANDBOOK_MARK = "<!-- living-system handbook: a generated copy, not the rules -->"
 
 
 def handbook(ws, today=None):
@@ -1805,6 +2045,7 @@ def main(argv=None):
     i.add_argument("--language", required=True)
     i.add_argument("--calm-replies", action="store_true")
     i.add_argument("--coach", action="store_true", help="the agent also helps you keep and build your own skills")
+    i.add_argument("--team", action="store_true", help="a shared company workspace: who proposes a change never approves it")
     v = sub.add_parser("value-score", help="count right/wrong/made up/don't know in value-check/questions.md")
     v.add_argument("workspace")
     ls = sub.add_parser("modules", help="list optional modules")
@@ -1860,6 +2101,21 @@ def main(argv=None):
     sc = sub.add_parser("scan", help="look for secrets and hidden instructions in workspace files (read-only)")
     sc.add_argument("workspace")
     sc.add_argument("paths", nargs="*", help="only these files or folders, e.g. incoming")
+    ln = sub.add_parser("link", help="link this personal workspace to a company workspace, with your role there")
+    ln.add_argument("workspace")
+    ln.add_argument("--org", help="the company workspace folder")
+    ln.add_argument("--role", help="your role there, e.g. account-manager")
+    ln.add_argument("--remove", action="store_true", help="undo the link")
+    sh = sub.add_parser("share", help="hand one file of role knowledge to the company workspace (plan unless --apply)")
+    sh.add_argument("workspace")
+    sh.add_argument("file", help="a .md file in knowledge/, workflows/ or lessons/active.md")
+    sh.add_argument("--as", dest="shared_as", help="how it is labelled there (default: your role)")
+    sh.add_argument("--apply", action="store_true")
+    rr = sub.add_parser("role-review", help="in a company workspace: accept or reject shared role knowledge")
+    rr.add_argument("workspace")
+    rr.add_argument("file", help="roles/<role>/inbox/<file>.md")
+    rr.add_argument("--outcome", required=True, choices=("accept", "reject"))
+    rr.add_argument("--by", required=True)
     hb = sub.add_parser("handbook", help="a readable copy of your rules and workflows, for working without AI")
     hb.add_argument("workspace")
     hb.add_argument("--out", help="save it to this .md file outside the workspace (default: print it)")
@@ -1869,9 +2125,10 @@ def main(argv=None):
             setattr(a, name, os.path.expanduser(getattr(a, name)))
     try:
         if a.cmd == "init":
-            ws = init(a.dir, a.profile, a.language, a.calm_replies, a.coach)
+            ws = init(a.dir, a.profile, a.language, a.calm_replies, a.coach, a.team)
             print(f"Created workspace: {ws.resolve()}")
-            print(f"Profile: {a.profile} | language: {a.language} | calm replies: {'on' if a.calm_replies else 'off'} | coach: {'on' if a.coach else 'off'}")
+            print(f"Profile: {a.profile} | language: {a.language} | calm replies: {'on' if a.calm_replies else 'off'} | coach: {'on' if a.coach else 'off'}"
+                  + (" | team workspace" if a.team else ""))
             print("Undo: delete that folder. Next: open it in Claude Code or Codex.")
         elif a.cmd == "value-score":
             print(format_score(*value_score(a.workspace)))
@@ -1919,6 +2176,18 @@ def main(argv=None):
             results = scan(a.workspace, a.paths)
             print(format_scan(results))
             return 1 if any(lvl == "ERROR" for lvl, *_ in results) else 0
+        elif a.cmd == "link":
+            print(link(a.workspace, a.org and os.path.expanduser(a.org), a.role, a.remove))
+        elif a.cmd == "share":
+            rel, text = share(a.workspace, a.file, a.shared_as, a.apply)
+            print(f"Would write {rel} in the company workspace:\n\n{text}" if not a.apply else
+                  f"Written {rel} in the company workspace. Someone there accepts or rejects it with "
+                  f"living.py role-review.")
+            if not a.apply:
+                print("Read it: it must not contain names of people or clients (the tool cannot recognise names). "
+                      "Nothing was written. Run again with --apply to share it.")
+        elif a.cmd == "role-review":
+            print(role_review(a.workspace, a.file, a.outcome, a.by))
         elif a.cmd == "handbook":
             text = handbook(a.workspace)
             if a.out:

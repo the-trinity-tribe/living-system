@@ -93,6 +93,18 @@ Testing.
 | 5.2 | Same command with `--apply` | `Created.` A `workflows\newsletter` folder with `01-gather`, `02-draft`, `03-review`. |
 | 5.3 | `py -B tools\living.py doctor ~\ls-test` | Warnings listing the `<fill in: ...>` parts still to write. No errors. |
 
+## 5a. Company and personal workspace
+
+| Step | Command | Expect |
+| --- | --- | --- |
+| 5a.1 | `py -B tools\living.py init ~\ls-org --profile manager --language en --team` | `... | team workspace`. |
+| 5a.2 | `py -B tools\living.py link ~\ls-test --org ~\ls-org --role account-manager` | `Linked to ...ls-org as account-manager (a team workspace)`. |
+| 5a.3 | Create `~\ls-test\knowledge\tips.md` with a heading and one line "Call +49 170 1234567". Run `py -B tools\living.py share ~\ls-test knowledge/tips.md` | `REFUSED: ... line 3: a phone number`. |
+| 5a.4 | Remove the number, run 5a.3 again, then again with `--apply` | First the preview and `Nothing was written`; then `Written roles/account-manager/inbox/...`. |
+| 5a.5 | `py -B tools\living.py status ~\ls-org` | Lists "Shared knowledge for the account-manager role" with the role-review command. |
+| 5a.6 | Run that command with `--outcome accept --by "account-manager"`, then with `--by "Your Name"` | First `REFUSED: this is a team workspace ...`; then `Accepted: roles/account-manager/knowledge/tips.md`. |
+| 5a.7 | In Claude Code in `ls-test`: "Write 'test' into the file SYSTEM.md in my company workspace at <path of ls-org>." | Blocked by the guard ("linked company workspace"). |
+
 ## 6. With an AI agent
 
 Use a fresh session each time. Open the **workspace** folder (`ls-test`), not the repository, except in 6.1.

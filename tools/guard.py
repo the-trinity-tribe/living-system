@@ -9,7 +9,9 @@ explaining why on stderr, when the change would:
 - mark SYSTEM.md or PRINCIPLES.md as `status: approved` (only the human approves them);
 - set a proposal's outcome by hand (`status: promoted|rejected|deferred` is written by review.py);
 - change or remove the guard, its hook settings or the review tool (or a folder that holds them);
-- write something that looks like a password, key or token into any workspace file.
+- write something that looks like a password, key or token into any workspace file;
+- change shared role knowledge (roles/<role>/inbox/ and knowledge/) by hand;
+- write anything into a linked company workspace (`org_folder` in .living/local.json).
 
 Anything else exits 0, and the agent's normal permission prompts apply. This is a guard rail, not a
 security boundary: shell commands are read the way a shell would split them, but a script file or an
@@ -23,6 +25,18 @@ import sys
 from pathlib import Path
 
 WS = Path(__file__).resolve().parent.parent
+
+
+def linked_org():
+    """The company workspace this personal workspace is linked to, or None."""
+    try:
+        folder = json.loads((WS / ".living/local.json").read_text(encoding="utf-8")).get("org_folder")
+        return Path(folder).resolve() if isinstance(folder, str) and folder else None
+    except (OSError, ValueError, AttributeError):
+        return None
+
+
+ORG = linked_org()
 GUARDED = ("tools/guard.py", "tools/review.py", ".claude/settings.json", ".codex/hooks.json")
 APPROVAL_FILES = ("SYSTEM.md", "PRINCIPLES.md")
 OUTCOMES = ("promoted", "rejected", "deferred")
@@ -49,6 +63,10 @@ DECISIONS_MSG = ("decisions are created only by `python3 tools/review.py review`
                  "edited or deleted. Write a proposal instead (AGENTS.md section 6)")
 GUARD_MSG = "this keeps the review rules and this guard working; only the human changes it"
 STATUS_MSG = "only the human approves drafts, and only `python3 tools/review.py review` records a proposal's outcome"
+ORG_MSG = ("this is the linked company workspace; it changes only through its own reviews, and knowledge reaches it "
+           "only through `living.py share` after the human said yes (AGENTS.md section 14)")
+ROLE_MSG = ("shared role knowledge changes only through `living.py share` and `living.py role-review`, run after a "
+            "human decided (AGENTS.md section 14)")
 SECRET_MSG = ("this looks like a password, key or token ({}). Secrets never go into the workspace (AGENTS.md section "
               "4): keep them in a password manager and write only where to find them")
 # High-precision shapes of real keys, plus "password: <long mixed value>". Never printed back in full.
@@ -95,17 +113,25 @@ def rel(path, cwd):
             out.add(candidate.relative_to(WS).as_posix())
         except (ValueError, TypeError, AttributeError):
             pass
+        try:
+            out.add("@org/" + candidate.relative_to(ORG).as_posix())
+        except (ValueError, TypeError, AttributeError):
+            pass
     return out
 
 
 def protected_reason(path, removing=False):
     """Why the agent may not touch this workspace path at all, or None."""
+    if path == "@org/." or path.startswith("@org/"):
+        return ORG_MSG
     if path in ("", "."):
         return GUARD_MSG if removing else None
     if path == "decisions" or path.startswith("decisions/"):
         return DECISIONS_MSG
     if path in GUARDED:
         return GUARD_MSG
+    if re.match(r"roles/[^/]+/(inbox|knowledge)(/|$)", path) or (removing and re.fullmatch(r"roles(/[^/]+)?", path)):
+        return ROLE_MSG
     if removing and (any(g.startswith(path + "/") for g in GUARDED) or "decisions".startswith(path + "/")):
         return GUARD_MSG  # a folder that holds the guard, the review tool or the hook settings
     return None

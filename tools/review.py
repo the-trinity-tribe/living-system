@@ -56,6 +56,20 @@ def text_sha(data):
     return hashlib.sha256(data.replace(b"\r\n", b"\n")).hexdigest()
 
 
+def team_workspace(root):
+    """True for a shared company workspace (`"team": true` in .living/profile.json)."""
+    try:
+        return json.loads((Path(root) / ".living/profile.json").read_text(encoding="utf-8")).get("team") is True
+    except (OSError, ValueError, AttributeError):
+        return False
+
+
+def same_person(a, b):
+    """The same name, ignoring case and spaces. Names are attribution, not verified identity."""
+    norm = lambda s: " ".join(str(s).casefold().split())
+    return norm(a) == norm(b)
+
+
 def record_lines(root):
     path = Path(root) / RECORD
     if path.is_symlink():
@@ -407,6 +421,9 @@ def _review(root, proposal_rel, outcome, reviewer, note, date):
     kind = proposal_kind(pmeta, proposal_rel)
     if kind != "new":
         safe_rel(root, pmeta["target"], "decisions/")
+    if outcome == "approve" and team_workspace(root) and same_person(reviewer, pmeta["proposed_by"]):
+        raise Refusal(f"this is a team workspace: {reviewer} proposed this change, so someone else approves it "
+                      f"(the person who makes a change does not check it). Rejecting or deferring it yourself is fine")
 
     writes = {}
     result = ""
