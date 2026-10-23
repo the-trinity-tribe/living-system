@@ -9,6 +9,7 @@
   living.py new-workflow <ws> <name> --stages a,b,c [--goal "..."] [--apply]
   living.py doctor <ws>
   living.py status <ws>
+  living.py export <ws> <file.zip> [--apply]
   living.py runs <ws> [--add NAME | --decide NAME automate|manual|later | --forget NAME]
   living.py propose <ws> --kind new|exception|replace|retire --title ... --rule ... --evidence ... [--apply]
   living.py upgrade <ws> [--apply]
@@ -558,7 +559,7 @@ def list_modules(root=MODULES, ws=None):
 
 # Folders and files that belong to the human; upgrade never writes them.
 UPGRADE_SKIP_DIRS = ("decisions/", "proposals/", "projects/", "me/", ".living/upgrade/")
-UPGRADE_SKIP_FILES = (".living/profile.json", ".living/manifest.json")
+UPGRADE_SKIP_FILES = (".living/profile.json", ".living/manifest.json", ".living/local.json")
 UPGRADE_COPIES = ".living/upgrade"
 
 
@@ -648,6 +649,13 @@ def plan_upgrade(ws):
                  without_modules_block(routing).encode("utf-8"), exists=True)
         else:
             step(rel, data, manifest["files"].get(rel), None)
+    local = ws / ".living/local.json"
+    try:
+        known = json.loads(local.read_text(encoding="utf-8")).get("product_folder") if local.is_file() else None
+    except ValueError:
+        known = None
+    if known != str(HERE.parent):  # this computer's Living System folder, not content: always kept current
+        plan.append(("local", ".living/local.json", template[".living/local.json"], None))
     installed_mods = manifest.get("modules", {})
     for mid, entry in sorted(installed_mods.items()):
         try:
@@ -676,7 +684,8 @@ def format_upgrade_plan(plan):
               ("gone", "You deleted these; they stay deleted"), ("routing", "Refreshes routing rows for module"),
               ("routing-kept", f"Keeps your edited routing rows for module; the new rows are saved in "
                                f"{UPGRADE_COPIES}/CONTEXT-ROUTING.<module>.md"),
-              ("module-gone", "Installed module no longer available here; left as it is")]
+              ("module-gone", "Installed module no longer available here; left as it is"),
+              ("local", "Records where Living System is on this computer")]
     lines = []
     for action, title in groups:
         items = [rel for a, rel, _, _ in plan if a == action]
@@ -750,6 +759,9 @@ def upgrade(ws, apply=False):
                     files[rel] = sha256_bytes(data)
                 elif action == "keep":
                     put_copy(f"{UPGRADE_COPIES}/{rel}", data)
+                elif action == "local":
+                    target = ws / rel
+                    put(rel, data, sha256_bytes(target.read_bytes()) if target.is_file() else None)
             refresh = [mid for a, mid, _, _ in plan if a == "routing"]
             for mid in [m for a, m, _, _ in plan if a == "routing-kept"]:
                 rows = module_rows(mid, load_module(mid)["routing"])
@@ -920,6 +932,63 @@ def format_runs(work):
         state = "decide now" if run_is_due(e) else (e.get("decision") or "counting")
         lines.append(f"{name}: {e['count']} run(s), first {e['first']}, last {e['last']}, {state}")
     return "\n".join(lines)
+
+
+EXPORT_SKIP_FILES = (".living/local.json", ".living/.lock")
+EXPORT_SKIP_PARTS = (".git", "__pycache__")
+EXPORT_NOTE = """Living System workspace export
+
+These are plain Markdown and JSON files. Any text editor, and any AI tool that can read files, can open them.
+
+To use them again: unzip this file into a new, empty folder. Then, from a Living System folder, run
+    python3 tools/living.py doctor <that folder>
+and, if the Living System version changed, python3 tools/living.py upgrade <that folder>.
+
+Left out on purpose: .living/local.json (a path on the old computer), .living/.lock, .living/upgrade/,
+.git/ and Python caches.
+"""
+
+
+def export_files(ws):
+    ws = Path(ws)
+    out = []
+    for p in sorted(ws.rglob("*")):
+        rel = p.relative_to(ws).as_posix()
+        if p.is_symlink() or not p.is_file() or rel in EXPORT_SKIP_FILES or rel.startswith(".living/upgrade/") \
+                or set(p.relative_to(ws).parts) & set(EXPORT_SKIP_PARTS):
+            continue
+        out.append(rel)
+    return out
+
+
+def export(ws, target, apply=False):
+    """Pack the workspace into one zip file. Plan only unless apply. Never writes into the workspace."""
+    import zipfile
+    ws = Path(ws).resolve()
+    read_manifest(ws)
+    target = Path(target).expanduser().resolve()
+    if target.suffix.lower() != ".zip":
+        raise Refusal("the export file name must end in .zip")
+    if ws in (target, *target.parents):
+        raise Refusal("save the export outside the workspace, so it does not include itself")
+    if target.exists() or target.is_symlink():
+        raise Refusal(f"{target} already exists; choose a new file name")
+    if not target.parent.is_dir():
+        raise Refusal(f"folder {target.parent} does not exist")
+    files = export_files(ws)
+    if apply:
+        fd, tmp = tempfile.mkstemp(prefix=".living-export-", suffix=".zip", dir=target.parent)
+        os.close(fd)
+        try:
+            with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as z:
+                z.writestr("EXPORT-README.txt", EXPORT_NOTE)
+                for rel in files:
+                    z.write(ws / rel, rel)
+            os.replace(tmp, target)
+        except BaseException:
+            Path(tmp).unlink(missing_ok=True)
+            raise
+    return files
 
 
 PROPOSE_KINDS = ("new", "exception", "replace", "retire")
@@ -1110,6 +1179,9 @@ def doctor(ws):
         if sha256(p) in demo or (p.suffix == ".md" and DEMO_BANNER in p.read_text(encoding="utf-8", errors="replace")):
             out.append(("ERROR", f"{rel}: demo sandbox content; keep demo material out of your workspace"))
     local = ws / ".living/local.json"
+    if not local.is_file():
+        out.append(("INFO", ".living/local.json is missing, so agents will ask where Living System is; run upgrade "
+                            "from your Living System folder to record it"))
     if local.is_file():
         try:
             folder = json.loads(local.read_text(encoding="utf-8")).get("product_folder", "")
@@ -1316,6 +1388,10 @@ def main(argv=None):
     w.add_argument("--stages", required=True, help="comma-separated stage names in order, e.g. research,draft,review")
     w.add_argument("--goal", default="")
     w.add_argument("--apply", action="store_true")
+    ex = sub.add_parser("export", help="pack the workspace into one zip file (plan unless --apply)")
+    ex.add_argument("workspace")
+    ex.add_argument("file", help="the .zip file to create, outside the workspace")
+    ex.add_argument("--apply", action="store_true")
     rn = sub.add_parser("runs", help="Third-Run Rule: count a kind of work, record a decision, or list counts")
     rn.add_argument("workspace")
     g = rn.add_mutually_exclusive_group()
@@ -1362,6 +1438,10 @@ def main(argv=None):
             print(format_upgrade_plan(plan))
             if any(act not in ("same",) for act, *_ in plan):
                 print("Upgraded." if a.apply else "Nothing was written. Run again with --apply to upgrade.")
+        elif a.cmd == "export":
+            files = export(a.workspace, os.path.expanduser(a.file), a.apply)
+            print(f"{len(files)} files" + (f" saved to {Path(a.file).expanduser().resolve()}." if a.apply else
+                  ". Nothing was written. Run again with --apply to create the zip file."))
         elif a.cmd == "runs":
             name, decision = (a.decide or (None, None))
             work, message = runs(a.workspace, add=a.add, decide=name, decision=decision, after=a.after, forget=a.forget)

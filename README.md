@@ -92,6 +92,8 @@ python3 tools/living.py new-workflow ~/my-workspace launch-post --stages researc
 
 **Health check:** `python3 tools/living.py doctor ~/my-workspace` reads your workspace and lists problems in plain words (for example a draft you have not approved yet, a workflow step left unfinished, or demo material that slipped in). It changes nothing.
 
+**Backup or move:** `python3 tools/living.py export ~/my-workspace ~/backup.zip --apply` packs everything into one zip file ([export](docs/features/export.md)).
+
 **Getting a newer version:** after you update this folder (for example with `git pull`), run `python3 tools/living.py upgrade ~/my-workspace` to see what would change, then add `--apply`. Files you never changed are updated; files you edited are kept, with the new version saved in `.living/upgrade/` to compare; your decisions, proposals, projects and personal goals are never touched.
 
 ### Explore the demo
