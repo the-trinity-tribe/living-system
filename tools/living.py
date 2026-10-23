@@ -14,6 +14,7 @@
   living.py scan <ws> [paths...]
   living.py link <ws> --org <company ws> --role <role> | --remove
   living.py share <ws> <file> [--as LABEL] [--apply]
+  living.py onboard <ws> [--done ID] [--next N]
   living.py role-review <company ws> <file> --outcome accept|reject --by NAME
   living.py export <ws> <file.zip> [--apply]
   living.py protect <ws> [--apply]
@@ -1499,6 +1500,12 @@ def status(ws):
     step = handover_next_step(ws)
     if step:
         lines.append(f"Last session's next step: {step}")
+    path = ws / ONBOARD_FILE
+    if path.is_file():
+        marks = [m for m, _ in ONBOARD_ITEM.findall(path.read_text(encoding="utf-8", errors="replace"))]
+        if marks and " " in marks:
+            lines.append(f"Onboarding: {marks.count(' ')} of {len(marks)} item(s) still to read "
+                         f"(living.py onboard . shows the next ones)")
     health = doctor(ws)
     errors = sum(1 for lvl, _ in health if lvl == "ERROR")
     warns = sum(1 for lvl, _ in health if lvl == "WARN")
@@ -1923,6 +1930,124 @@ def role_review(ws, rel, outcome, by, today=None):
             f"not a rule. accepted_by is attribution, not verified identity.")
 
 
+# ---------- onboarding: a personal reading path, a few items at a time ----------
+
+ONBOARD_FILE = "me/onboarding.md"
+ONBOARD_ITEM = re.compile(r"^- \[([ xX])\] .*<!-- onboard:(\S+) -->\s*$", re.M)
+ONBOARD_SECTIONS = ("Company rules (read these first)", "How the company works",
+                    "What earlier people in your role handed on", "Company workflows", "Your own rules",
+                    "Your workflows", "Lessons")
+
+
+def onboarding_items(ws):
+    """[(section, id, line text)] in reading order. Company items first when the workspace is linked."""
+    R = review_tool()
+    ws = Path(ws)
+    items = []
+
+    def title_of(path, fallback):
+        text = path.read_text(encoding="utf-8", errors="replace") if path.is_file() else ""
+        m = re.search(r"^# (.+)$", text, re.M)
+        return (m.group(1).strip() if m else fallback).replace("<!--", "").replace("-->", "")
+
+    def add_rules(root, section, prefix, where):
+        if (root / "decisions").is_dir():
+            decs = R.decisions(root)
+            for k in sorted(R.current_decisions(root), key=lambda k: (decs[k].get("date", ""), k)):
+                items.append((section, f"{prefix}:{k}", f"{title_of(root / k, k)}: read `{k}`{where}"))
+
+    def add_workflows(root, section, prefix, where):
+        for ctx in sorted((root / "workflows").glob("*/CONTEXT.md")) if (root / "workflows").is_dir() else []:
+            rel = ctx.relative_to(root).as_posix()
+            items.append((section, f"{prefix}:{rel}", f"{title_of(ctx, ctx.parent.name)}: read `{rel}`{where}"))
+
+    org = org_folder(ws)
+    role = read_profile(ws).get("role")
+    if org is not None:
+        there = " in the company workspace"
+        add_rules(org, ONBOARD_SECTIONS[0], "company", there)
+        for f in ("SYSTEM.md", "PRINCIPLES.md"):
+            try:
+                approved = R.split_frontmatter((org / f).read_text(encoding="utf-8"), f)[0].get("status") == "approved"
+            except (OSError, Refusal):
+                approved = False
+            if approved:
+                items.append((ONBOARD_SECTIONS[1], f"company:{f}", f"{title_of(org / f, f)}: read `{f}`{there}"))
+        if role and re.fullmatch(MODULE_ID, str(role)):
+            for p in sorted((org / "roles" / role / "knowledge").glob("*.md")):
+                rel = p.relative_to(org).as_posix()
+                items.append((ONBOARD_SECTIONS[2], f"company:{rel}", f"{title_of(p, p.stem)}: read `{rel}`{there}"))
+        add_workflows(org, ONBOARD_SECTIONS[3], "company", there)
+    add_rules(ws, ONBOARD_SECTIONS[4], "here", "")
+    add_workflows(ws, ONBOARD_SECTIONS[5], "here", "")
+    if (ws / "lessons/active.md").is_file():
+        items.append((ONBOARD_SECTIONS[6], "here:lessons/active.md", "Approved lessons: read `lessons/active.md`"))
+    return items
+
+
+def onboarding_text(items, ticked):
+    out = ["# My onboarding path", "",
+           "Private to you, and not a rule. Made by `living.py onboard`, which adds new items when rules or role "
+           "knowledge change. Tick an item (`[x]`) when you have read and understood it; there is no hurry.", ""]
+    for section in ONBOARD_SECTIONS:
+        rows = [(i, line) for s, i, line in items if s == section]
+        if rows:
+            out += [f"## {section}", ""] + [f"- [{'x' if i in ticked else ' '}] {line} <!-- onboard:{i} -->"
+                                            for i, line in rows] + [""]
+    if not items:
+        out += ["Nothing to read yet: no approved rules, role knowledge or workflows.", ""]
+    return "\n".join(out)
+
+
+def onboard(ws, done=None, per=3):
+    """Refresh me/onboarding.md (keeping ticks) and return (next items, done count, total, message)."""
+    ws = Path(ws)
+    read_manifest(ws)
+    refuse_links(ws, ["me", ONBOARD_FILE])
+    if per < 1:
+        raise Refusal("--next must be 1 or more")
+    with workspace_lock(ws):
+        path = ws / ONBOARD_FILE
+        old = path.read_text(encoding="utf-8") if path.is_file() else None
+        ticked = {i for mark, i in ONBOARD_ITEM.findall(old or "") if mark in "xX"}
+        items = onboarding_items(ws)
+        ids = [i for _, i, _ in items]
+        message = ""
+        if done:
+            match = [i for i in ids if i == done or i.split(":", 1)[1] == done]
+            if not match:
+                raise Refusal(f"{done!r} is not on your onboarding path; use an id shown by living.py onboard")
+            ticked.add(match[0])
+            message = f"Ticked: {match[0]}."
+        text = onboarding_text(items, ticked)
+        if text != old:
+            path.parent.mkdir(exist_ok=True)
+            fd, tmp = tempfile.mkstemp(prefix=".onboarding.", suffix=".tmp", dir=path.parent)
+            try:
+                with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as f:
+                    f.write(text)
+                os.replace(tmp, path)
+            except BaseException:
+                Path(tmp).unlink(missing_ok=True)
+                raise
+    left = [(s, i, line) for s, i, line in items if i not in ticked]
+    return left[:per], len(items) - len(left), len(items), message
+
+
+def format_onboard(nxt, n_done, total, message):
+    lines = [message] if message else []
+    if not total:
+        return "\n".join(lines + ["Nothing to read yet: no approved rules, role knowledge or workflows."])
+    if not nxt:
+        return "\n".join(lines + [f"Onboarding: all {total} item(s) done. New rules or role knowledge will appear "
+                                  f"in {ONBOARD_FILE} when you run this again."])
+    lines.append(f"Onboarding: {n_done} of {total} done. Next, one at a time is fine:")
+    lines += [f"  {n}. {line} ({section}; id: {i})" for n, (section, i, line) in enumerate(nxt, 1)]
+    lines.append(f"When you have understood one: living.py onboard . --done <id>. Your list: {ONBOARD_FILE} "
+                 f"(private, not a rule).")
+    return "\n".join(lines)
+
+
 HANDBOOK_MARK = "<!-- living-system handbook: a generated copy, not the rules -->"
 
 
@@ -2116,6 +2241,10 @@ def main(argv=None):
     rr.add_argument("file", help="roles/<role>/inbox/<file>.md")
     rr.add_argument("--outcome", required=True, choices=("accept", "reject"))
     rr.add_argument("--by", required=True)
+    ob = sub.add_parser("onboard", help="your reading path: company rules, role knowledge, workflows, a few at a time")
+    ob.add_argument("workspace")
+    ob.add_argument("--done", metavar="ID", help="tick one item you have understood")
+    ob.add_argument("--next", type=int, default=3, help="how many next items to show (default 3)")
     hb = sub.add_parser("handbook", help="a readable copy of your rules and workflows, for working without AI")
     hb.add_argument("workspace")
     hb.add_argument("--out", help="save it to this .md file outside the workspace (default: print it)")
@@ -2188,6 +2317,8 @@ def main(argv=None):
                       "Nothing was written. Run again with --apply to share it.")
         elif a.cmd == "role-review":
             print(role_review(a.workspace, a.file, a.outcome, a.by))
+        elif a.cmd == "onboard":
+            print(format_onboard(*onboard(a.workspace, a.done, a.next)))
         elif a.cmd == "handbook":
             text = handbook(a.workspace)
             if a.out:

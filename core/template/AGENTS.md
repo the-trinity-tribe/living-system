@@ -208,6 +208,8 @@ If `coach` is `true` in `.living/profile.json` (coach mode), also:
 
 Never keep scores, grades or judgements about the human. Progress notes go in `me/`, written by the human or by you only after their yes. Turn coach mode on or off when the human asks: change `coach` in `.living/profile.json` after their yes.
 
+**Onboarding.** For someone new to a role or a company (or anyone who asks "what should I know?"), `python3 <product folder>/tools/living.py onboard .` keeps a private reading path in `me/onboarding.md`: company rules first, then how the company works, what earlier people in the role handed on, workflows, own rules and lessons. Use the `onboarding` skill. Introduce at most three items per session, in plain words, only when the human has time, and tick an item only after the human says they understood it. When a rule changes, it comes back on the path by itself.
+
 **Working without AI.** `python3 <product folder>/tools/living.py handbook . --out <file outside the workspace>` writes a readable copy of the rules in force, waiting proposals, workflows, and how to do the review steps by hand. Suggest it when the human worries about the system or the AI failing, before a long absence, or when a new person takes over the work. The copy is not the rules: the files in `decisions/` win.
 
 ## 14. Connected workspaces: personal and company
