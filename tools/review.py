@@ -261,7 +261,7 @@ def write_all(writes, new=()):
             if path not in new:
                 fd, tmp = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
                 tmps.append(Path(tmp))
-                with os.fdopen(fd, "w", encoding="utf-8") as f:
+                with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as f:
                     f.write(text)
                 os.chmod(tmp, stat.S_IMODE(os.stat(path).st_mode))
                 old = path.read_bytes()
@@ -269,7 +269,7 @@ def write_all(writes, new=()):
                 done.append((path, old))
             else:
                 try:
-                    f = open(path, "x", encoding="utf-8")
+                    f = open(path, "x", encoding="utf-8", newline="\n")
                 except FileExistsError:
                     raise Refusal(f"{path.name} appeared while reviewing; nothing was written") from None
                 done.append((path, None))

@@ -63,6 +63,19 @@ Created from `proposals/2026-10-20-weekly-update-owner.md`. `approved_by` is att
 """
 
 
+def can_link():
+    """Windows may refuse to create links without extra rights; those tests are skipped there."""
+    with tempfile.TemporaryDirectory() as d:
+        try:
+            os.symlink(d, os.path.join(d, "link"))
+            return True
+        except (OSError, NotImplementedError):
+            return False
+
+
+CAN_LINK = can_link()
+
+
 def snapshot(root):
     """Every file's bytes, and every folder (so leftover folders count as changes)."""
     return {str(p.relative_to(root)) + ("/" if p.is_dir() else ""): p.read_bytes() if p.is_file() else b""
@@ -74,7 +87,7 @@ class EmptyWorkspace(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.root = Path(self.tmp.name)
         for f in ("AGENTS.md", "CONTEXT-ROUTING.md", "SYSTEM.md", "PRINCIPLES.md", "README.md"):
-            (self.root / f).write_text(f"# {f}\n")
+            (self.root / f).write_text(f"# {f}\n", encoding="utf-8", newline="\n")
         (self.root / "decisions").mkdir()
         (self.root / "proposals").mkdir()
         self.write_proposal(FRONT + BODY)
@@ -83,7 +96,7 @@ class EmptyWorkspace(unittest.TestCase):
         self.tmp.cleanup()
 
     def write_proposal(self, text, rel=PROPOSAL):
-        (self.root / rel).write_text(text)
+        (self.root / rel).write_text(text, encoding="utf-8", newline="\n")
         self.before = snapshot(self.root)
 
     def run_review(self, outcome, rel=PROPOSAL):
@@ -138,7 +151,7 @@ class TestNewDecision(EmptyWorkspace):
         self.assertRefused()
 
     def test_existing_result_file_blocks(self):
-        (self.root / NEW).write_text("---\nstatus: approved\n---\n# taken\n")
+        (self.root / NEW).write_text("---\nstatus: approved\n---\n# taken\n", encoding="utf-8", newline="\n")
         self.before = snapshot(self.root)
         self.assertRefused()
 
@@ -202,6 +215,7 @@ class TestAllOrNothingWrites(EmptyWorkspace):
                 self.run_review("approve")
         self.assertEqual(snapshot(self.root), self.before, "no half-written decision and no new folder")
 
+    @unittest.skipIf(os.name == "nt", "Windows has no Unix permission bits")
     def test_proposal_keeps_its_file_permissions(self):
         os.chmod(self.root / PROPOSAL, 0o640)
         self.run_review("defer")
@@ -240,24 +254,26 @@ class TestHardening(EmptyWorkspace):
         self.write_proposal(FRONT + BODY.replace("every Friday.", "every Friday.\n>\n> ## Why\n> because"))
         self.assertRefused()
 
+    @unittest.skipUnless(CAN_LINK, "this system cannot create links")
     def test_linked_proposal_is_refused(self):
         real = self.root / "real.md"
-        real.write_text(FRONT + BODY)
+        real.write_text(FRONT + BODY, encoding="utf-8", newline="\n")
         (self.root / PROPOSAL).unlink()
         (self.root / PROPOSAL).symlink_to(real)
         self.before = snapshot(self.root)
         self.assertRefused()
 
+    @unittest.skipUnless(CAN_LINK, "this system cannot create links")
     def test_link_in_place_of_new_decision_is_not_followed(self):
         target = self.root / "outside.md"
-        target.write_text("keep me\n")
+        target.write_text("keep me\n", encoding="utf-8", newline="\n")
         (self.root / NEW).symlink_to(target)
         self.before = snapshot(self.root)
         self.assertRefused()
         self.assertEqual(target.read_text(), "keep me\n")
 
     def test_concurrent_review_is_refused_and_lock_is_released(self):
-        (self.root / ".review.lock").write_text("")
+        (self.root / ".review.lock").write_text("", encoding="utf-8", newline="\n")
         self.before = snapshot(self.root)
         self.assertRefused()
         (self.root / ".review.lock").unlink()

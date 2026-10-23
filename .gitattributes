@@ -1,0 +1,6 @@
+# Keep the same line endings on every computer. The review tool compares file
+# fingerprints, so a Windows checkout that turned LF into CRLF would look like
+# a changed decision.
+* text=auto eol=lf
+*.png binary
+*.jpg binary

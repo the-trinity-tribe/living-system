@@ -3,7 +3,7 @@
 Thank you for helping improve this experimental local-first Human–AI governance Kernel.
 
 - Open an issue to discuss behavioral changes, bugs or documentation gaps before undertaking large changes. Keep proposed improvements bounded and explain why they matter.
-- Use a branch and submit a pull request against the maintained repository. Include the motivation, changed behavior, and test output (`python3 -B tools/review.py check` and `python3 -B -m unittest discover tests`).
+- Use a branch and submit a pull request against the maintained repository. Include the motivation, changed behavior, and test output (`python3 -B -m unittest discover tests`, `python3 -B tools/review.py --root demo/moss-and-circuit check` and `python3 -B tools/release_check.py`).
 - Preserve approved decision history and the distinction between current canonical state, staged proposals and project working evidence. Do not edit fictional canonical decisions to make an acceptance test pass.
 - Do not submit private Trinity Tribe operating content, real client or personal data, API credentials, session transcripts, or proprietary material without permission.
 - AI-assisted contributions are welcome if you understand and review the changes, disclose material AI assistance in the pull request, and can explain the outcome.

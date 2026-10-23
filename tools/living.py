@@ -68,14 +68,14 @@ def apply_appends(profile_dir, dst):
         base = dst / rel.parent / (p.name[: -len(".append.md")] + ".md")
         text, add = base.read_text(encoding="utf-8"), p.read_text(encoding="utf-8")
         text = text.replace(MARKER, add.rstrip("\n") + "\n" + MARKER, 1) if MARKER in text else text.rstrip("\n") + "\n" + add
-        base.write_text(text, encoding="utf-8")
+        base.write_text(text, encoding="utf-8", newline="\n")
 
 
 def strip_markers(dst):
     for p in dst.rglob("*.md"):
         t = p.read_text(encoding="utf-8")
         if MARKER in t:
-            p.write_text(t.replace(MARKER + "\n", "").replace(MARKER, ""), encoding="utf-8")
+            p.write_text(t.replace(MARKER + "\n", "").replace(MARKER, ""), encoding="utf-8", newline="\n")
 
 
 def sha256(path):
@@ -86,7 +86,7 @@ def write_manifest(ws):
     files = {p.relative_to(ws).as_posix(): sha256(p)
              for p in sorted(ws.rglob("*")) if p.is_file() and p.name != "manifest.json"}
     (ws / ".living" / "manifest.json").write_text(
-        json.dumps({"kernel_version": KERNEL_VERSION, "files": files}, indent=2) + "\n", encoding="utf-8")
+        json.dumps({"kernel_version": KERNEL_VERSION, "files": files}, indent=2) + "\n", encoding="utf-8", newline="\n")
 
 
 def build(ws, profile, language, calm_replies):
@@ -99,8 +99,8 @@ def build(ws, profile, language, calm_replies):
     (ws / ".living").mkdir()
     (ws / ".living" / "profile.json").write_text(json.dumps(
         {"profile": profile, "language": language, "calm_replies": bool(calm_replies)}, indent=2) + "\n",
-        encoding="utf-8")
-    (ws / ".living" / "catalog.md").write_text(catalog_text(), encoding="utf-8")
+        encoding="utf-8", newline="\n")
+    (ws / ".living" / "catalog.md").write_text(catalog_text(), encoding="utf-8", newline="\n")
     write_manifest(ws)
 
 
@@ -287,7 +287,7 @@ def read_manifest(ws):
 def write_json(path, data):
     fd, tmp = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as f:
             f.write(json.dumps(data, indent=2) + "\n")
         os.replace(tmp, path)
     except BaseException:
@@ -410,7 +410,7 @@ def add_module(ws, mid, apply=False, root=MODULES):
                 manifest.setdefault("modules", {})[m["id"]] = {
                     "version": m["version"], "kind": m["kind"], "requires": m["requires"],
                     "files": {rel: sha256(ws / rel) for rel in m["files"]}, "dirs": dirs, "routing": m["routing"]}
-            routing.write_text(new_routing, encoding="utf-8")
+            routing.write_text(new_routing, encoding="utf-8", newline="\n")
             write_json(ws / ".living" / "manifest.json", manifest)
         except BaseException:
             for p in reversed(created):
@@ -418,7 +418,7 @@ def add_module(ws, mid, apply=False, root=MODULES):
             for d in reversed(made):
                 if d.is_dir() and not any(d.iterdir()):
                     d.rmdir()
-            routing.write_text(old_routing, encoding="utf-8")
+            routing.write_text(old_routing, encoding="utf-8", newline="\n")
             raise
     return order
 
@@ -472,7 +472,7 @@ def remove_module(ws, mid, apply=False):
         old_routing = routing.read_text(encoding="utf-8")
         backups, removed_dirs = {}, []
         try:
-            routing.write_text(routing_without(old_routing, mid), encoding="utf-8")
+            routing.write_text(routing_without(old_routing, mid), encoding="utf-8", newline="\n")
             for rel in list(delete):
                 p = ws / rel
                 data = p.read_bytes()
@@ -497,7 +497,7 @@ def remove_module(ws, mid, apply=False):
             for p, data in backups.items():
                 p.parent.mkdir(parents=True, exist_ok=True)
                 p.write_bytes(data)
-            routing.write_text(old_routing, encoding="utf-8")
+            routing.write_text(old_routing, encoding="utf-8", newline="\n")
             raise
     return delete, sorted(keep), missing
 
@@ -742,7 +742,7 @@ def new_workflow(ws, slug, stages, goal="", apply=False):
         try:
             for rel, text in files.items():
                 (tmp / rel).parent.mkdir(parents=True, exist_ok=True)
-                (tmp / rel).write_text(text, encoding="utf-8")
+                (tmp / rel).write_text(text, encoding="utf-8", newline="\n")
             os.rename(tmp, target)
         except BaseException:
             shutil.rmtree(tmp, ignore_errors=True)

@@ -32,7 +32,7 @@ class TestDoctor(unittest.TestCase):
     def test_approved_drafts_and_modules_are_clean(self):
         for f in ("SYSTEM.md", "PRINCIPLES.md"):
             p = self.ws / f
-            p.write_text(p.read_text().replace("status: draft", "status: approved", 1))
+            p.write_text(p.read_text().replace("status: draft", "status: approved", 1), encoding="utf-8", newline="\n")
         for mid in ("weekly-update", "meeting-notes", "staged-learning"):
             L.add_module(self.ws, mid, apply=True)
         self.assertEqual(L.doctor(self.ws), [])
@@ -41,13 +41,13 @@ class TestDoctor(unittest.TestCase):
     def test_finds_real_problems(self):
         L.add_module(self.ws, "staged-learning", apply=True)
         (self.ws / "workflows/x").mkdir()
-        (self.ws / "workflows/x/AGENTS.md").write_text("rules\n")
-        (self.ws / "knowledge/copied.md").write_text("> **DEMO — fictional sandbox, not your workspace.**\n")
-        (self.ws / "lessons/active.md").write_text("## Active lessons\n\n" + "".join(f"- lesson {i}\n" for i in range(21)))
+        (self.ws / "workflows/x/AGENTS.md").write_text("rules\n", encoding="utf-8", newline="\n")
+        (self.ws / "knowledge/copied.md").write_text("> **DEMO — fictional sandbox, not your workspace.**\n", encoding="utf-8", newline="\n")
+        (self.ws / "lessons/active.md").write_text("## Active lessons\n\n" + "".join(f"- lesson {i}\n" for i in range(21)), encoding="utf-8", newline="\n")
         with open(self.ws / "tools/review.py", "a") as f:
             f.write("\n# edited\n")
         L.new_workflow(self.ws, "plan", ["a", "b"], apply=True)
-        (self.ws / "workflows/plan/01-a/CONTEXT.md").write_text("line\n" * 85)
+        (self.ws / "workflows/plan/01-a/CONTEXT.md").write_text("line\n" * 85, encoding="utf-8", newline="\n")
         (self.ws / "proposals/2026-10-23-new-rule.md").write_text(
             "---\nstatus: proposed\nkind: new\ntarget: none\nevidence: x\nproposed_by: agent\ndate: 2026-10-23\n---\n"
             "\n# Proposal: X\n\n## Proposed future state\n\n> Rule.\n\n## Why and open questions\n\nx\n")
@@ -61,7 +61,7 @@ class TestDoctor(unittest.TestCase):
     def test_routing_and_manifest_out_of_sync(self):
         L.add_module(self.ws, "weekly-update", apply=True)
         r = self.ws / "CONTEXT-ROUTING.md"
-        r.write_text(L.routing_without(r.read_text(), "weekly-update"))
+        r.write_text(L.routing_without(r.read_text(), "weekly-update"), encoding="utf-8", newline="\n")
         shutil.rmtree(self.ws / "workflows/weekly-update/01-gather")
         text = L.format_doctor(L.doctor(self.ws))
         self.assertIn("ERROR: module weekly-update is installed but has no row", text)
@@ -71,7 +71,7 @@ class TestDoctor(unittest.TestCase):
         run = lambda: subprocess.run([sys.executable, "-B", str(REPO / "tools/living.py"), "doctor", str(self.ws)],
                                      capture_output=True, text=True)
         self.assertEqual(run().returncode, 0)
-        (self.ws / "workflows/CLAUDE.md").write_text("x\n")
+        (self.ws / "workflows/CLAUDE.md").write_text("x\n", encoding="utf-8", newline="\n")
         r = run()
         self.assertEqual(r.returncode, 1)
         self.assertIn("1 error(s)", r.stdout)

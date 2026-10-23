@@ -31,11 +31,11 @@ class Case(unittest.TestCase):
         return json.loads((self.ws / ".living/manifest.json").read_text())
 
     def save(self, m):
-        (self.ws / ".living/manifest.json").write_text(json.dumps(m, indent=2) + "\n")
+        (self.ws / ".living/manifest.json").write_text(json.dumps(m, indent=2) + "\n", encoding="utf-8", newline="\n")
 
     def make_old(self, rel, old_text, module=None):
         """Pretend an older version installed `rel` with `old_text` and the human never touched it."""
-        (self.ws / rel).write_text(old_text)
+        (self.ws / rel).write_text(old_text, encoding="utf-8", newline="\n")
         m = self.manifest()
         files = m["files"] if module is None else m["modules"][module]["files"]
         files[rel] = L.sha256_bytes(old_text.encode())
@@ -66,7 +66,7 @@ class TestUpgrade(Case):
 
     def test_edited_file_is_kept_and_new_version_saved_beside(self):
         new = (self.ws / "AGENTS.md").read_text()
-        (self.ws / "AGENTS.md").write_text(new + "\nMy own extra rule.\n")
+        (self.ws / "AGENTS.md").write_text(new + "\nMy own extra rule.\n", encoding="utf-8", newline="\n")
         self.make_old_hash_only("AGENTS.md", "older text\n")
         L.upgrade(self.ws, apply=True)
         self.assertIn("My own extra rule.", (self.ws / "AGENTS.md").read_text())
@@ -93,8 +93,8 @@ class TestUpgrade(Case):
 
     def test_human_folders_and_setup_are_never_touched(self):
         for rel in ("decisions/2026-10-01-x.md", "proposals/2026-10-01-y.md", "projects/p.md"):
-            (self.ws / rel).write_text("mine\n")
-        (self.ws / "me/goals.md").write_text("my goals\n")
+            (self.ws / rel).write_text("mine\n", encoding="utf-8", newline="\n")
+        (self.ws / "me/goals.md").write_text("my goals\n", encoding="utf-8", newline="\n")
         self.make_old_hash_only("me/goals.md", "older\n")
         prof = (self.ws / ".living/profile.json").read_bytes()
         self.make_old("AGENTS.md", "old\n")
@@ -110,7 +110,7 @@ class TestUpgrade(Case):
         text = r.read_text()
         base = L.without_modules_block(text)
         old_base = base.replace("Start with the smallest route.", "Old wording.")
-        r.write_text(old_base.rstrip("\n") + "\n\n" + L.modules_block(text))
+        r.write_text(old_base.rstrip("\n") + "\n\n" + L.modules_block(text), encoding="utf-8", newline="\n")
         self.make_old_hash_only("CONTEXT-ROUTING.md", old_base)
         L.upgrade(self.ws, apply=True)
         after = r.read_text()
@@ -123,9 +123,9 @@ class TestUpgrade(Case):
         L.add_module(self.ws, "staged-learning", apply=True)
         new_inbox = (self.ws / "lessons/inbox.md").read_text()
         self.make_old("lessons/inbox.md", "# old inbox\n", module="staged-learning")
-        (self.ws / "lessons/active.md").write_text("## Active lessons\n\n- mine\n")
+        (self.ws / "lessons/active.md").write_text("## Active lessons\n\n- mine\n", encoding="utf-8", newline="\n")
         r = self.ws / "CONTEXT-ROUTING.md"
-        r.write_text("".join(l for l in r.read_text().splitlines(True) if "lessons/README.md" not in l))
+        r.write_text("".join(l for l in r.read_text().splitlines(True) if "lessons/README.md" not in l), encoding="utf-8", newline="\n")
         plan = L.upgrade(self.ws, apply=True)
         self.assertIn(("update", "lessons/inbox.md"), self.actions(plan))
         self.assertIn(("routing", "staged-learning"), self.actions(plan))
@@ -145,11 +145,11 @@ class TestUpgrade(Case):
         self.assertEqual(snapshot(self.ws), before)
 
     def test_lock_and_damaged_profile_are_refused(self):
-        (self.ws / ".living/.lock").write_text("")
+        (self.ws / ".living/.lock").write_text("", encoding="utf-8", newline="\n")
         with self.assertRaises(L.Refusal):
             L.upgrade(self.ws, apply=True)
         (self.ws / ".living/.lock").unlink()
-        (self.ws / ".living/profile.json").write_text("{")
+        (self.ws / ".living/profile.json").write_text("{", encoding="utf-8", newline="\n")
         with self.assertRaises(L.Refusal):
             L.upgrade(self.ws)
 

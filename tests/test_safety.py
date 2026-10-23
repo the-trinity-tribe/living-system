@@ -12,6 +12,19 @@ import living as L
 import review as R
 
 
+def can_link():
+    """Windows may refuse to create links without extra rights; those tests are skipped there."""
+    with tempfile.TemporaryDirectory() as d:
+        try:
+            os.symlink(d, os.path.join(d, "link"))
+            return True
+        except (OSError, NotImplementedError):
+            return False
+
+
+CAN_LINK = can_link()
+
+
 def snapshot(root):
     """File bytes, folders and links, so leftover folders or replaced links count as changes."""
     out = {}
@@ -30,7 +43,7 @@ def make_module(root, mid, files, routing=None):
     d = Path(root) / mid
     for rel, text in files.items():
         (d / "files" / rel).parent.mkdir(parents=True, exist_ok=True)
-        (d / "files" / rel).write_text(text)
+        (d / "files" / rel).write_text(text, encoding="utf-8", newline="\n")
     (d / "module.json").write_text(json.dumps({
         "id": mid, "version": "0.1.0", "kind": "workflow", "summary": "s", "requires": [],
         "routing": routing or [["need", next(iter(files))]], "needs_approval": [], "signals": []}))
@@ -43,7 +56,7 @@ class Case(unittest.TestCase):
         self.ws = L.init(self.base / "ws", "manager", "en")
         self.outside = self.base / "outside"
         self.outside.mkdir()
-        (self.outside / "keep.md").write_text("keep me\n")
+        (self.outside / "keep.md").write_text("keep me\n", encoding="utf-8", newline="\n")
 
     def tearDown(self):
         self.tmp.cleanup()
@@ -55,6 +68,7 @@ class Case(unittest.TestCase):
         self.assertEqual((snapshot(self.ws), snapshot(self.outside)), before)
 
 
+@unittest.skipUnless(CAN_LINK, "this system cannot create links")
 class TestLinks(Case):
     def test_add_does_not_write_through_a_linked_folder(self):
         shutil.rmtree(self.ws / "workflows")
@@ -125,10 +139,10 @@ class TestModuleRules(Case):
     def test_manifest_cannot_point_removal_at_human_files(self):
         L.add_module(self.ws, "weekly-update", apply=True)
         mine = self.ws / "projects/mine.md"
-        mine.write_text("my project\n")
+        mine.write_text("my project\n", encoding="utf-8", newline="\n")
         m = json.loads((self.ws / ".living/manifest.json").read_text())
         m["modules"]["weekly-update"]["files"]["projects/mine.md"] = L.sha256(mine)
-        (self.ws / ".living/manifest.json").write_text(json.dumps(m))
+        (self.ws / ".living/manifest.json").write_text(json.dumps(m), encoding="utf-8", newline="\n")
         self.refused(L.remove_module, self.ws, "weekly-update", apply=True)
         self.assertEqual(mine.read_text(), "my project\n")
 
@@ -139,7 +153,7 @@ class TestAtomicity(Case):
         real = L.routing_without
 
         def edit_meanwhile(text, mid):
-            (self.ws / "lessons/active.md").write_text("## Active lessons\n\n- saved while removing\n")
+            (self.ws / "lessons/active.md").write_text("## Active lessons\n\n- saved while removing\n", encoding="utf-8", newline="\n")
             return real(text, mid)
 
         with mock.patch.object(L, "routing_without", edit_meanwhile):
@@ -184,18 +198,18 @@ class TestAtomicity(Case):
         self.assertTrue((self.ws / "lessons").is_dir(), "a folder the human made stays after removal")
 
     def test_parallel_changes_are_refused_while_locked(self):
-        (self.ws / ".living/.lock").write_text("")
+        (self.ws / ".living/.lock").write_text("", encoding="utf-8", newline="\n")
         self.refused(L.add_module, self.ws, "weekly-update", apply=True)
         self.assertEqual(len(L.add_module(self.ws, "weekly-update")), 1, "a dry run still works")
         (self.ws / ".living/.lock").unlink()
         L.add_module(self.ws, "weekly-update", apply=True)
-        (self.ws / ".living/.lock").write_text("")
+        (self.ws / ".living/.lock").write_text("", encoding="utf-8", newline="\n")
         self.refused(L.remove_module, self.ws, "weekly-update", apply=True)
 
     def test_human_note_in_modules_section_survives_last_removal(self):
         L.add_module(self.ws, "weekly-update", apply=True)
         r = self.ws / "CONTEXT-ROUTING.md"
-        r.write_text(r.read_text().replace(L.ROUTING_END, "My own note about modules.\n\n" + L.ROUTING_END))
+        r.write_text(r.read_text().replace(L.ROUTING_END, "My own note about modules.\n\n" + L.ROUTING_END), encoding="utf-8", newline="\n")
         L.remove_module(self.ws, "weekly-update", apply=True)
         self.assertIn("My own note about modules.", r.read_text())
 
@@ -208,7 +222,7 @@ class TestAtomicity(Case):
 
         def appears(root, *a):
             rel, text = real(root, *a)
-            (root / rel).write_text("written by a human meanwhile\n")
+            (root / rel).write_text("written by a human meanwhile\n", encoding="utf-8", newline="\n")
             return rel, text
 
         with mock.patch.object(R, "build_new_decision", appears):
@@ -226,7 +240,7 @@ class TestDoctorAccuracy(Case):
     def approve_drafts(self):
         for f in ("SYSTEM.md", "PRINCIPLES.md"):
             p = self.ws / f
-            p.write_text(p.read_text().replace("status: draft", "status: approved", 1))
+            p.write_text(p.read_text().replace("status: draft", "status: approved", 1), encoding="utf-8", newline="\n")
 
     def text(self):
         return L.format_doctor(L.doctor(self.ws))
@@ -235,7 +249,7 @@ class TestDoctorAccuracy(Case):
         self.approve_drafts()
         L.add_module(self.ws, "weekly-update", apply=True)
         r = self.ws / "CONTEXT-ROUTING.md"
-        r.write_text(r.read_text().replace("workflows/weekly-update/CONTEXT.md", "workflows/weekly-update/NOT-HERE.md"))
+        r.write_text(r.read_text().replace("workflows/weekly-update/CONTEXT.md", "workflows/weekly-update/NOT-HERE.md"), encoding="utf-8", newline="\n")
         (self.ws / "tools/review.py").unlink()
         t = self.text()
         self.assertIn("sends agents to workflows/weekly-update/NOT-HERE.md", t)
@@ -244,11 +258,11 @@ class TestDoctorAccuracy(Case):
     def test_status_need_not_be_the_first_field(self):
         self.approve_drafts()
         p = self.ws / "SYSTEM.md"
-        p.write_text(p.read_text().replace("---\nstatus: approved\n", "---\nreviewed_by: Owner\nstatus: approved\n", 1))
+        p.write_text(p.read_text().replace("---\nstatus: approved\n", "---\nreviewed_by: Owner\nstatus: approved\n", 1), encoding="utf-8", newline="\n")
         self.assertNotIn("SYSTEM.md is not approved", self.text())
 
     def test_damaged_manifest_gives_a_readable_refusal(self):
-        (self.ws / ".living/manifest.json").write_text("{")
+        (self.ws / ".living/manifest.json").write_text("{", encoding="utf-8", newline="\n")
         with self.assertRaises(L.Refusal) as e:
             L.doctor(self.ws)
         self.assertIn("damaged", str(e.exception))
@@ -265,10 +279,10 @@ class TestDoctorAccuracy(Case):
 
     def test_other_instruction_files_are_found(self):
         (self.ws / "workflows/x").mkdir()
-        (self.ws / "workflows/x/AGENTS.override.md").write_text("x\n")
+        (self.ws / "workflows/x/AGENTS.override.md").write_text("x\n", encoding="utf-8", newline="\n")
         (self.ws / "workflows/x/.claude").mkdir()
-        (self.ws / "workflows/x/.claude/rules.md").write_text("x\n")
-        (self.ws / "AGENTS.override.md").write_text("x\n")
+        (self.ws / "workflows/x/.claude/rules.md").write_text("x\n", encoding="utf-8", newline="\n")
+        (self.ws / "AGENTS.override.md").write_text("x\n", encoding="utf-8", newline="\n")
         t = self.text()
         self.assertIn("ERROR: workflows/x/AGENTS.override.md", t)
         self.assertIn("ERROR: workflows/x/.claude/rules.md", t)

@@ -18,11 +18,11 @@ def make_module(root, mid, files, requires=(), routing=None, **extra):
     d = Path(root) / mid
     for rel, text in files.items():
         (d / "files" / rel).parent.mkdir(parents=True, exist_ok=True)
-        (d / "files" / rel).write_text(text)
+        (d / "files" / rel).write_text(text, encoding="utf-8", newline="\n")
     meta = {"id": mid, "version": "0.1.0", "kind": "workflow", "summary": f"{mid} summary",
             "requires": list(requires), "routing": routing if routing is not None else [[f"{mid} need", next(iter(files))]],
             "needs_approval": [], "signals": [f"{mid} signal"], **extra}
-    (d / "module.json").write_text(json.dumps(meta))
+    (d / "module.json").write_text(json.dumps(meta), encoding="utf-8", newline="\n")
     return d
 
 
@@ -116,7 +116,7 @@ class TestAddRemove(ModuleCase):
 
     def test_remove_keeps_edited_files_and_dry_run_changes_nothing(self):
         L.add_module(self.ws, "staged-learning", apply=True)
-        (self.ws / "lessons/active.md").write_text("# Active lessons\n\n## Active lessons\n\n- mine\n")
+        (self.ws / "lessons/active.md").write_text("# Active lessons\n\n## Active lessons\n\n- mine\n", encoding="utf-8", newline="\n")
         mid = snapshot(self.ws)
         delete, keep, missing = L.remove_module(self.ws, "staged-learning")
         self.assertEqual(snapshot(self.ws), mid)
@@ -128,13 +128,13 @@ class TestAddRemove(ModuleCase):
 
     def test_remove_never_touches_human_folders(self):
         L.add_module(self.ws, "meeting-notes", apply=True)
-        (self.ws / "proposals/2026-10-23-x.md").write_text("mine")
+        (self.ws / "proposals/2026-10-23-x.md").write_text("mine", encoding="utf-8", newline="\n")
         L.remove_module(self.ws, "meeting-notes", apply=True)
         self.assertEqual((self.ws / "proposals/2026-10-23-x.md").read_text(), "mine")
 
     def test_existing_file_blocks_install(self):
         (self.ws / "workflows/weekly-update").mkdir()
-        (self.ws / "workflows/weekly-update/CONTEXT.md").write_text("mine")
+        (self.ws / "workflows/weekly-update/CONTEXT.md").write_text("mine", encoding="utf-8", newline="\n")
         before = snapshot(self.ws)
         with self.assertRaises(L.Refusal):
             L.add_module(self.ws, "weekly-update", apply=True)

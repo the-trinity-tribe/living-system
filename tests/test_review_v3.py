@@ -50,17 +50,17 @@ class Case(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.root = Path(self.tmp.name)
         for f in ("AGENTS.md", "CONTEXT-ROUTING.md", "SYSTEM.md", "PRINCIPLES.md", "README.md"):
-            (self.root / f).write_text(f"# {f}\n")
+            (self.root / f).write_text(f"# {f}\n", encoding="utf-8", newline="\n")
         (self.root / "decisions").mkdir()
         (self.root / "proposals").mkdir()
-        (self.root / OLD).write_text(OLD_TEXT)
+        (self.root / OLD).write_text(OLD_TEXT, encoding="utf-8", newline="\n")
         self.digest = R.sha256(self.root / OLD)
 
     def tearDown(self):
         self.tmp.cleanup()
 
     def put(self, name, text):
-        (self.root / f"proposals/{name}").write_text(text)
+        (self.root / f"proposals/{name}").write_text(text, encoding="utf-8", newline="\n")
         self.before = snapshot(self.root)
         return f"proposals/{name}"
 
@@ -152,8 +152,8 @@ class TestRetire(Case):
         self.refused(self.put("2026-10-22-again.md", proposal("retire", OLD, self.digest)))
 
     def test_check_flags_broken_retirement_records(self):
-        (self.root / "decisions/2026-10-25-bad.md").write_text("---\nstatus: approved\nkind: retirement\n---\n\n# x\n")
-        (self.root / "decisions/2026-10-26-odd.md").write_text("---\nstatus: approved\nkind: memo\n---\n\n# x\n")
+        (self.root / "decisions/2026-10-25-bad.md").write_text("---\nstatus: approved\nkind: retirement\n---\n\n# x\n", encoding="utf-8", newline="\n")
+        (self.root / "decisions/2026-10-26-odd.md").write_text("---\nstatus: approved\nkind: memo\n---\n\n# x\n", encoding="utf-8", newline="\n")
         problems = "\n".join(R.check(self.root))
         self.assertIn("must name the decision it retires", problems)
         self.assertIn("unexpected kind memo", problems)

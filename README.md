@@ -30,7 +30,7 @@ Your workspace is created in its own folder on purpose: personal data should nev
 
 ## Quick start
 
-**Requirements:** Git (to clone) and Python 3. No third-party packages or accounts.
+**Requirements:** Git (to clone) and Python 3.10 or newer. No third-party packages or accounts. The tests run automatically on Linux, Windows and macOS (`.github/workflows/tests.yml`).
 
 ```sh
 git clone https://github.com/the-trinity-tribe/living-system.git

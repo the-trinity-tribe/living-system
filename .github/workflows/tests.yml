@@ -1,0 +1,32 @@
+# Runs every test on Linux, Windows and macOS, on the oldest and a recent supported Python.
+# Read-only: it needs no secrets and changes nothing in the repository.
+name: tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python: ["3.10", "3.13"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Unit tests
+        run: python -B -m unittest discover -v tests
+      - name: Demo structure check
+        run: python -B tools/review.py --root demo/moss-and-circuit check
+      - name: Release safety check
+        run: python -B tools/release_check.py

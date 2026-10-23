@@ -68,12 +68,12 @@ class TestInit(InitCase):
     def test_refuses_non_empty_dir_and_file(self):
         d = self.base / "full"
         d.mkdir()
-        (d / "mine.txt").write_text("keep")
+        (d / "mine.txt").write_text("keep", encoding="utf-8", newline="\n")
         with self.assertRaises(L.Refusal):
             L.init(d, "student", "en")
         self.assertEqual([p.name for p in d.iterdir()], ["mine.txt"])
         f = self.base / "afile"
-        f.write_text("x")
+        f.write_text("x", encoding="utf-8", newline="\n")
         with self.assertRaises(L.Refusal):
             L.init(f, "student", "en")
         self.assertEqual(f.read_text(), "x")
@@ -197,7 +197,7 @@ class TestValueScore(InitCase):
 
     def test_prints_table(self):
         ws = self.ws("student")
-        (ws / "value-check/questions.md").write_text(self.SAMPLE)
+        (ws / "value-check/questions.md").write_text(self.SAMPLE, encoding="utf-8", newline="\n")
         out = subprocess.run([sys.executable, "-B", str(REPO / "tools/living.py"), "value-score", str(ws)],
                              capture_output=True, text=True)
         self.assertEqual(out.returncode, 0, out.stderr)
@@ -214,13 +214,13 @@ class TestValueScore(InitCase):
 
     def test_unknown_word_is_refused(self):
         ws = self.ws("student")
-        (ws / "value-check/questions.md").write_text(self.SAMPLE.replace("wrong", "meh"))
+        (ws / "value-check/questions.md").write_text(self.SAMPLE.replace("wrong", "meh"), encoding="utf-8", newline="\n")
         with self.assertRaises(L.Refusal):
             L.value_score(ws)
 
     def test_missing_table_is_refused_not_scored_as_zero(self):
         ws = self.ws("student")
-        (ws / "value-check/questions.md").write_text("# Questions\n\nI wrote prose instead of a table.\n")
+        (ws / "value-check/questions.md").write_text("# Questions\n\nI wrote prose instead of a table.\n", encoding="utf-8", newline="\n")
         with self.assertRaises(L.Refusal):
             L.value_score(ws)
 
