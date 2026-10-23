@@ -22,6 +22,7 @@ Plain words first. Exact commands are under the heading that needs them. Every f
 - [Status](features/status.md): a read-only list of what needs your attention.
 - [Catch-up](features/catch-up.md): what changed while you were away, changed rules first.
 - [Material from outside, and secrets](features/outside-material-and-secrets.md): outside e-mails and documents are checked for hidden instructions; passwords and keys stay out of the workspace.
+- [Review record](features/review-record.md): every review is fingerprinted, so you can tell if an approved rule was changed afterwards.
 - [Learning mode](features/learning-mode.md): coach mode, practice questions about your own rules, and a handbook for working without AI.
 - [Upgrade](features/upgrade.md): bring a workspace up to date without overwriting your own edits.
 - [Obsidian or any editor](features/obsidian.md): read and approve in a note app; what not to edit by hand.

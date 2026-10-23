@@ -47,7 +47,7 @@ class TestSlice3(Fixture):
     def test_approve_exact_result(self):
         status, result = self.run_review("approve")
         self.assertEqual((status, result), ("promoted", NEW))
-        self.assertEqual(self.changed(), {NEW, PROPOSAL})  # nothing beyond target/result
+        self.assertEqual(self.changed(), {NEW, PROPOSAL, R.RECORD})  # nothing beyond result, proposal and the record
         old = (FIX / TARGET).read_text(encoding="utf-8")
         expected = f"""---
 status: approved
@@ -102,7 +102,7 @@ Promoted from `{PROPOSAL}` and supersedes `{TARGET}`. `approved_by` is attributi
 
     def _non_canonical(self, outcome, status):
         self.run_review(outcome, note="needs Maya confirmation")
-        self.assertEqual(self.changed(), {PROPOSAL})
+        self.assertEqual(self.changed(), {PROPOSAL, R.RECORD})
         p = (self.root / PROPOSAL).read_text(encoding="utf-8")
         self.assertIn(f"status: {status}\n", p)
         self.assertIn(f"| {outcome} | by Test Reviewer", p)

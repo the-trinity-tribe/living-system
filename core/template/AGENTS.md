@@ -155,6 +155,7 @@ Only a human changes a proposal's fate, with `python3 tools/review.py review <pr
 - `approve` creates one new `status: approved` decision with `source_proposal:` (and `supersedes:` when the proposal changed, replaced or retired an existing decision), and marks the proposal `promoted`. An old decision file is never edited. A retirement record (`kind: retirement`) is listed by nothing as current.
 - Approve refuses (and writes nothing) if the proposal is not `proposed`/`deferred`, a target's hash differs from `target_sha256`, the target is already superseded, or the proposed future state is not exactly one blockquote. After a refusal, a human must re-review; do not work around it.
 - `--by` / `approved_by` / `reviewed_by` are attribution, not verified identity.
+- Every review also adds one line to `decisions/review-record.jsonl` with fingerprints of the files it wrote. Never edit that file. `python3 tools/review.py verify` reports any approved decision or reviewed proposal changed or deleted afterwards. If it reports a problem, tell the human plainly what changed and do not repair it yourself: they decide whether to restore the file or record the change through a new proposal.
 
 ## 8. Language
 

@@ -1366,6 +1366,8 @@ def doctor(ws):
             continue
         if meta.get("status") in R.REVIEWABLE:
             out.append(("INFO", f"proposals/{p.name} is {meta['status']} and waits for your review"))
+    if (ws / "decisions").is_dir():
+        out += R.verify(ws)
     steering = set()
     for level, rel, line, what in scan(ws):
         if level == "ERROR" or what.startswith("invisible"):
@@ -1751,7 +1753,8 @@ def handbook(ws, today=None):
             "person who may approve reviews it with `python3 tools/review.py review proposals/<file> "
             "--outcome approve|reject|defer --by \"Name\"`.",
             "- **Without Python:** the person who may approve writes a new file in `decisions/` with `status: "
-            "approved`, today's `date`, and `supersedes:` naming the old file. Never edit or delete the old file.",
+            "approved`, today's `date`, and `supersedes:` naming the old file. Never edit or delete the old file. "
+            "`review.py verify` will list it as written by hand, which is expected.",
             "- **Repeated work:** each workflow's `CONTEXT.md` lists its steps in plain words; do them in order and "
             "check the result yourself at each stop.",
             "- **Skills you want to keep:** `me/goals.md`, if your profile has it.", ""]

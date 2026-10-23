@@ -12,11 +12,17 @@ Proposal kinds (`kind:` in the front matter):
 - `retire`: a retirement record supersedes `target`, so no rule applies any more.
   The blockquote says why. A retirement record is never a current rule.
 Every kind except `new` needs `target_sha256` of the current target.
+
+Every review is also written to `decisions/review-record.jsonl`: one line per review with
+the fingerprints of the files it wrote, each line chained to the one before. `verify`
+reports any approved decision or reviewed proposal changed or deleted afterwards, any
+decision the review tool did not write, and any edit to the record itself.
 """
 import argparse
 import contextlib
 import datetime
 import hashlib
+import json
 import os
 import re
 import stat
@@ -37,6 +43,34 @@ class Refusal(Exception):
 
 def sha256(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+RECORD = "decisions/review-record.jsonl"
+RECORD_KEYS = ("n", "date", "outcome", "by", "files", "prev")
+
+
+def text_sha(data):
+    """Fingerprint of a text file that ignores Windows line endings (git may convert them)."""
+    if isinstance(data, str):
+        data = data.encode("utf-8")
+    return hashlib.sha256(data.replace(b"\r\n", b"\n")).hexdigest()
+
+
+def record_lines(root):
+    path = Path(root) / RECORD
+    if path.is_symlink():
+        raise Refusal(f"{RECORD} is a link; nothing was written")
+    if not path.is_file():
+        return []
+    return [l.rstrip("\r") for l in path.read_text(encoding="utf-8").split("\n") if l.strip()]
+
+
+def record_entry(lines, date, outcome, by, files):
+    """The next line of the review record: what was written, chained to the previous line."""
+    entry = {"n": len(lines) + 1, "date": date, "outcome": outcome, "by": by,
+             "files": {rel: text_sha(text) for rel, text in sorted(files.items())},
+             "prev": text_sha(lines[-1]) if lines else "start"}
+    return json.dumps(entry, ensure_ascii=False, sort_keys=True)
 
 
 def split_frontmatter(text, name):
@@ -403,8 +437,84 @@ def _review(root, proposal_rel, outcome, reviewer, note, date):
         pbody_new += "\n\n## Review log\n"
     pbody_new += f"\n{log}\n"
     writes[pp] = f"---\n{front}\n---\n{pbody_new}"
-    write_all(writes, new={root / result} if result else set())
+    lines = record_lines(root)
+    files = {p.relative_to(root).as_posix(): text for p, text in writes.items()}
+    record = root / RECORD
+    writes[record] = "".join(l + "\n" for l in lines) + record_entry(lines, date, outcome, reviewer, files) + "\n"
+    new = {root / result} if result else set()
+    write_all(writes, new=new | (set() if record.is_file() else {record}))
     return status, result
+
+
+def start_record(root, by, date=None):
+    """Start the review record for a workspace that has none: fingerprint what is there now. Returns the file count."""
+    root = Path(root)
+    date = date or datetime.date.today().isoformat()
+    one_line(by, "--by")
+    if not by.strip():
+        raise Refusal("--by is required")
+    if not (root / "decisions").is_dir():
+        raise Refusal(f"{root} has no decisions/ folder")
+    with review_lock(root):
+        if record_lines(root) or (root / RECORD).exists():
+            raise Refusal(f"{RECORD} already exists; a record is started only once. Run verify to check it")
+        files = {}
+        for p in sorted((root / "decisions").glob("*.md")) + sorted((root / "proposals").glob("*.md")):
+            rel = p.relative_to(root).as_posix()
+            if rel.startswith("proposals/"):
+                meta = split_frontmatter(p.read_text(encoding="utf-8"), rel)[0]
+                if meta.get("status") not in TERMINAL | {"deferred"}:
+                    continue  # still open: nothing has been decided about it yet
+            files[rel] = p.read_text(encoding="utf-8")
+        write_all({root / RECORD: record_entry([], date, "start", by, files) + "\n"}, new={root / RECORD})
+    return len(files)
+
+
+def verify(root):
+    """[(level, message)] comparing decisions and reviewed proposals with the review record. Read-only."""
+    root = Path(root)
+    try:
+        lines = record_lines(root)
+    except Refusal as e:
+        return [("ERROR", str(e))]
+    if not lines and not any((root / "decisions").glob("*.md")):
+        return []  # nothing decided yet: the record starts with the first review
+    if not lines:
+        return [("INFO", f"no review record yet ({RECORD}); it starts with the next review, or run: "
+                         f"python3 tools/review.py verify --start --by \"Your Name\"")]
+    out, latest, prev = [], {}, "start"
+    for i, line in enumerate(lines, 1):
+        try:
+            e = json.loads(line)
+            ok = isinstance(e, dict) and all(k in e for k in RECORD_KEYS) and isinstance(e["files"], dict)
+        except ValueError:
+            ok = False
+        if not ok or e["n"] != i or e["prev"] != prev:
+            return [("ERROR", f"{RECORD} line {i} was edited, removed or added by hand; the record cannot be "
+                              f"trusted from there on. Restore it from git or a backup")]
+        prev = text_sha(line)
+        for rel, sha in e["files"].items():
+            latest[rel] = (sha, e["date"], e["outcome"])
+    for rel, (sha, date, outcome) in sorted(latest.items()):
+        p = root / rel
+        what = "approved decision" if rel.startswith("decisions/") else "reviewed proposal"
+        if not p.is_file():
+            out.append(("ERROR", f"{rel}: {what} from {date} is missing"))
+        elif text_sha(p.read_bytes()) != sha:
+            out.append(("ERROR", f"{rel}: {what} was changed after it was recorded on {date} ({outcome})"))
+    for p in sorted((root / "decisions").glob("*.md")):
+        rel = p.relative_to(root).as_posix()
+        if rel not in latest:
+            out.append(("WARN", f"{rel}: not written by the review tool (by hand, or before the record started); "
+                                f"check who wrote it"))
+    return out
+
+
+def format_verify(results, root):
+    if not results:
+        n = len(record_lines(root))
+        return f"Review record intact: {n} entr{'y' if n == 1 else 'ies'}; every recorded file is unchanged."
+    return "\n".join(f"{lvl}: {msg}" for lvl, msg in results)
 
 
 def check(root):
@@ -470,12 +580,15 @@ def main(argv=None):
     h = sub.add_parser("hash")
     h.add_argument("file")
     sub.add_parser("check")
+    v = sub.add_parser("verify", help="check that no approved decision or reviewed proposal changed afterwards")
+    v.add_argument("--start", action="store_true", help="start the record for a workspace that has none")
+    v.add_argument("--by", help="with --start: who starts it")
     a = ap.parse_args(argv)
     a.root = os.path.expanduser(a.root)  # PowerShell passes ~ through unexpanded
     try:
         if not Path(a.root).is_dir():
             raise Refusal(f"{a.root} is not a folder")
-        if a.cmd in ("current", "history") and not (Path(a.root) / "decisions").is_dir():
+        if a.cmd in ("current", "history", "verify") and not (Path(a.root) / "decisions").is_dir():
             raise Refusal(f"{a.root} has no decisions/ folder; is it a Living System workspace?")
         if a.cmd == "review":
             status, result = review(a.root, a.proposal, a.outcome, a.by, a.note, a.date)
@@ -486,6 +599,14 @@ def main(argv=None):
             print("\n".join(current_decisions(Path(a.root))))
         elif a.cmd == "hash":
             print(sha256(Path(a.root) / a.file))
+        elif a.cmd == "verify":
+            if a.start:
+                n = start_record(a.root, a.by or "")
+                print(f"Started {RECORD} with {n} file(s). From now on, verify reports any change to them.")
+                return 0
+            results = verify(a.root)
+            print(format_verify(results, a.root))
+            return 1 if any(lvl == "ERROR" for lvl, _ in results) else 0
         elif a.cmd == "check":
             probs = check(a.root)
             print("\n".join(probs) if probs else "ok")

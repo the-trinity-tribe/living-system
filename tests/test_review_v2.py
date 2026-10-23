@@ -149,7 +149,8 @@ class TestNewDecision(EmptyWorkspace):
             with self.subTest(outcome=outcome):
                 self.write_proposal(FRONT + BODY)
                 self.assertEqual(self.run_review(outcome), (status, ""))
-                self.assertEqual(list((self.root / "decisions").iterdir()), [])
+                self.assertEqual([p.name for p in (self.root / "decisions").iterdir()], ["review-record.jsonl"])
+                (self.root / R.RECORD).unlink()
 
     def test_defer_then_approve(self):
         self.run_review("defer")
