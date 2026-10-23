@@ -43,7 +43,7 @@ cd living-system
 
 ### Make your own workspace
 
-The easiest way is to open this repository in Claude Code or Codex and say *"Read INSTALL.md and set up my workspace."* The agent asks you up to five questions, shows you what it will create, and waits for your yes. See [INSTALL.md](INSTALL.md).
+The easiest way is to open this repository in Claude Code or Codex and say *"Read INSTALL.md and set up my workspace."* The agent asks you up to five short questions (plus whether to keep replies short), shows you what it will create, and waits for your yes. See [INSTALL.md](INSTALL.md).
 
 Or do it yourself. Profiles: `student`, `professional`, `employee`, `manager`.
 

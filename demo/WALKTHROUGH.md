@@ -127,6 +127,22 @@ For the workflow generator, open a fresh session and say "Create a workflow for 
 
 Date of run: 2026-10-23, one run per step (plus one Claude Code re-run of steps 1 and 2 after the rule change). Agent versions: Claude Code 2.1.309 with Claude Sonnet 5.5 (`claude -p`, file tools and `living.py` allowed, `review.py review` not allowed); Codex CLI 0.163.0 with its default model (`codex exec`, workspace-write sandbox). Before this run, new workspaces got `.living/catalog.md`; without it, an agent in a workspace had no way to know which modules exist.
 
+## Results: guided install (`INSTALL.md`)
+
+One run per agent on 2026-10-23, each in a fresh clone of the product repository. The "user" was a solo freelance UX designer: English; professional; weekly client updates, call notes, monthly newsletter; "nothing goes to a client or gets published without my OK"; no passwords, contracts or client names; calm replies yes; a named folder outside the repository.
+
+| Check | Claude Code (Sonnet 5.5) | Codex (default model) |
+| --- | --- | --- |
+| Asked one question at a time, at most five plus the replies question | Passed | Passed |
+| Approval screen (what, where, why a separate folder, how to undo) before anything was created | Passed | Passed |
+| Ran `init` only after "yes", in the named folder, with the right profile, language and calm replies | Passed | Passed |
+| Drafted `SYSTEM.md` and `me/goals.md` from the answers only, kept them `status: draft`, approved nothing | Passed; marked the owner's name and goals "(to confirm)". One sentence from the template appears twice in its `SYSTEM.md`, and it added "agents may draft" next to the approval rule | Passed; marked the owner's name "(to confirm)" |
+| Ran `check` and `doctor` (0 errors, the two draft warnings) | Passed | Passed |
+| Mentioned the fitting modules without installing them, and offered the approval rule as a proposal | Passed (`weekly-update`, `meeting-notes`) | Passed (same two) |
+| Product clone unchanged, no demo names in the workspace | Passed | Passed |
+
+The only fix that came out of this run: `INSTALL.md` said "maximum 5" questions while also asking about calm replies; the heading now says "five, plus one about how to reply".
+
 ## What this demo does not show
 
 - It does not prove an agent will always follow the rules. Agents can ignore instructions.

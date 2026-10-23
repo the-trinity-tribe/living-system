@@ -35,7 +35,7 @@ You are helping a human, who may not be technical, create a private workspace. K
 - Run `review.py review`, push, publish or upload anything.
 - Copy the demo's names or content (Moss & Circuit, Riverside, Maya, Leo, Sam) into the workspace.
 
-## The questions (maximum 5)
+## The questions (five, plus one about how to reply)
 
 Ask one at a time. Accept short answers. "Skip" is a valid answer.
 

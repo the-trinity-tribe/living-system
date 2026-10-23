@@ -8,7 +8,7 @@ It creates your own private workspace: a new folder of plain Markdown files with
 
 You can do it in two ways:
 
-- **With your agent.** Open the Living System folder in Claude Code or Codex and say: "Read INSTALL.md and set up my workspace." The agent asks up to five questions, shows you what it will create, and waits for your yes.
+- **With your agent.** Open the Living System folder in Claude Code or Codex and say: "Read INSTALL.md and set up my workspace." The agent asks up to five short questions (plus whether to keep replies short), shows you what it will create, and waits for your yes.
 - **By hand.** Run one command (below).
 
 ## Why would someone need it?
