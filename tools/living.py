@@ -45,6 +45,8 @@ def copy_tree(src, dst):
         if p.is_dir():
             (dst / rel).mkdir(parents=True, exist_ok=True)
         elif not p.name.endswith(".append.md"):
+            if p.name == "gitignore":  # stored without the dot so git does not apply it inside this repo
+                rel = rel.with_name(".gitignore")
             (dst / rel).parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(p, dst / rel)
 

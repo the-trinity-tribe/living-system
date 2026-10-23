@@ -114,7 +114,9 @@ class TestInit(InitCase):
         self.assertIn("me/", (emp / ".gitignore").read_text().splitlines())
         self.assertTrue((emp / "me/goals.md").is_file())
         self.assertIn("you propose, you do not approve", (emp / "AGENTS.md").read_text().lower())
-        self.assertFalse((self.ws("manager") / ".gitignore").exists())
+        mgr = self.ws("manager")
+        self.assertFalse((mgr / ".gitignore").exists())
+        self.assertTrue((mgr / "me/goals.md").is_file())
 
     def test_student_has_no_team_files(self):
         ws = self.ws("student")
@@ -153,6 +155,16 @@ class TestInit(InitCase):
         self.assertEqual(set(m["files"]), on_disk)
         for rel, h in m["files"].items():
             self.assertEqual(L.sha256(ws / rel), h)
+
+    def test_git_ignores_nothing_under_core(self):
+        try:
+            r = subprocess.run(["git", "ls-files", "--others", "--ignored", "--exclude-standard", "core/"],
+                               cwd=REPO, capture_output=True, text=True)
+        except FileNotFoundError:
+            self.skipTest("git not available")
+        if r.returncode != 0:
+            self.skipTest("not a git checkout")
+        self.assertEqual(r.stdout.strip(), "")
 
     def test_template_is_not_modified_by_init(self):
         before = all_text(REPO / "core")
