@@ -68,8 +68,8 @@ def single_blockquote(text, name):
     quote = "\n".join(re.sub(r"^> ?", "", l) for l in blocks[0].strip().split("\n")).strip()
     if not quote:
         raise Refusal(f"{name}: Proposed future state blockquote is empty")
-    if re.search(r"^\s*#", quote, re.M) or re.search(r"^\s*---\s*$", quote, re.M):
-        raise Refusal(f"{name}: the proposed rule must not contain headings or '---' lines")
+    if re.search(r"^\s*(#|```|~~~)", quote, re.M) or re.search(r"^\s*---\s*$", quote, re.M):
+        raise Refusal(f"{name}: the proposed rule must not contain headings, code fences or '---' lines")
     return quote
 
 
@@ -104,9 +104,10 @@ def safe_rel(root, rel, prefix):
     if (not rel.startswith(prefix) or not rel.endswith(".md") or "\\" in rel
             or any(part in ("", ".", "..") for part in parts) or len(parts) != 2):
         raise Refusal(f"path {rel!r} must be written as {prefix}<name>.md (no ./, .., \\ or subfolders)")
+    folder = root / parts[0]
     p = root / rel
-    if p.is_symlink() or not p.is_file():
-        raise Refusal(f"{rel} does not exist or is a link")
+    if folder.is_symlink() or p.is_symlink() or not p.is_file():
+        raise Refusal(f"{rel} does not exist, or it or its folder is a link")
     return p
 
 
@@ -179,11 +180,12 @@ def proposal_kind(meta, name):
     return kind
 
 
-def write_all(writes):
+def write_all(writes, new=()):
     """Write every file or none; undo on failure.
 
-    New files are created exclusively, so an existing file (or a link) is never
-    overwritten. Existing files are replaced through a uniquely named temp file.
+    Paths in `new` are created exclusively, so an existing file (or a link) is
+    never overwritten, even one that appeared after validation. Other paths must
+    already exist and are replaced through a uniquely named temp file.
     """
     made_dirs, tmps, done = [], [], []
     try:
@@ -193,7 +195,7 @@ def write_all(writes):
                     d.mkdir()
                     made_dirs.append(d)
         for path, text in writes.items():
-            if path.exists() or path.is_symlink():
+            if path not in new:
                 fd, tmp = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
                 tmps.append(Path(tmp))
                 with os.fdopen(fd, "w", encoding="utf-8") as f:
@@ -279,6 +281,8 @@ def _review(root, proposal_rel, outcome, reviewer, note, date):
             new_rel, new_text = build_new_decision(root, proposal_rel, pbody, reviewer, date)
         else:
             new_rel, new_text = build_decision(root, proposal_rel, pmeta, pbody, reviewer, date)
+        if (root / "decisions").is_symlink():
+            raise Refusal("decisions/ is a link; nothing was written")
         writes[root / new_rel] = new_text
         result = new_rel
     status = OUTCOME_STATUS[outcome]
@@ -298,7 +302,7 @@ def _review(root, proposal_rel, outcome, reviewer, note, date):
         pbody_new += "\n\n## Review log\n"
     pbody_new += f"\n{log}\n"
     writes[pp] = f"---\n{front}\n---\n{pbody_new}"
-    write_all(writes)
+    write_all(writes, new={root / result} if result else set())
     return status, result
 
 

@@ -9,7 +9,7 @@ Collect the facts this week's update needs. Write nothing else.
 | Human | The request | Who the update is for, and which project or period | Sets the scope |
 | Projects | The relevant file in `projects/` | Working notes from this period | What happened |
 | Handover | `handover/LATEST.md` | All | Where the last session stopped |
-| Current decisions | output of `python3 tools/review.py current` | The printed list | Rules that may limit what can be said |
+| Current decisions | output of `python3 tools/review.py current`, then those files | Rule, Exception and Scope sections | Rules that limit what can be said, and conflicts to flag |
 
 ## Process
 

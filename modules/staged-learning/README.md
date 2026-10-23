@@ -39,7 +39,7 @@ Work as usual. When the agent adds a suggestion to `lessons/inbox.md`, it tells 
 
 ## What changes inside the system when it runs?
 
-Only `lessons/inbox.md` (agent suggestions) and `lessons/active.md` (your approvals) change. Installing adds the `lessons/` folder and two routing rows.
+Only `lessons/inbox.md` (agent suggestions) and `lessons/active.md` (your approvals) change. Installing adds the `lessons/` folder and three routing rows.
 
 ## Where does the human keep control?
 

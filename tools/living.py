@@ -16,6 +16,7 @@ at the end, so a failure never leaves a half-made workspace.
 a file. `remove` deletes only files that are unchanged since they were added.
 """
 import argparse
+import contextlib
 import hashlib
 import json
 import os
@@ -172,11 +173,51 @@ def format_score(counts, unscored):
 MODULES = HERE.parent / "modules"
 MODULE_KINDS = ("workflow", "knowledge", "skill", "domain")
 MODULE_ID = r"[a-z0-9][a-z0-9-]{0,40}"
-# Owned by the human or the kernel; a module may never ship files here.
-PROTECTED_DIRS = ("decisions/", "proposals/", "projects/", "me/", ".living/", "tools/")
-INSTRUCTION_FILES = ("AGENTS.md", "CLAUDE.md")
-ROOT_FILES = ("CONTEXT-ROUTING.md", "SYSTEM.md", "PRINCIPLES.md", "README.md", ".gitignore")
+# Owned by the human or the kernel; a module may never ship or delete files here (compared case-insensitively).
+PROTECTED_DIRS = ("decisions", "proposals", "projects", "me", ".living", "tools")
+ROOT_FILES = ("context-routing.md", "system.md", "principles.md", "readme.md", ".gitignore")
+# Files that Claude Code, Codex or similar agents load automatically as instructions.
+INSTRUCTION_NAMES = ("agents.md", "agents.override.md", "claude.md", "claude.local.md", "gemini.md")
+UNSAFE = re.compile(r"[\x00-\x1f\x7f\x85  ]")
 ROUTING_START, ROUTING_END = "<!-- modules:start -->", "<!-- modules:end -->"
+ROUTING_INTRO = ("## Installed modules\n\nOptional modules you added. The file each row points to says what "
+                 "that module may do.\n\n| Need | Read |\n| --- | --- |\n")
+
+
+def path_problem(rel):
+    """Why a module may not own this workspace path, or None. Used for module files and manifest entries."""
+    parts = rel.split("/") if isinstance(rel, str) else [""]
+    low = [part.lower() for part in parts]
+    if (not rel or rel.startswith("/") or "\\" in rel or ":" in rel or UNSAFE.search(rel)
+            or any(part in ("", ".", "..") or part != part.rstrip(". ") for part in parts)):
+        return "is not a plain relative path"
+    if low[0] in PROTECTED_DIRS:
+        return "is in a folder owned by you or the kernel"
+    if len(parts) == 1 and low[0] in ROOT_FILES:
+        return "is a workspace root file"
+    if low[-1] in INSTRUCTION_NAMES or any(part.startswith(".") for part in parts[:-1]) \
+            or (parts[-1].startswith(".") and parts[-1] != ".gitkeep"):
+        return "is an agent instruction file or a hidden tool folder"
+    return None
+
+
+def linked_part(ws, rel):
+    """The first existing link on the way from the workspace to rel, or None."""
+    cur = Path(ws)
+    for part in rel.split("/"):
+        cur = cur / part
+        if cur.is_symlink():
+            return cur.relative_to(ws).as_posix()
+        if not cur.exists():
+            return None
+    return None
+
+
+def refuse_links(ws, rels):
+    for rel in rels:
+        link = linked_part(ws, rel)
+        if link:
+            raise Refusal(f"{link} is a link; Living System does not write or delete through links. Nothing was changed")
 
 
 def load_module(mid, root=MODULES):
@@ -200,12 +241,13 @@ def load_module(mid, root=MODULES):
     if not files:
         raise Refusal(f"modules/{mid} has no files to install")
     for rel in files:
-        if rel.startswith(PROTECTED_DIRS) or rel in ROOT_FILES or Path(rel).name in INSTRUCTION_FILES:
-            raise Refusal(f"modules/{mid}: may not ship {rel} (human-owned, kernel-owned or an agent instruction file)")
+        why = path_problem(rel)
+        if why:
+            raise Refusal(f"modules/{mid}: may not ship {rel}: it {why}")
     for row in meta["routing"]:
         if (not isinstance(row, list) or len(row) != 2 or row[1] not in files
-                or any(not isinstance(c, str) or "|" in c or "\n" in c for c in row)):
-            raise Refusal(f"modules/{mid}: routing row {row!r} must be [need, one of its own files]")
+                or any(not isinstance(c, str) or "|" in c or UNSAFE.search(c) for c in row)):
+            raise Refusal(f"modules/{mid}: routing row {row!r} must be [one-line need, one of its own files]")
     return {**meta, "dir": d, "files": files}
 
 
@@ -213,13 +255,41 @@ def read_manifest(ws):
     path = Path(ws) / ".living" / "manifest.json"
     if not path.is_file():
         raise Refusal(f"{ws} is not a Living System workspace (no .living/manifest.json)")
-    return json.loads(path.read_text(encoding="utf-8"))
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError) as e:
+        raise Refusal(f".living/manifest.json is damaged ({e}); restore it from a backup or git") from None
+    mods = data.get("modules", {}) if isinstance(data, dict) else None
+    if not isinstance(data, dict) or not isinstance(data.get("files"), dict) or not isinstance(mods, dict) \
+            or not all(isinstance(m, dict) and isinstance(m.get("files"), dict) for m in mods.values()):
+        raise Refusal(".living/manifest.json has an unexpected structure; restore it from a backup or git")
+    return data
 
 
 def write_json(path, data):
-    tmp = path.with_name(f".{path.name}.tmp")
-    tmp.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
-    os.replace(tmp, path)
+    fd, tmp = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(json.dumps(data, indent=2) + "\n")
+        os.replace(tmp, path)
+    except BaseException:
+        Path(tmp).unlink(missing_ok=True)
+        raise
+
+
+@contextlib.contextmanager
+def workspace_lock(ws):
+    """One add or remove at a time per workspace, so changes cannot overwrite each other."""
+    lock = Path(ws) / ".living" / ".lock"
+    try:
+        os.close(os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY))
+    except FileExistsError:
+        raise Refusal("another Living System command is changing this workspace (.living/.lock exists). "
+                      "If none is running, delete that file and try again") from None
+    try:
+        yield
+    finally:
+        lock.unlink(missing_ok=True)
 
 
 def install_order(mid, root=MODULES, trail=()):
@@ -242,7 +312,10 @@ def plan_add(ws, mid, root=MODULES):
     seen, problems = {}, []
     for m in order:
         for rel in m["files"]:
-            if (ws / rel).exists() or (ws / rel).is_symlink():
+            link = linked_part(ws, rel)
+            if link:
+                problems.append(f"{link} is a link (module {m['id']}); Living System does not write through links")
+            elif (ws / rel).exists():
                 problems.append(f"{rel} already exists (module {m['id']})")
             elif rel in seen:
                 problems.append(f"{rel} is shipped by both {seen[rel]} and {m['id']}")
@@ -267,70 +340,88 @@ def format_add_plan(order, mid):
 def routing_with(text, m):
     rows = "".join(f"| {need} | `{path}` <!-- module:{m['id']} --> |\n" for need, path in m["routing"])
     if ROUTING_START not in text:
-        text = (text.rstrip("\n") + f"\n\n{ROUTING_START}\n## Installed modules\n\n"
-                f"Optional modules you added. The file each row points to says what that module may do.\n\n"
-                f"| Need | Read |\n| --- | --- |\n\n{ROUTING_END}\n")
+        text = text.rstrip("\n") + f"\n\n{ROUTING_START}\n{ROUTING_INTRO}\n{ROUTING_END}\n"
     head, tail = text.split(ROUTING_END, 1)
     return head.rstrip("\n") + "\n" + rows + "\n" + ROUTING_END + tail
 
 
 def routing_without(text, mid):
     text = "".join(l for l in text.splitlines(True) if f"<!-- module:{mid} -->" not in l)
-    if ROUTING_START in text and "<!-- module:" not in text.split(ROUTING_START, 1)[1]:
+    if ROUTING_START in text and ROUTING_END in text:
         head, rest = text.split(ROUTING_START, 1)
-        text = head.rstrip("\n") + "\n" + rest.split(ROUTING_END, 1)[1].lstrip("\n")
+        inner, tail = rest.split(ROUTING_END, 1)
+        if inner.strip() == ROUTING_INTRO.strip():  # only our own wrapper is left, so drop it
+            text = head.rstrip("\n") + "\n" + tail.lstrip("\n")
     return text
+
+
+def routing_file(ws):
+    routing = Path(ws) / "CONTEXT-ROUTING.md"
+    if routing.is_symlink() or not routing.is_file():
+        raise Refusal("CONTEXT-ROUTING.md is missing or is a link; nothing was changed")
+    return routing
 
 
 def add_module(ws, mid, apply=False, root=MODULES):
     ws = Path(ws)
-    order = plan_add(ws, mid, root)
     if not apply:
-        return order
-    routing = ws / "CONTEXT-ROUTING.md"
-    old_routing = routing.read_text(encoding="utf-8")
-    manifest = read_manifest(ws)
-    created = []
-    try:
-        new_routing = old_routing
-        for m in order:
-            for rel in m["files"]:
-                dst = ws / rel
-                dst.parent.mkdir(parents=True, exist_ok=True)
-                with open(dst, "xb") as f:
-                    f.write((m["dir"] / "files" / rel).read_bytes())
-                created.append(dst)
-            new_routing = routing_with(new_routing, m)
-            manifest.setdefault("modules", {})[m["id"]] = {
-                "version": m["version"], "kind": m["kind"], "requires": m["requires"],
-                "files": {rel: sha256(ws / rel) for rel in m["files"]}}
-        routing.write_text(new_routing, encoding="utf-8")
-        write_json(ws / ".living" / "manifest.json", manifest)
-    except BaseException:
-        for p in created:
-            p.unlink(missing_ok=True)
-        prune_empty_dirs(ws, created)
-        routing.write_text(old_routing, encoding="utf-8")
-        raise
+        return plan_add(ws, mid, root)
+    read_manifest(ws)
+    with workspace_lock(ws):
+        order = plan_add(ws, mid, root)
+        routing = routing_file(ws)
+        old_routing = routing.read_text(encoding="utf-8")
+        manifest = read_manifest(ws)
+        created, made = [], []
+        try:
+            new_routing = old_routing
+            for m in order:
+                dirs = []
+                for rel in m["files"]:
+                    dst = ws / rel
+                    for d in reversed([dst.parent, *dst.parent.parents]):
+                        if ws in d.parents and not d.exists():
+                            d.mkdir()
+                            made.append(d)
+                            dirs.append(d.relative_to(ws).as_posix())
+                    fd = os.open(dst, os.O_CREAT | os.O_EXCL | os.O_WRONLY | getattr(os, "O_BINARY", 0))
+                    created.append(dst)
+                    with os.fdopen(fd, "wb") as f:
+                        f.write((m["dir"] / "files" / rel).read_bytes())
+                new_routing = routing_with(new_routing, m)
+                manifest.setdefault("modules", {})[m["id"]] = {
+                    "version": m["version"], "kind": m["kind"], "requires": m["requires"],
+                    "files": {rel: sha256(ws / rel) for rel in m["files"]}, "dirs": dirs}
+            routing.write_text(new_routing, encoding="utf-8")
+            write_json(ws / ".living" / "manifest.json", manifest)
+        except BaseException:
+            for p in reversed(created):
+                p.unlink(missing_ok=True)
+            for d in reversed(made):
+                if d.is_dir() and not any(d.iterdir()):
+                    d.rmdir()
+            routing.write_text(old_routing, encoding="utf-8")
+            raise
     return order
 
 
-def prune_empty_dirs(ws, paths):
-    for p in sorted({d for p in paths for d in Path(p).parents if ws in d.parents}, key=lambda d: -len(d.parts)):
-        if p.is_dir() and not any(p.iterdir()):
-            p.rmdir()
-
-
 def plan_remove(ws, mid):
+    ws = Path(ws)
     installed = read_manifest(ws).get("modules", {})
     if mid not in installed:
         raise Refusal(f"module {mid!r} is not installed")
     needed_by = sorted(k for k, v in installed.items() if mid in v.get("requires", []))
     if needed_by:
         raise Refusal(f"module {mid!r} is required by {', '.join(needed_by)}; remove those first")
+    entry = installed[mid]
+    for rel in [*entry["files"], *entry.get("dirs", [])]:
+        why = path_problem(rel) if rel in entry["files"] else (path_problem(rel + "/x") or None)
+        if why:
+            raise Refusal(f".living/manifest.json lists {rel!r} for {mid}, which {why}; nothing was changed")
+    refuse_links(ws, entry["files"])
     delete, keep, missing = [], [], []
-    for rel, digest in sorted(installed[mid]["files"].items()):
-        p = Path(ws) / rel
+    for rel, digest in sorted(entry["files"].items()):
+        p = ws / rel
         if not p.is_file():
             missing.append(rel)
         elif sha256(p) == digest:
@@ -352,19 +443,45 @@ def format_remove_plan(mid, delete, keep, missing):
 
 def remove_module(ws, mid, apply=False):
     ws = Path(ws)
-    delete, keep, missing = plan_remove(ws, mid)
-    if apply:
+    if not apply:
+        return plan_remove(ws, mid)
+    read_manifest(ws)
+    with workspace_lock(ws):
+        delete, keep, missing = plan_remove(ws, mid)
         manifest = read_manifest(ws)
-        routing = ws / "CONTEXT-ROUTING.md"
-        routing.write_text(routing_without(routing.read_text(encoding="utf-8"), mid), encoding="utf-8")
-        for rel in delete:
-            (ws / rel).unlink()
-        prune_empty_dirs(ws, [ws / r for r in delete])
-        del manifest["modules"][mid]
-        if not manifest["modules"]:
-            del manifest["modules"]
-        write_json(ws / ".living" / "manifest.json", manifest)
-    return delete, keep, missing
+        entry = manifest["modules"][mid]
+        routing = routing_file(ws)
+        old_routing = routing.read_text(encoding="utf-8")
+        backups, removed_dirs = {}, []
+        try:
+            routing.write_text(routing_without(old_routing, mid), encoding="utf-8")
+            for rel in list(delete):
+                p = ws / rel
+                data = p.read_bytes()
+                if hashlib.sha256(data).hexdigest() != entry["files"][rel]:  # edited since the plan: keep it
+                    delete.remove(rel)
+                    keep.append(rel)
+                    continue
+                backups[p] = data
+                p.unlink()
+            for rel in sorted(entry.get("dirs", []), key=lambda r: -r.count("/")):
+                d = ws / rel
+                if d.is_dir() and not d.is_symlink() and not any(d.iterdir()):
+                    d.rmdir()
+                    removed_dirs.append(d)
+            del manifest["modules"][mid]
+            if not manifest["modules"]:
+                del manifest["modules"]
+            write_json(ws / ".living" / "manifest.json", manifest)
+        except BaseException:
+            for d in reversed(removed_dirs):
+                d.mkdir(exist_ok=True)
+            for p, data in backups.items():
+                p.parent.mkdir(parents=True, exist_ok=True)
+                p.write_bytes(data)
+            routing.write_text(old_routing, encoding="utf-8")
+            raise
+    return delete, sorted(keep), missing
 
 
 def list_modules(root=MODULES, ws=None):
@@ -431,6 +548,7 @@ def new_workflow(ws, slug, stages, goal="", apply=False):
     if "\n" in goal or "|" in goal:
         raise Refusal("the goal must be one line without '|'")
     target = ws / "workflows" / slug
+    refuse_links(ws, [f"workflows/{slug}"])
     if target.exists():
         raise Refusal(f"workflows/{slug} already exists")
     files = workflow_files(slug, stages, goal)
@@ -460,6 +578,21 @@ def review_tool():
     return mod
 
 
+AGENT_DIRS = (".claude", ".codex", ".agents", ".cursor")
+
+
+def demo_fingerprints():
+    """Hashes of files that only the demo ships, so a copied demo file is recognised even without its banner."""
+    def hashes(folder):
+        return {sha256(p) for p in folder.rglob("*") if p.is_file()} if folder.is_dir() else set()
+    shared = hashes(CORE) | hashes(MODULES)
+    return {h for h in hashes(HERE.parent / "demo") - shared if h != sha256_bytes(b"")}
+
+
+def sha256_bytes(data):
+    return hashlib.sha256(data).hexdigest()
+
+
 def doctor(ws):
     """Read-only health check. Returns (level, message) pairs; level is ERROR, WARN or INFO."""
     ws = Path(ws)
@@ -467,51 +600,69 @@ def doctor(ws):
     R = review_tool()
     out = [("ERROR", p) for p in R.check(ws)]
     files = [p for p in sorted(ws.rglob("*")) if p.is_file() and ".git" not in p.relative_to(ws).parts]
-    md = [p for p in files if p.suffix == ".md"]
+    demo = demo_fingerprints()
     for p in files:
         rel = p.relative_to(ws).as_posix()
-        if p.name in INSTRUCTION_FILES and p.parent != ws:
+        name, below_root = p.name.lower(), p.parent != ws
+        if name in INSTRUCTION_NAMES and below_root:
             out.append(("ERROR", f"{rel}: agent instruction file below the workspace root; agents may load it "
                                  f"as a competing rule set. Move its content into a CONTEXT.md"))
-    for p in md:
-        if DEMO_BANNER in p.read_text(encoding="utf-8"):
-            out.append(("ERROR", f"{p.relative_to(ws).as_posix()}: contains demo sandbox content; "
-                                 f"keep demo material out of your workspace"))
+        elif name in ("agents.override.md", "claude.local.md") and not below_root:
+            out.append(("WARN", f"{rel}: personal or override instructions; some agents read it instead of or "
+                                f"on top of AGENTS.md. Make sure it does not contradict AGENTS.md"))
+        if any(part.lower() in AGENT_DIRS for part in p.relative_to(ws).parts[1:-1]):
+            out.append(("ERROR", f"{rel}: agent settings folder below the workspace root; agents may load it"))
+        if sha256(p) in demo or (p.suffix == ".md" and DEMO_BANNER in p.read_text(encoding="utf-8", errors="replace")):
+            out.append(("ERROR", f"{rel}: demo sandbox content; keep demo material out of your workspace"))
     kernel = manifest.get("files", {})
-    if kernel.get("tools/review.py") and (ws / "tools/review.py").is_file() \
-            and sha256(ws / "tools/review.py") != kernel["tools/review.py"]:
+    tool = ws / "tools/review.py"
+    if "tools/review.py" in kernel and not tool.is_file():
+        out.append(("ERROR", "tools/review.py is missing; the review commands in AGENTS.md cannot run. "
+                             "Copy it back from the Living System folder"))
+    elif "tools/review.py" in kernel and sha256(tool) != kernel["tools/review.py"]:
         out.append(("WARN", "tools/review.py differs from the version installed; the review rules may not "
                             "behave as documented"))
     routing = (ws / "CONTEXT-ROUTING.md").read_text(encoding="utf-8") if (ws / "CONTEXT-ROUTING.md").is_file() else ""
     installed = manifest.get("modules", {})
-    routed = set(re.findall(r"<!-- module:([a-z0-9-]+) -->", routing))
-    for mid in sorted(set(installed) - routed):
+    routed = {}
+    for need, path, mid in re.findall(r"^\|([^|]*)\|\s*`([^`]+)`\s*<!-- module:([a-z0-9-]+) -->\s*\|", routing, re.M):
+        routed.setdefault(mid, []).append(path)
+    for mid in sorted(set(installed) - set(routed)):
         out.append(("ERROR", f"module {mid} is installed but has no row in CONTEXT-ROUTING.md"))
-    for mid in sorted(routed - set(installed)):
+    for mid in sorted(set(routed) - set(installed)):
         out.append(("ERROR", f"CONTEXT-ROUTING.md has rows for module {mid}, which is not installed"))
+    for mid, paths in sorted(routed.items()):
+        for path in paths:
+            if not (ws / path).is_file():
+                out.append(("ERROR", f"CONTEXT-ROUTING.md sends agents to {path} for module {mid}, but it does not exist"))
     for mid, entry in sorted(installed.items()):
         gone = [r for r in entry.get("files", {}) if not (ws / r).is_file()]
         if gone:
             out.append(("WARN", f"module {mid}: {len(gone)} file(s) missing, e.g. {gone[0]}"))
     for f in ("SYSTEM.md", "PRINCIPLES.md"):
-        if (ws / f).is_file() and not (ws / f).read_text(encoding="utf-8").startswith("---\nstatus: approved\n"):
-            out.append(("WARN", f"{f} is not approved yet, so agents treat it as a draft, not as your rules"))
+        if (ws / f).is_file():
+            try:
+                status = R.split_frontmatter((ws / f).read_text(encoding="utf-8"), f)[0].get("status")
+            except R.Refusal:
+                status = None
+            if status != "approved":
+                out.append(("WARN", f"{f} is not approved yet, so agents treat it as a draft, not as your rules"))
     for p in sorted((ws / "workflows").rglob("CONTEXT.md")) if (ws / "workflows").is_dir() else []:
-        rel, text = p.relative_to(ws).as_posix(), p.read_text(encoding="utf-8")
+        rel, text = p.relative_to(ws).as_posix(), p.read_text(encoding="utf-8", errors="replace")
         if len(text.splitlines()) >= 80:
             out.append(("WARN", f"{rel} has {len(text.splitlines())} lines; keep stage files under 80"))
         if FILL in text:
             out.append(("WARN", f"{rel} still has {text.count(FILL)} '{FILL} ...>' part(s) to write"))
     active = ws / "lessons/active.md"
     if active.is_file():
-        body = active.read_text(encoding="utf-8").split("## Active lessons", 1)[-1]
-        n = len(re.findall(r"^\s*(?:[-*]|\d+\.) \S", body, re.M))
+        body = active.read_text(encoding="utf-8", errors="replace").split("## Active lessons", 1)[-1]
+        n = len(re.findall(r"^(?:[-*]|\d+\.) \S", body, re.M))  # top-level entries only, not sub-bullets
         if n > MAX_LESSONS:
             out.append(("WARN", f"lessons/active.md has {n} lessons; the limit is {MAX_LESSONS}. Merge or retire some"))
     for p in sorted((ws / "proposals").glob("*.md")) if (ws / "proposals").is_dir() else []:
         try:
             meta, _, _ = R.split_frontmatter(p.read_text(encoding="utf-8"), p.name)
-        except R.Refusal:
+        except (R.Refusal, UnicodeDecodeError):
             continue
         if meta.get("status") in R.REVIEWABLE:
             out.append(("INFO", f"proposals/{p.name} is {meta['status']} and waits for your review"))
