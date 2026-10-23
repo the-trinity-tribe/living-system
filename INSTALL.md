@@ -46,6 +46,7 @@ Ask one at a time. Accept short answers. "Skip" is a valid answer.
 5. **Privacy limits.** What must never go into the workspace or to an AI? For example client names, health information, employer secrets.
 
 Also ask once: "Should I keep my replies short and calm?" If yes, use `--calm-replies`.
+And once: "Do you want me to coach you as well, so you keep your own skills (I offer to let you try first, and ask a critical question now and then)?" If yes, use `--coach`.
 
 ## The approval screen
 
@@ -53,7 +54,7 @@ Before creating anything, show the human this, filled in, and wait for "yes":
 
 ```text
 I will create:   <full path of the new folder, outside this repository>
-Profile:         <profile>   Language: <code>   Calm replies: <on/off>
+Profile:         <profile>   Language: <code>   Calm replies: <on/off>   Coach: <on/off>
 It contains:     AGENTS.md (rules for me), SYSTEM.md and PRINCIPLES.md (drafts),
                  empty folders for decisions, proposals, projects, knowledge,
                  workflows, a handover note, a value check, and a copy of the
@@ -69,7 +70,7 @@ Continue? (yes / no)
 1. Run:
 
    ```sh
-   python3 tools/living.py init <folder> --profile <profile> --language <code> [--calm-replies]
+   python3 tools/living.py init <folder> --profile <profile> --language <code> [--calm-replies] [--coach]
    ```
 
    If it prints `REFUSED`, show the message to the human. Do not work around it (no `rm`, no forcing).

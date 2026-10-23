@@ -4,3 +4,4 @@ Ten folder jest wpisany do `.gitignore`, więc nie trafi do żadnego wspólnego 
 
 - Za co odpowiadam: (wpisz tutaj)
 - Czego chcę się nauczyć lub co chcę zmienić w tym roku: (wpisz tutaj)
+- Umiejętności, które chcę zachować, także korzystając z AI: (wpisz tutaj)

@@ -41,10 +41,11 @@ python3 tools/review.py --root ~/my-workspace check
 | `--profile` | Required. One of `student`, `professional`, `employee`, `manager`. |
 | `--language` | Required. A language code such as `en`, `de`, `pl` or `pt-BR`. A name like `English` is refused. |
 | `--calm-replies` | Optional. Asks the agent for short, plain replies. |
+| `--coach` | Optional. The agent also helps you keep your own skills (see [learning mode](learning-mode.md)). |
 
 Success prints the new path, your choices, and `Undo: delete that folder.`
 
-Every workspace also gets five short skills, in `.claude/skills/` for Claude Code and `.agents/skills/` for Codex, both copied from one source: `living-status`, `first-decision`, `propose-change`, `wrap-up` and `catch-up`. In Claude Code you can also type them as `/living-status` and so on; both agents pick them up when your request matches.
+Every workspace also gets six short skills, in `.claude/skills/` for Claude Code and `.agents/skills/` for Codex, both copied from one source: `living-status`, `first-decision`, `propose-change`, `wrap-up`, `catch-up` and `practice`. In Claude Code you can also type them as `/living-status` and so on; both agents pick them up when your request matches.
 
 ## How do you use it?
 
@@ -116,7 +117,7 @@ What the folder contains:
 
 | File | What it is |
 | --- | --- |
-| `profile.json` | Your profile, language and calm-replies choice. |
+| `profile.json` | Your profile, language, calm-replies and coach choices. |
 | `catalog.md` | A list of the optional [modules](modules.md) that existed when the workspace was made, so the agent knows what it could offer. |
 | `manifest.json` | The Living System version and a fingerprint (SHA-256) of every file as created. Installed modules add their own entries. |
 | `.lock` | Appears only while `add` or `remove` runs. |

@@ -6,7 +6,7 @@ Shared entry point for any AI agent working in this workspace. Read this file fi
 
 This is a personal or team working context, kept as plain Markdown files. Humans own it. Agents help with work, reason and propose. Agents do not decide what is true for the owner.
 
-Settings chosen at setup are in `.living/profile.json` (profile, language, calm replies). Read it once at the start of a session.
+Settings chosen at setup are in `.living/profile.json` (profile, language, calm replies, coach). Read it once at the start of a session.
 
 ## 2. Authority order
 
@@ -187,3 +187,22 @@ When the human asks for a structure for repeated work (for example "create a mar
 3. Propose 2 to 6 stages, each with one job, and where the human checks the result. Show the plan with `python3 <product folder>/tools/living.py new-workflow . <name> --stages <a,b,c> --goal "<one line>"` (no `--apply`).
 4. After the human says yes, run it again with `--apply`. Then fill in every `<fill in: ...>` together with the human. Keep each `CONTEXT.md` under 80 lines.
 5. Never put an `AGENTS.md` or `CLAUDE.md` inside `workflows/`. Stage outputs are working evidence: they can lead to a proposal, never to a decision.
+
+## 13. Learning: the human keeps their own skills
+
+The aim is a human who can still do the work, and judge it, when no AI is available. Always:
+
+- When you choose an approach, say why in one line.
+- When the human asks "how did you do that?" or "show me", give the steps so they could do it without you.
+- Say plainly when you are unsure, and what the human should check before trusting your answer.
+
+If `coach` is `true` in `.living/profile.json` (coach mode), also:
+
+- Before a task that trains a skill the human wants to keep (listed in `me/goals.md`, or said to you), offer once: "Do you want to try it first? I will check it after." Respect a no. Never offer it for urgent work.
+- After doing such a task, add "How to do this yourself" in at most five steps.
+- When the human states a plan or claim with real consequences, ask one honest question that tests it: what is the evidence, what could go wrong, who is affected, what would change your mind. Ask once, then help either way. It is not a gate.
+- When the human wants to practise, use the `practice` skill.
+
+Never keep scores, grades or judgements about the human. Progress notes go in `me/`, written by the human or by you only after their yes. Turn coach mode on or off when the human asks: change `coach` in `.living/profile.json` after their yes.
+
+**Working without AI.** `python3 <product folder>/tools/living.py handbook . --out <file outside the workspace>` writes a readable copy of the rules in force, waiting proposals, workflows, and how to do the review steps by hand. Suggest it when the human worries about the system or the AI failing, before a long absence, or when a new person takes over the work. The copy is not the rules: the files in `decisions/` win.

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Create and inspect a Living System workspace. Standard library only.
 
-  living.py init <dir> --profile <p> --language <code> [--calm-replies]
+  living.py init <dir> --profile <p> --language <code> [--calm-replies] [--coach]
   living.py value-score <workspace>
   living.py modules [--workspace <ws>]
   living.py add <ws> <module> [--apply]
@@ -9,6 +9,8 @@
   living.py new-workflow <ws> <name> --stages a,b,c [--goal "..."] [--apply]
   living.py doctor <ws>
   living.py status <ws>
+  living.py since <ws> --date YYYY-MM-DD | --days N
+  living.py handbook <ws> [--out FILE]
   living.py export <ws> <file.zip> [--apply]
   living.py protect <ws> [--apply]
   living.py runs <ws> [--add NAME | --decide NAME automate|manual|later | --forget NAME]
@@ -114,7 +116,7 @@ def write_manifest(ws):
         json.dumps({"kernel_version": KERNEL_VERSION, "files": files}, indent=2) + "\n", encoding="utf-8", newline="\n")
 
 
-def build(ws, profile, language, calm_replies):
+def build(ws, profile, language, calm_replies, coach=False):
     lang = language_dir(language)
     copy_tree(CORE / "template", ws)
     if lang and (lang / "template").is_dir():
@@ -136,7 +138,7 @@ def build(ws, profile, language, calm_replies):
     shutil.copyfile(HERE / "guard.py", ws / "tools" / "guard.py")
     (ws / ".living").mkdir()
     (ws / ".living" / "profile.json").write_text(json.dumps(
-        {"profile": profile, "language": language, "calm_replies": bool(calm_replies)}, indent=2) + "\n",
+        {"profile": profile, "language": language, "calm_replies": bool(calm_replies), "coach": bool(coach)}, indent=2) + "\n",
         encoding="utf-8", newline="\n")
     (ws / ".living" / "catalog.md").write_text(catalog_text(), encoding="utf-8", newline="\n")
     # Where the tools live on this computer, so agents can run status, runs or doctor without asking.
@@ -162,7 +164,7 @@ def catalog_text(root=None):
             "(`AGENTS.md` section 11).\n")
 
 
-def init(target, profile, language, calm_replies=False):
+def init(target, profile, language, calm_replies=False, coach=False):
     if profile not in PROFILES:
         raise Refusal(f"profile must be one of {', '.join(PROFILES)}")
     if not re.fullmatch(r"[a-z]{2,3}(-[A-Za-z0-9]{2,8})?", language):
@@ -174,7 +176,7 @@ def init(target, profile, language, calm_replies=False):
         umask = os.umask(0)
         os.umask(umask)
         os.chmod(tmp, 0o777 & ~umask)
-        build(tmp, profile, language, calm_replies)
+        build(tmp, profile, language, calm_replies, coach)
         emptied = target.is_dir()
         if emptied:
             target.rmdir()  # Windows cannot rename onto an existing folder, even an empty one
@@ -632,6 +634,7 @@ def plan_upgrade(ws):
     try:
         prof = json.loads((ws / ".living/profile.json").read_text(encoding="utf-8"))
         profile, language, calm = prof["profile"], prof["language"], bool(prof.get("calm_replies"))
+        coach = bool(prof.get("coach"))
     except (OSError, ValueError, KeyError, TypeError):
         raise Refusal(".living/profile.json is missing or damaged; upgrade needs it to know your profile") from None
     if profile not in PROFILES:
@@ -641,7 +644,7 @@ def plan_upgrade(ws):
     with tempfile.TemporaryDirectory() as tmp:
         fresh = Path(tmp) / "ws"
         fresh.mkdir()
-        build(fresh, profile, language, calm)
+        build(fresh, profile, language, calm, coach)
         template = {p.relative_to(fresh).as_posix(): p.read_bytes() for p in sorted(fresh.rglob("*")) if p.is_file()}
     plan = Plan()
     plan.routing_hash = sha256_bytes(routing.encode("utf-8")) if routing_path.is_file() else None
@@ -1563,6 +1566,109 @@ def since(ws, date, today=None):
     return "\n".join(lines)
 
 
+HANDBOOK_MARK = "<!-- living-system handbook: a generated copy, not the rules -->"
+
+
+def handbook(ws, today=None):
+    """A readable copy of the rules in force, waiting proposals, workflows and the manual steps. Read-only."""
+    import datetime
+    ws = Path(ws)
+    read_manifest(ws)
+    R = review_tool()
+    today = today or datetime.date.today()
+    out = [HANDBOOK_MARK, f"# Working without AI: {ws.resolve().name}", "",
+           f"Made on {today} with `living.py handbook`. This is a copy for reading, not the rules. If it differs "
+           f"from the files in `decisions/`, the files win. Make it again after a rule changes.", ""]
+    decs = R.decisions(ws) if (ws / "decisions").is_dir() else {}
+    current = R.current_decisions(ws) if decs else []
+    out += [f"## The rules in force ({len(current)})", ""]
+    for k in sorted(current, key=lambda k: (decs[k].get("date", ""), k)):
+        body = R.split_frontmatter((ws / k).read_text(encoding="utf-8"), k)[2]
+        title = (re.search(r"^# (.+)$", body, re.M) or re.match("(.*)", Path(k).stem)).group(1).strip()
+        try:
+            rule = R.section(body, "Rule", k)
+        except R.Refusal:
+            rule = "(no Rule section; read the file)"
+        out += [f"### {title}", "", rule, "",
+                f"Approved by {decs[k].get('approved_by', '?')} on {decs[k].get('date', '?')}. File: `{k}`", ""]
+    if not current:
+        out += ["No approved rules yet. Until there are, nothing here is a rule.", ""]
+    for f in ("SYSTEM.md", "PRINCIPLES.md"):
+        if (ws / f).is_file():
+            try:
+                approved = R.split_frontmatter((ws / f).read_text(encoding="utf-8"), f)[0].get("status") == "approved"
+            except R.Refusal:
+                approved = False
+            out.append(f"- `{f}`: {'approved, so it counts as your rules' if approved else 'a draft, not a rule yet'}.")
+    out.append("")
+    waiting = []
+    for p in sorted((ws / "proposals").glob("*.md")) if (ws / "proposals").is_dir() else []:
+        try:
+            meta, _, body = R.split_frontmatter(p.read_text(encoding="utf-8"), p.name)
+        except (R.Refusal, UnicodeDecodeError):
+            continue
+        if meta.get("status") in R.REVIEWABLE:
+            title = (re.search(r"^# Proposal: (.+)$", body, re.M) or re.match("(.*)", p.stem)).group(1).strip()
+            waiting.append(f"- {title} (`proposals/{p.name}`): not a rule until someone approves it.")
+    out += ["## Waiting for a decision", "", *(waiting or ["Nothing."]), ""]
+    flows = []
+    for d in sorted((ws / "workflows").iterdir()) if (ws / "workflows").is_dir() else []:
+        ctx = d / "CONTEXT.md"
+        if d.is_dir() and not d.is_symlink() and ctx.is_file():
+            stages = [s.name for s in sorted(d.iterdir()) if s.is_dir() and re.match(r"\d\d-", s.name)]
+            first = re.search(r"^# (.+)$", ctx.read_text(encoding="utf-8", errors="replace"), re.M)
+            flows.append(f"- **{first.group(1).strip() if first else d.name}**: "
+                         + (" → ".join(stages) if stages else "no stages") + f". Steps: `workflows/{d.name}/CONTEXT.md`")
+    try:
+        counted = read_runs(ws)["work"]
+    except Refusal:
+        counted = {}
+    flows += [f"- '{n}' (counted {e['count']} times; your choice: {e.get('decision') or 'not decided'})"
+              for n, e in sorted(counted.items())]
+    out += ["## Your repeated work", "", *(flows or ["Nothing recorded yet."]), ""]
+    step = handover_next_step(ws)
+    if step:
+        out += ["## Where the last session stopped", "", step, ""]
+    out += ["## Doing it by hand", "",
+            "- **Which rule applies?** The newest file in `decisions/` about it that no other approved decision "
+            "names in `supersedes:`. The list above shows them.",
+            "- **Changing a rule:** write a proposal in `proposals/` (the format is in `AGENTS.md` section 6). The "
+            "person who may approve reviews it with `python3 tools/review.py review proposals/<file> "
+            "--outcome approve|reject|defer --by \"Name\"`.",
+            "- **Without Python:** the person who may approve writes a new file in `decisions/` with `status: "
+            "approved`, today's `date`, and `supersedes:` naming the old file. Never edit or delete the old file.",
+            "- **Repeated work:** each workflow's `CONTEXT.md` lists its steps in plain words; do them in order and "
+            "check the result yourself at each stop.",
+            "- **Skills you want to keep:** `me/goals.md`, if your profile has it.", ""]
+    return "\n".join(out)
+
+
+def write_handbook(ws, target, text):
+    """Save the handbook outside the workspace. Only a previous handbook is ever replaced."""
+    ws, target = Path(ws).resolve(), Path(target).expanduser().resolve()
+    if target.suffix.lower() not in (".md", ".txt"):
+        raise Refusal("the handbook file name must end in .md or .txt")
+    if ws in (target, *target.parents):
+        raise Refusal("save the handbook outside the workspace, so no agent mistakes the copy for the rules")
+    if not target.parent.is_dir():
+        raise Refusal(f"folder {target.parent} does not exist")
+    if target.is_symlink() or (target.exists() and not target.is_file()):
+        raise Refusal(f"{target} is not a plain file; choose a new file name")
+    if target.exists():
+        with open(target, encoding="utf-8", errors="replace") as f:
+            if f.readline().strip() != HANDBOOK_MARK:
+                raise Refusal(f"{target} already exists and is not a handbook; choose a new file name")
+    fd, tmp = tempfile.mkstemp(prefix=".living-handbook-", suffix=".tmp", dir=target.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as f:
+            f.write(text + "\n")
+        os.replace(tmp, target)
+    except BaseException:
+        Path(tmp).unlink(missing_ok=True)
+        raise
+    return target
+
+
 def format_doctor(results):
     if not results:
         return "All good: no problems found."
@@ -1580,6 +1686,7 @@ def main(argv=None):
     i.add_argument("--profile", required=True, choices=PROFILES)
     i.add_argument("--language", required=True)
     i.add_argument("--calm-replies", action="store_true")
+    i.add_argument("--coach", action="store_true", help="the agent also helps you keep and build your own skills")
     v = sub.add_parser("value-score", help="count right/wrong/made up/don't know in value-check/questions.md")
     v.add_argument("workspace")
     ls = sub.add_parser("modules", help="list optional modules")
@@ -1632,15 +1739,18 @@ def main(argv=None):
     when = sn.add_mutually_exclusive_group(required=True)
     when.add_argument("--date", help="the day you left, e.g. 2026-10-01")
     when.add_argument("--days", type=int, help="or: how many days you were away")
+    hb = sub.add_parser("handbook", help="a readable copy of your rules and workflows, for working without AI")
+    hb.add_argument("workspace")
+    hb.add_argument("--out", help="save it to this .md file outside the workspace (default: print it)")
     a = ap.parse_args(argv)
     for name in ("workspace", "dir"):  # PowerShell passes ~ through unexpanded
         if getattr(a, name, None):
             setattr(a, name, os.path.expanduser(getattr(a, name)))
     try:
         if a.cmd == "init":
-            ws = init(a.dir, a.profile, a.language, a.calm_replies)
+            ws = init(a.dir, a.profile, a.language, a.calm_replies, a.coach)
             print(f"Created workspace: {ws.resolve()}")
-            print(f"Profile: {a.profile} | language: {a.language} | calm replies: {'on' if a.calm_replies else 'off'}")
+            print(f"Profile: {a.profile} | language: {a.language} | calm replies: {'on' if a.calm_replies else 'off'} | coach: {'on' if a.coach else 'off'}")
             print("Undo: delete that folder. Next: open it in Claude Code or Codex.")
         elif a.cmd == "value-score":
             print(format_score(*value_score(a.workspace)))
@@ -1684,6 +1794,12 @@ def main(argv=None):
                 raise Refusal("--days must be 0 or more")
             date = a.date or (datetime.date.today() - datetime.timedelta(days=a.days)).isoformat()
             print(since(a.workspace, date))
+        elif a.cmd == "handbook":
+            text = handbook(a.workspace)
+            if a.out:
+                print(f"Saved {write_handbook(a.workspace, os.path.expanduser(a.out), text)}. It is a copy, not the rules.")
+            else:
+                print(text)
         elif a.cmd == "doctor":
             results = doctor(a.workspace)
             print(format_doctor(results))

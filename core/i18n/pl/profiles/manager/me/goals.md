@@ -5,3 +5,4 @@ Szkic. Napisany przez ciebie (albo z agentem, a potem przez ciebie sprawdzony). 
 - Co chcę osiągnąć w tym roku: (wpisz tutaj)
 - W czym chcę być lepsza lub lepszy jako osoba zarządzająca: (wpisz tutaj)
 - Z czym chcę skończyć: (wpisz tutaj)
+- Umiejętności, które chcę zachować, także korzystając z AI: (wpisz tutaj)

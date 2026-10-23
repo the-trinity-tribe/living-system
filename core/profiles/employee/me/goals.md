@@ -4,3 +4,4 @@ This folder is listed in `.gitignore`, so it stays out of any shared repository.
 
 - What I am responsible for: (write here)
 - What I want to learn or change this year: (write here)
+- Skills I want to keep doing myself, even with AI: (write here)

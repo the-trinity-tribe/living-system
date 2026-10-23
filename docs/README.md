@@ -21,6 +21,7 @@ Plain words first. Exact commands are under the heading that needs them. Every f
 - [Modules](features/modules.md): add and remove optional ready-made workflows, always with a plan first.
 - [Status](features/status.md): a read-only list of what needs your attention.
 - [Catch-up](features/catch-up.md): what changed while you were away, changed rules first.
+- [Learning mode](features/learning-mode.md): coach mode, practice questions about your own rules, and a handbook for working without AI.
 - [Upgrade](features/upgrade.md): bring a workspace up to date without overwriting your own edits.
 - [Obsidian or any editor](features/obsidian.md): read and approve in a note app; what not to edit by hand.
 - [Export](features/export.md): pack your whole workspace into one zip file, and restore it elsewhere.
