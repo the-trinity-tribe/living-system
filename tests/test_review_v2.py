@@ -64,7 +64,9 @@ Created from `proposals/2026-10-20-weekly-update-owner.md`. `approved_by` is att
 
 
 def snapshot(root):
-    return {str(p.relative_to(root)): p.read_bytes() for p in sorted(Path(root).rglob("*")) if p.is_file()}
+    """Every file's bytes, and every folder (so leftover folders count as changes)."""
+    return {str(p.relative_to(root)) + ("/" if p.is_dir() else ""): p.read_bytes() if p.is_file() else b""
+            for p in sorted(Path(root).rglob("*"))}
 
 
 class EmptyWorkspace(unittest.TestCase):
@@ -176,26 +178,108 @@ class TestNewDecisionRefusals(EmptyWorkspace):
 
 
 class TestAllOrNothingWrites(EmptyWorkspace):
-    def test_failed_second_write_leaves_workspace_unchanged(self):
-        real = os.replace
-        calls = []
+    def test_failed_proposal_update_removes_new_decision(self):
+        with mock.patch.object(R.os, "replace", side_effect=OSError("disk full (simulated)")):
+            with self.assertRaises(OSError):
+                self.run_review("approve")
+        self.assertEqual(snapshot(self.root), self.before)
 
-        def fail_second(src, dst):
-            calls.append(dst)
-            if len(calls) == 2:
+    def test_failed_write_midway_leaves_nothing_behind(self):
+        (self.root / "decisions").rmdir()
+        self.before = snapshot(self.root)
+        real_open = open
+
+        class Broken:
+            def __init__(self, f): self.f = f
+            def __enter__(self): return self
+            def __exit__(self, *a): self.f.close()
+            def write(self, text):
+                self.f.write(text[:10])
                 raise OSError("disk full (simulated)")
-            return real(src, dst)
 
-        with mock.patch.object(R.os, "replace", fail_second):
+        with mock.patch.object(R, "open", create=True, side_effect=lambda *a, **k: Broken(real_open(*a, **k))):
             with self.assertRaises(OSError):
                 self.run_review("approve")
+        self.assertEqual(snapshot(self.root), self.before, "no half-written decision and no new folder")
+
+    def test_proposal_keeps_its_file_permissions(self):
+        os.chmod(self.root / PROPOSAL, 0o640)
+        self.run_review("defer")
+        self.assertEqual(os.stat(self.root / PROPOSAL).st_mode & 0o777, 0o640)
+
+
+class TestHardening(EmptyWorkspace):
+    """Regression tests for review findings: each input must be refused and write nothing."""
+
+    def test_line_breaks_in_reviewer_or_note_are_refused(self):
+        for by, note in (("Alex\rsupersedes: decisions/x.md", ""), ("Alex\n", ""), ("Alex", "a\u2028b"),
+                         ("Al\x00ex", "")):
+            with self.subTest(by=by, note=note):
+                with self.assertRaises(R.Refusal):
+                    R.review(self.root, PROPOSAL, "approve", by, note, date="2026-10-21")
+                self.assertEqual(snapshot(self.root), self.before)
+
+    def test_noncanonical_paths_are_refused(self):
+        for rel in ("proposals/./2026-10-20-weekly-update-owner.md", "proposals//2026-10-20-weekly-update-owner.md",
+                    "proposals\\2026-10-20-weekly-update-owner.md"):
+            with self.subTest(rel=rel):
+                with self.assertRaises(R.Refusal):
+                    R.review(self.root, rel, "approve", "Test Reviewer", date="2026-10-21")
         self.assertEqual(snapshot(self.root), self.before)
 
-    def test_failed_temp_write_leaves_workspace_unchanged(self):
-        with mock.patch.object(Path, "write_text", side_effect=OSError("read-only (simulated)")):
-            with self.assertRaises(OSError):
-                self.run_review("approve")
-        self.assertEqual(snapshot(self.root), self.before)
+    def test_lazy_continuation_line_is_refused(self):
+        self.write_proposal(FRONT + BODY.replace("every Friday.", "every Friday,\nunless Sam does it."))
+        self.assertRefused()
+
+    def test_rule_inside_code_block_is_refused(self):
+        self.write_proposal(FRONT + BODY.replace("> Alex prepares", "```\n> Alex prepares").replace(
+            "every Friday.\n", "every Friday.\n```\n"))
+        self.assertRefused()
+
+    def test_heading_inside_rule_is_refused(self):
+        self.write_proposal(FRONT + BODY.replace("every Friday.", "every Friday.\n>\n> ## Why\n> because"))
+        self.assertRefused()
+
+    def test_linked_proposal_is_refused(self):
+        real = self.root / "real.md"
+        real.write_text(FRONT + BODY)
+        (self.root / PROPOSAL).unlink()
+        (self.root / PROPOSAL).symlink_to(real)
+        self.before = snapshot(self.root)
+        self.assertRefused()
+
+    def test_link_in_place_of_new_decision_is_not_followed(self):
+        target = self.root / "outside.md"
+        target.write_text("keep me\n")
+        (self.root / NEW).symlink_to(target)
+        self.before = snapshot(self.root)
+        self.assertRefused()
+        self.assertEqual(target.read_text(), "keep me\n")
+
+    def test_concurrent_review_is_refused_and_lock_is_released(self):
+        (self.root / ".review.lock").write_text("")
+        self.before = snapshot(self.root)
+        self.assertRefused()
+        (self.root / ".review.lock").unlink()
+        self.run_review("approve")
+        self.assertFalse((self.root / ".review.lock").exists())
+
+    def test_missing_workspace_is_refused_by_the_cli(self):
+        import subprocess
+        tool = Path(R.__file__)
+        for cmd in ("current", "check"):
+            r = subprocess.run([sys.executable, "-B", str(tool), "--root", str(self.root / "nope"), cmd],
+                               capture_output=True, text=True)
+            self.assertEqual(r.returncode, 2, cmd)
+        r = subprocess.run([sys.executable, "-B", str(tool), "--root", str(self.root), "current"],
+                           capture_output=True, text=True)
+        self.assertEqual((r.returncode, r.stdout), (0, "\n"))
+
+    def test_non_ascii_text_round_trips(self):
+        self.write_proposal(FRONT + BODY.replace("Alex prepares", "Łukasz przygotowuje"))
+        R.review(self.root, PROPOSAL, "approve", "Zoë Müller", date="2026-10-21")
+        self.assertIn("Łukasz przygotowuje", (self.root / NEW).read_text(encoding="utf-8"))
+        self.assertIn("Zoë Müller", (self.root / NEW).read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

@@ -10,11 +10,14 @@ Two proposal kinds:
   blockquote in `## Proposed future state`, titled from `# Proposal: <title>`.
 """
 import argparse
+import contextlib
 import datetime
 import hashlib
 import os
 import re
+import stat
 import sys
+import tempfile
 from pathlib import Path
 
 TERMINAL = {"promoted", "rejected"}
@@ -53,20 +56,35 @@ def section(body, heading, name):
 
 
 def single_blockquote(text, name):
+    if re.search(r"^\s*(```|~~~)", text, re.M):
+        raise Refusal(f"{name}: Proposed future state must not contain a code block; write the rule as one blockquote")
+    lines = text.split("\n")
+    for prev, line in zip(lines, lines[1:]):
+        if prev.startswith(">") and line.strip() and not line.startswith(">"):
+            raise Refusal(f"{name}: every line of the proposed rule must start with '>' (found {line!r})")
     blocks = re.findall(r"(?:^>.*\n?)+", text, flags=re.M)
     if len(blocks) != 1:
         raise Refusal(f"{name}: Proposed future state must contain exactly one blockquote, found {len(blocks)}")
     quote = "\n".join(re.sub(r"^> ?", "", l) for l in blocks[0].strip().split("\n")).strip()
     if not quote:
         raise Refusal(f"{name}: Proposed future state blockquote is empty")
+    if re.search(r"^\s*#", quote, re.M) or re.search(r"^\s*---\s*$", quote, re.M):
+        raise Refusal(f"{name}: the proposed rule must not contain headings or '---' lines")
     return quote
+
+
+def one_line(value, what):
+    """Refuse values that could break into a new front-matter or log line."""
+    if re.search(r"[\x00-\x1f\x7f\x85  ]", value):
+        raise Refusal(f"{what} must be a single line of plain text (no line breaks or control characters)")
+    return value
 
 
 def decisions(root):
     out = {}
     for p in sorted((root / "decisions").glob("*.md")):
-        meta, _, _ = split_frontmatter(p.read_text(), str(p.relative_to(root)))
-        out[str(p.relative_to(root))] = meta
+        meta, _, _ = split_frontmatter(p.read_text(encoding="utf-8"), p.relative_to(root).as_posix())
+        out[p.relative_to(root).as_posix()] = meta
     return out
 
 
@@ -81,17 +99,20 @@ def current_decisions(root):
 
 
 def safe_rel(root, rel, prefix):
-    if not rel.startswith(prefix) or ".." in Path(rel).parts or not rel.endswith(".md"):
-        raise Refusal(f"path {rel!r} must be a .md file under {prefix}")
+    one_line(rel, "a path")
+    parts = rel.split("/")
+    if (not rel.startswith(prefix) or not rel.endswith(".md") or "\\" in rel
+            or any(part in ("", ".", "..") for part in parts) or len(parts) != 2):
+        raise Refusal(f"path {rel!r} must be written as {prefix}<name>.md (no ./, .., \\ or subfolders)")
     p = root / rel
-    if not p.is_file():
-        raise Refusal(f"{rel} does not exist")
+    if p.is_symlink() or not p.is_file():
+        raise Refusal(f"{rel} does not exist or is a link")
     return p
 
 
 def build_decision(root, proposal_rel, pmeta, pbody, reviewer, date):
     target_rel = pmeta["target"]
-    tmeta, _, tbody = split_frontmatter((root / target_rel).read_text(), target_rel)
+    tmeta, _, tbody = split_frontmatter((root / target_rel).read_text(encoding="utf-8"), target_rel)
     if tmeta.get("status") != "approved":
         raise Refusal(f"target {target_rel} is not approved")
     if target_rel in superseded(root):
@@ -124,6 +145,7 @@ def build_new_decision(root, proposal_rel, pbody, reviewer, date):
     titles = re.findall(r"^# Proposal: (.+)$", pbody, re.M)
     if len(titles) != 1 or not titles[0].strip():
         raise Refusal(f"{proposal_rel}: expected exactly one '# Proposal: <title>' line")
+    one_line(titles[0], "the proposal title")
     quote = single_blockquote(section(pbody, "Proposed future state", proposal_rel), proposal_rel)
     slug = Path(proposal_rel).stem[len("YYYY-MM-DD-"):]
     new_rel = f"decisions/{date}-{slug}.md"
@@ -158,26 +180,64 @@ def proposal_kind(meta, name):
 
 
 def write_all(writes):
-    """Write every file or none: stage temp files, then rename; undo on failure."""
-    staged, done = [], []
+    """Write every file or none; undo on failure.
+
+    New files are created exclusively, so an existing file (or a link) is never
+    overwritten. Existing files are replaced through a uniquely named temp file.
+    """
+    made_dirs, tmps, done = [], [], []
     try:
+        for path in writes:
+            for d in reversed([path.parent, *path.parent.parents]):
+                if not d.exists():
+                    d.mkdir()
+                    made_dirs.append(d)
         for path, text in writes.items():
-            path.parent.mkdir(parents=True, exist_ok=True)
-            tmp = path.with_name(f".{path.name}.tmp")
-            tmp.write_text(text)
-            staged.append((tmp, path, path.read_bytes() if path.exists() else None))
-        for tmp, path, old in staged:
-            os.replace(tmp, path)
-            done.append((path, old))
+            if path.exists() or path.is_symlink():
+                fd, tmp = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
+                tmps.append(Path(tmp))
+                with os.fdopen(fd, "w", encoding="utf-8") as f:
+                    f.write(text)
+                os.chmod(tmp, stat.S_IMODE(os.stat(path).st_mode))
+                old = path.read_bytes()
+                os.replace(tmp, path)
+                done.append((path, old))
+            else:
+                try:
+                    f = open(path, "x", encoding="utf-8")
+                except FileExistsError:
+                    raise Refusal(f"{path.name} appeared while reviewing; nothing was written") from None
+                done.append((path, None))
+                with f:
+                    f.write(text)
     except BaseException:
-        for tmp, _, _ in staged:
+        for tmp in tmps:
             tmp.unlink(missing_ok=True)
-        for path, old in done:
+        for path, old in reversed(done):
             if old is None:
                 path.unlink(missing_ok=True)
             else:
                 path.write_bytes(old)
+        for d in reversed(made_dirs):
+            if d.is_dir() and not any(d.iterdir()):
+                d.rmdir()
         raise
+
+
+@contextlib.contextmanager
+def review_lock(root):
+    """One review at a time per workspace, so two approvals cannot race."""
+    lock = root / ".review.lock"
+    try:
+        fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+    except FileExistsError:
+        raise Refusal("another review is running (.review.lock exists). If none is, delete .review.lock "
+                      "and try again") from None
+    os.close(fd)
+    try:
+        yield
+    finally:
+        lock.unlink(missing_ok=True)
 
 
 def review(root, proposal_rel, outcome, reviewer, note="", date=None):
@@ -185,12 +245,21 @@ def review(root, proposal_rel, outcome, reviewer, note="", date=None):
     date = date or datetime.date.today().isoformat()
     if outcome not in OUTCOME_STATUS:
         raise Refusal(f"outcome must be one of {sorted(OUTCOME_STATUS)}")
-    if not reviewer.strip() or "\n" in reviewer or "\n" in note:
-        raise Refusal("--by is required; --by and --note must be single-line")
+    if not reviewer.strip():
+        raise Refusal("--by is required")
+    one_line(reviewer, "--by")
+    one_line(note, "--note")
     if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", date):
         raise Refusal("date must be YYYY-MM-DD")
+    if not root.is_dir():
+        raise Refusal(f"{root} is not a folder")
+    with review_lock(root):
+        return _review(root, proposal_rel, outcome, reviewer, note, date)
+
+
+def _review(root, proposal_rel, outcome, reviewer, note, date):
     pp = safe_rel(root, proposal_rel, "proposals/")
-    ptext = pp.read_text()
+    ptext = pp.read_text(encoding="utf-8")
     pmeta, pfront, pbody = split_frontmatter(ptext, proposal_rel)
     for k in ("status", "target", "evidence", "proposed_by", "date"):
         if k not in pmeta:
@@ -240,7 +309,7 @@ def check(root):
     for f in ("AGENTS.md", "CONTEXT-ROUTING.md", "SYSTEM.md", "PRINCIPLES.md", "README.md"):
         if not (root / f).is_file():
             problems.append(f"missing {f}")
-    routing = (root / "CONTEXT-ROUTING.md").read_text() if (root / "CONTEXT-ROUTING.md").is_file() else ""
+    routing = (root / "CONTEXT-ROUTING.md").read_text(encoding="utf-8") if (root / "CONTEXT-ROUTING.md").is_file() else ""
     for ref in re.findall(r"`((?:decisions|knowledge|projects|proposals|examples)/[^`]*|[A-Z]+\.md)`", routing):
         if not ref.endswith("/") and not (root / ref).exists():
             problems.append(f"routing points at missing {ref}")
@@ -255,12 +324,12 @@ def check(root):
             problems.append(f"{k}: supersedes missing {m['supersedes']}")
     gone = superseded(root)
     for p in sorted((root / "projects").glob("*.md")):
-        for ref in sorted(set(re.findall(r"`(decisions/[^`]*\.md)`", p.read_text())) & gone):
-            problems.append(f"{p.relative_to(root)}: references superseded decision {ref}")
+        for ref in sorted(set(re.findall(r"`(decisions/[^`]*\.md)`", p.read_text(encoding="utf-8"))) & gone):
+            problems.append(f"{p.relative_to(root).as_posix()}: references superseded decision {ref}")
     for p in sorted((root / "proposals").glob("*.md")):
-        rel = str(p.relative_to(root))
+        rel = p.relative_to(root).as_posix()
         try:
-            meta, _, body = split_frontmatter(p.read_text(), rel)
+            meta, _, body = split_frontmatter(p.read_text(encoding="utf-8"), rel)
         except Refusal as e:
             problems.append(str(e))
             continue
@@ -293,6 +362,10 @@ def main(argv=None):
     sub.add_parser("check")
     a = ap.parse_args(argv)
     try:
+        if not Path(a.root).is_dir():
+            raise Refusal(f"{a.root} is not a folder")
+        if a.cmd == "current" and not (Path(a.root) / "decisions").is_dir():
+            raise Refusal(f"{a.root} has no decisions/ folder; is it a Living System workspace?")
         if a.cmd == "review":
             status, result = review(a.root, a.proposal, a.outcome, a.by, a.note, a.date)
             print(f"{a.proposal}: {status}" + (f"; created {result}" if result else "; canonical state unchanged"))
