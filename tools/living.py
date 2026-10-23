@@ -19,7 +19,7 @@
   living.py role-review <company ws> <file> --outcome accept|reject --by NAME
   living.py export <ws> <file.zip> [--apply]
   living.py protect <ws> [--apply]
-  living.py runs <ws> [--add NAME | --decide NAME automate|manual|later | --forget NAME]
+  living.py runs <ws> [--add NAME | --decide NAME automate|improve|manual|later | --forget NAME]
   living.py propose <ws> --kind new|exception|replace|retire --title ... --rule ... --evidence ... [--apply]
   living.py upgrade <ws> [--apply]
 
@@ -884,7 +884,7 @@ def workflow_files(slug, stages, goal):
 
 RUNS_FILE = ".living/runs.json"
 THIRD_RUN = 3
-RUN_DECISIONS = ("automate", "manual", "later")
+RUN_DECISIONS = ("automate", "improve", "manual", "later")
 RUNS_ABOUT = ("Third-Run Rule counts: how often a kind of work came up. Only short names, dates and your decisions; "
               "never content or names of people or clients. Delete an entry with: living.py runs . --forget <name>")
 
@@ -941,8 +941,9 @@ def runs(ws, add=None, decide=None, decision=None, after=None, forget=None, date
             e["last"] = date
             message = (f"{name}: run {e['count']}. " + (
                 f"This is run {e['count']}: by the Third-Run Rule it is time to decide. Choose: automate "
-                f"(a module or a workflow), manual (keep doing it by hand) or later (ask again after a few more runs). "
-                f"Record it with: living.py runs . --decide {name} automate|manual|later" if run_is_due(e) else
+                f"(a module or a workflow), improve (keep it manual, but write down better steps), manual (keep doing "
+                f"it by hand) or later (ask again after a few more runs). "
+                f"Record it with: living.py runs . --decide {name} automate|improve|manual|later" if run_is_due(e) else
                 "Counted. Nothing else happens before the third run." if e["count"] < THIRD_RUN else
                 f"Counted. You chose 'later'; you will be asked again at run {e['remind_after']}."
                 if e.get("decision") == "later" else f"Counted. Your decision on record: {e['decision']}."))
@@ -1483,7 +1484,7 @@ def status(ws):
     for n, e in sorted(counted.items()):
         if run_is_due(e):
             todo.append(f"'{n}' has come up {e['count']} times: decide whether to automate it, keep it manual or "
-                        f"decide later (living.py runs . --decide {n} automate|manual|later)")
+                        f"decide later (living.py runs . --decide {n} automate|improve|manual|later)")
     inbox = ws / "lessons/inbox.md"
     if inbox.is_file():
         n = inbox.read_text(encoding="utf-8", errors="replace").count("---lesson---")
@@ -2228,7 +2229,8 @@ def evidence(ws, today=None):
     manifest = read_manifest(ws)
     flows = len(list((ws / "workflows").glob("*/CONTEXT.md"))) if (ws / "workflows").is_dir() else 0
     out += [f"- Kinds of repeated work counted: {len(work)}, {sum(e['count'] for e in work.values())} run(s) in total; "
-            f"decided: {chosen['automate']} automate, {chosen['manual']} keep manual, {chosen['later']} later.",
+            f"decided: {chosen['automate']} automate, {chosen['improve']} improve, {chosen['manual']} keep manual, "
+            f"{chosen['later']} later.",
             f"- Workflows: {flows}. Modules installed: {', '.join(sorted(manifest.get('modules', {}))) or 'none'}.", "",
             "## Knowledge", ""]
     ages = knowledge_ages(ws, today)
@@ -2326,7 +2328,7 @@ def main(argv=None):
     rn.add_argument("workspace")
     g = rn.add_mutually_exclusive_group()
     g.add_argument("--add", metavar="NAME", help="count one more run of this kind of work")
-    g.add_argument("--decide", nargs=2, metavar=("NAME", "DECISION"), help="automate, manual or later")
+    g.add_argument("--decide", nargs=2, metavar=("NAME", "DECISION"), help="automate, improve, manual or later")
     g.add_argument("--forget", metavar="NAME", help="delete this entry")
     rn.add_argument("--after", type=int, help="with --decide NAME later: ask again after this many more runs")
     pr = sub.add_parser("propose", help="plan (or with --apply, write) a proposal; never approves anything")

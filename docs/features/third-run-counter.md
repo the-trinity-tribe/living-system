@@ -4,7 +4,7 @@ Status: EXPERIMENTAL. Version: 0.2.0.
 
 ## What does this feature do?
 
-It keeps a small, visible count of how often a kind of work comes up, such as a weekly update or notes after a call. At the third time, your agent offers you a choice: automate it with a module or a workflow, keep doing it by hand, or decide later.
+It keeps a small, visible count of how often a kind of work comes up, such as a weekly update or notes after a call. At the third time, your agent offers you a choice: automate it with a module or a workflow, improve it (keep doing it by hand, but write down better steps), keep doing it by hand, or decide later. If a task costs you a lot of effort and is safe and easy to undo, the agent may offer to automate it sooner.
 
 ## Why would someone need it?
 

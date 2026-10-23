@@ -28,6 +28,17 @@ class TestRuns(unittest.TestCase):
         self.assertIn("time to decide", msg)
         self.assertIn("'weekly-update' has come up 3 times", L.status(self.ws))
 
+    def test_improve_is_a_decision_and_stops_the_question(self):
+        for _ in range(3):
+            L.runs(self.ws, add="call-notes")
+        work, message = L.runs(self.ws, decide="call-notes", decision="improve")
+        self.assertEqual(work["call-notes"]["decision"], "improve")
+        self.assertFalse(L.run_is_due(work["call-notes"]))
+        agents = (REPO / "core/template/AGENTS.md").read_text(encoding="utf-8")
+        for rule in ("**Cognitive-load exception.**", "**Deterministic first.**", "**Approval screen.**", "**Stay in scope.**",
+                     "A new topic in the same chat is a new task"):
+            self.assertIn(rule, agents)
+
     def test_decisions_manual_and_later(self):
         for _ in range(3):
             self.add()
