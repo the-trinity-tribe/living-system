@@ -14,12 +14,11 @@ The staged-workflow example in `demo/moss-and-circuit/workflows/client-update/` 
 
 ## Influences
 
-> **Wording to be confirmed by Adrianna.**
-
 These people influenced how the project thinks. Naming them does not mean they know of, endorse or are affiliated with this project.
 
-- **David Shapiro**: the heuristic imperatives; writing on post-labour economics.
-- **Jacque Fresco**: designing systems around human needs and sustainability (The Venus Project).
+- **Jake Van Clief** (with David McDermott, ICM): letting folders and plain files guide AI one small step at a time, so each step is easy to check.
+- **David Shapiro**: asking what AI should be *for* (less suffering, more prosperity, more understanding), and which work should stay human.
+- **Jacque Fresco**: designing whole systems around real human needs and the planet's limits, rather than around tools (The Venus Project).
 
 ## Licence
 

@@ -535,7 +535,7 @@ footer.site{margin-top:4rem;padding-block:2rem 4rem;border-top:1px solid var(--l
           </div>
         </div>
       </div>
-      <div class="callout note"><p><strong>Credit:</strong> the idea of using folders and plain files as the structure of a workflow comes from Jake Van Clief's Interpretable Context Methodology (ICM). Living System reimplements the idea in its own way. No endorsement by Jake Van Clief is implied.</p></div>
+      <div class="callout note"><p><strong>Credit:</strong> the idea of using folders and plain files as the structure of a workflow comes from the Interpretable Context Methodology (ICM) by Jake Van Clief and David McDermott. Living System reimplements the idea in its own way. No endorsement by the ICM authors is implied.</p></div>
       <div class="planned" id="icm-generator">
         <h3>Workflow generator <span data-status="icmGenerator"></span></h3>
         <p>Planned: describe a task and get a stage-by-stage folder like the one above. Not available yet.</p>
@@ -549,7 +549,8 @@ footer.site{margin-top:4rem;padding-block:2rem 4rem;border-top:1px solid var(--l
         <p>The knowledge lives in the files, not in one vendor's tool. Each agent gets a thin adapter file that points it to the same starting place. The tools still differ: in their settings, permission prompts and how they phrase answers, so results can differ too.</p>
       </div>
       <div class="chiprow"><span data-status="crossAgent"></span></div>
-      <p class="replay-note">Replay: this shows the reading order each tool follows. A side-by-side run of both agents on the same question has not been verified yet.</p>
+      <p class="replay-note">Replay: this shows the reading order each tool follows.</p>
+      <div class="callout note"><p><strong>Tested once, 23 October 2026.</strong> A fresh Claude Code and a fresh Codex got the same questions in a copy of the demo. Both answered from the current approved decision. When a project note contradicted that decision, both kept to the decision and changed nothing. Codex staged a narrow proposal on the first try. Claude Code missed the note until the routing guide was tightened; then it staged a proposal too, though broader than the evidence supports. One run each is a demonstration, not a measurement. Full results: <code>demo/WALKTHROUGH.md</code>.</p></div>
       <div class="panelbox">
         <div role="tablist" aria-label="Choose an agent" id="agent-tabs">
           <button role="tab" id="atab-claude" aria-controls="apanel-claude">Claude Code</button>
@@ -617,11 +618,11 @@ footer.site{margin-top:4rem;padding-block:2rem 4rem;border-top:1px solid var(--l
         <p><strong>Adrianna Mamczarz</strong> is a product designer and brand strategist moving into Human–AI systems design. She invented and tested Living System's features and structure in her own practice, inside The Trinity Tribe.</p>
         <p>AI assisted with implementation. Design decisions, review and acceptance stayed human-led (from the README).</p>
       </div>
-      <h3>Influences <span class="draft">draft — to confirm</span></h3>
+      <h3>Influences</h3>
       <ul class="influences">
-        <li><strong>Jake Van Clief</strong> — folders and plain files as the structure of a workflow (ICM). <span class="draft">draft — to confirm</span></li>
-        <li><strong>David Shapiro</strong> — heuristic imperatives and post-labour economics. <span class="draft">draft — to confirm</span></li>
-        <li><strong>Jacque Fresco</strong> — systems designed around human needs and sustainability. <span class="draft">draft — to confirm</span></li>
+        <li><strong>Jake Van Clief</strong> (with David McDermott, ICM) — letting folders and plain files guide AI one small step at a time, so each step is easy to check.</li>
+        <li><strong>David Shapiro</strong> — asking what AI should be <em>for</em> (less suffering, more prosperity, more understanding), and which work should stay human.</li>
+        <li><strong>Jacque Fresco</strong> — designing whole systems around real human needs and the planet's limits, rather than around tools.</li>
       </ul>
       <p class="small prose">Credit only. None of them has endorsed Living System.</p>
       <h3>Skills shown here, and where to see them</h3>
@@ -996,7 +997,10 @@ makeTabs($("#agent-tabs"));
 buildValueCheck();
 buildNav();
 initTheme();
-$$("[data-copy-md]").forEach(b=>b.addEventListener("click",()=>copyText(mdText()).then(ok=>toast(ok?"Page text copied as Markdown.":"Could not copy. Use Download .md instead."))));
+/* embedded viewers (e.g. a shared artifact link) block downloads, so offer copy only there */
+const framed = (()=>{ try{ return window.top!==window.self; }catch(e){ return true; } })();
+if(framed) $("#dl-md").hidden = true;
+$$("[data-copy-md]").forEach(b=>b.addEventListener("click",()=>copyText(mdText()).then(ok=>toast(ok?"Page text copied as Markdown.":(framed?"Could not copy. Select the page text and copy it by hand.":"Could not copy. Use Download .md instead.")))));
 $$("[data-copy-text]").forEach(b=>b.addEventListener("click",()=>copyText(b.dataset.copyText).then(ok=>toast(ok?"Command copied.":"Could not copy. Select the command and copy it by hand."))));
 $("#dl-md").addEventListener("click",()=>{
   const url = URL.createObjectURL(new Blob([mdText()],{type:"text/markdown"}));
