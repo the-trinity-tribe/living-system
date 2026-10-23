@@ -10,6 +10,7 @@
   living.py doctor <ws>
   living.py status <ws>
   living.py export <ws> <file.zip> [--apply]
+  living.py protect <ws> [--apply]
   living.py runs <ws> [--add NAME | --decide NAME automate|manual|later | --forget NAME]
   living.py propose <ws> --kind new|exception|replace|retire --title ... --rule ... --evidence ... [--apply]
   living.py upgrade <ws> [--apply]
@@ -569,6 +570,16 @@ UPGRADE_SKIP_FILES = (".living/profile.json", ".living/manifest.json", ".living/
 UPGRADE_COPIES = ".living/upgrade"
 
 
+def local_folder(ws):
+    """product_folder from .living/local.json, or None if the file is missing or damaged."""
+    try:
+        data = json.loads((Path(ws) / ".living/local.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError, UnicodeDecodeError):
+        return None
+    folder = data.get("product_folder") if isinstance(data, dict) else None
+    return folder if isinstance(folder, str) and folder else None
+
+
 def check_markers(text):
     """Refuse a routing file whose modules section markers are damaged, so nothing makes it worse."""
     s, e = text.count(ROUTING_START), text.count(ROUTING_END)
@@ -656,10 +667,7 @@ def plan_upgrade(ws):
         else:
             step(rel, data, manifest["files"].get(rel), None)
     local = ws / ".living/local.json"
-    try:
-        known = json.loads(local.read_text(encoding="utf-8")).get("product_folder") if local.is_file() else None
-    except ValueError:
-        known = None
+    known = local_folder(ws)
     if known != str(HERE.parent):  # this computer's Living System folder, not content: always kept current
         plan.append(("local", ".living/local.json", template[".living/local.json"], None))
     installed_mods = manifest.get("modules", {})
@@ -864,7 +872,14 @@ def read_runs(ws):
         data = json.loads(path.read_text(encoding="utf-8"))
     except (ValueError, UnicodeDecodeError):
         raise Refusal(f"{RUNS_FILE} is damaged; delete it to start counting again") from None
-    if not isinstance(data, dict) or not isinstance(data.get("work"), dict):
+    work = data.get("work") if isinstance(data, dict) else None
+    ok = isinstance(work, dict) and all(
+        isinstance(e, dict) and isinstance(e.get("count"), int) and e["count"] >= 0
+        and isinstance(e.get("first"), str) and isinstance(e.get("last"), str)
+        and e.get("decision") in (None,) + RUN_DECISIONS
+        and isinstance(e.get("remind_after", 0), int) and re.fullmatch(MODULE_ID, str(name))
+        for name, e in work.items())
+    if not ok:
         raise Refusal(f"{RUNS_FILE} has an unexpected structure; delete it to start counting again")
     return data
 
@@ -940,7 +955,7 @@ def format_runs(work):
     return "\n".join(lines)
 
 
-EXPORT_SKIP_FILES = (".living/local.json", ".living/.lock")
+EXPORT_SKIP_FILES = (".living/local.json", ".living/.lock", ".review.lock")
 EXPORT_SKIP_PARTS = (".git", "__pycache__")
 EXPORT_NOTE = """Living System workspace export
 
@@ -981,20 +996,50 @@ def export(ws, target, apply=False):
         raise Refusal(f"{target} already exists; choose a new file name")
     if not target.parent.is_dir():
         raise Refusal(f"folder {target.parent} does not exist")
-    files = export_files(ws)
-    if apply:
+    if not apply:
+        return export_files(ws)
+    R = review_tool()
+    with workspace_lock(ws), R.review_lock(ws):  # no add, remove, upgrade or review half-way through the export
+        files = export_files(ws)
         fd, tmp = tempfile.mkstemp(prefix=".living-export-", suffix=".zip", dir=target.parent)
         os.close(fd)
         try:
             with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as z:
                 z.writestr("EXPORT-README.txt", EXPORT_NOTE)
                 for rel in files:
-                    z.write(ws / rel, rel)
-            os.replace(tmp, target)
-        except BaseException:
+                    z.writestr(rel, read_no_follow(ws / rel))
+            try:
+                os.link(tmp, target)  # fails if the name appeared meanwhile: never overwrite
+            except FileExistsError:
+                raise Refusal(f"{target} appeared while exporting; nothing was overwritten") from None
+            except OSError:  # file systems without hard links
+                if target.exists():
+                    raise Refusal(f"{target} appeared while exporting; nothing was overwritten") from None
+                os.replace(tmp, target)
+        finally:
             Path(tmp).unlink(missing_ok=True)
-            raise
     return files
+
+
+def read_no_follow(path):
+    """Read a regular file without following a link that may have appeared after listing it."""
+    import stat as _stat
+    try:
+        fd = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_BINARY", 0))
+    except OSError as e:
+        import errno
+        if e.errno in (errno.ELOOP, getattr(errno, "EMLINK", -1)):
+            raise Refusal(f"{path} changed into a link while exporting; nothing was written") from None
+        raise
+    try:
+        if not _stat.S_ISREG(os.fstat(fd).st_mode) or Path(path).is_symlink():
+            raise Refusal(f"{path} changed into a link or folder while exporting; nothing was written")
+        with os.fdopen(fd, "rb") as f:
+            fd = None
+            return f.read()
+    finally:
+        if fd is not None:
+            os.close(fd)
 
 
 PROPOSE_KINDS = ("new", "exception", "replace", "retire")
@@ -1004,8 +1049,11 @@ def slugify(title):
     """A plain file-name part from a title in any language: 'Nur ich schicke Angebote' -> 'nur-ich-schicke-angebote'."""
     import unicodedata
     s = title.lower().replace("ß", "ss").replace("ł", "l")
-    s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode("ascii")
-    s = re.sub(r"[^a-z0-9]+", "-", s).strip("-")[:50].strip("-")
+    ascii_ = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode("ascii")
+    ascii_ = re.sub(r"[^a-z0-9]+", "-", ascii_).strip("-")[:50].strip("-")
+    # titles in other scripts keep their letters: '只有我能发送报价' -> '只有我能发送报价'
+    s = ascii_ if len(ascii_) >= 3 or not re.search(r"[^\W_]", s) else \
+        re.sub(r"[\W_]+", "-", unicodedata.normalize("NFC", s)).strip("-")[:50].strip("-")
     if not s:
         raise Refusal("the title needs at least one letter or digit")
     return s
@@ -1060,12 +1108,15 @@ def propose(ws, kind, title, rule, evidence, why="", proposed_by="agent", target
     if apply:
         (ws / "proposals").mkdir(exist_ok=True)
         fd = os.open(ws / rel, os.O_CREAT | os.O_EXCL | os.O_WRONLY | getattr(os, "O_BINARY", 0))
-        with os.fdopen(fd, "wb") as f:
-            f.write(text.encode("utf-8"))
-        problems = [x for x in R.check(ws) if rel in x]
-        if problems:
-            (ws / rel).unlink()
-            raise Refusal("the proposal did not pass check and was removed: " + "; ".join(problems))
+        try:
+            with os.fdopen(fd, "wb") as f:
+                f.write(text.encode("utf-8"))
+            problems = [x for x in R.check(ws) if rel in x]
+            if problems:
+                raise Refusal("the proposal did not pass check and was removed: " + "; ".join(problems))
+        except BaseException:
+            (ws / rel).unlink(missing_ok=True)
+            raise
     return rel, text
 
 
@@ -1163,6 +1214,58 @@ def sha256_bytes(data):
     return hashlib.sha256(data).hexdigest()
 
 
+GUARD_FILES = {"tools/guard.py": HERE / "guard.py", ".claude/settings.json": CORE / "template/dot-claude/settings.json",
+               ".codex/hooks.json": CORE / "template/dot-codex/hooks.json"}
+
+
+def hook_runs_guard(path):
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        groups = data["hooks"]["PreToolUse"]
+        return any("tools/guard.py" in h.get("command", "") for g in groups for h in g.get("hooks", []))
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        return False
+
+
+def guard_problems(ws, manifest):
+    """Is the write guard in place and switched on for both agents?"""
+    out = []
+    installed = "tools/guard.py" in manifest.get("files", {})
+    if not (ws / "tools/guard.py").is_file():
+        if installed or any((ws / f).is_file() for f in (".claude/settings.json", ".codex/hooks.json")):
+            out.append(("ERROR", "tools/guard.py is missing, so agents are not stopped from editing decisions/ "
+                                 "directly. Restore it with: living.py protect <workspace> --apply"))
+        return out
+    for f, agent in ((".claude/settings.json", "Claude Code"), (".codex/hooks.json", "Codex")):
+        if not (ws / f).is_file():
+            out.append(("WARN", f"{f} is missing, so {agent} does not run the write guard. Restore it with: "
+                                f"living.py protect <workspace> --apply"))
+        elif not hook_runs_guard(ws / f):
+            out.append(("WARN", f"{f} does not run tools/guard.py any more, so {agent} is not guarded. Compare it "
+                                f"with the Living System template, or ask for help"))
+    return out
+
+
+def protect(ws, apply=False):
+    """Put back a missing guard or hook file. Never overwrites an existing file. Returns the files it adds."""
+    ws = Path(ws)
+    read_manifest(ws)
+    missing = [rel for rel in GUARD_FILES if not (ws / rel).exists()]
+    refuse_links(ws, missing)
+    if apply and missing:
+        with workspace_lock(ws):
+            manifest = read_manifest(ws)
+            for rel_path in missing:
+                dst = ws / rel_path
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                fd = os.open(dst, os.O_CREAT | os.O_EXCL | os.O_WRONLY | getattr(os, "O_BINARY", 0))
+                with os.fdopen(fd, "wb") as f:
+                    f.write(GUARD_FILES[rel_path].read_bytes())
+                manifest["files"][rel_path] = sha256(dst)
+            write_json(ws / ".living" / "manifest.json", manifest)
+    return missing
+
+
 def doctor(ws):
     """Read-only health check. Returns (level, message) pairs; level is ERROR, WARN or INFO."""
     ws = Path(ws)
@@ -1189,20 +1292,12 @@ def doctor(ws):
         out.append(("INFO", ".living/local.json is missing, so agents will ask where Living System is; run upgrade "
                             "from your Living System folder to record it"))
     if local.is_file():
-        try:
-            folder = json.loads(local.read_text(encoding="utf-8")).get("product_folder", "")
-        except ValueError:
-            folder = ""
+        folder = local_folder(ws)
         if not folder or not (Path(folder) / "tools/living.py").is_file():
             out.append(("WARN", ".living/local.json does not point at a Living System folder on this computer; run "
                                 "upgrade from your Living System folder to fix it, or edit product_folder"))
-    hooks = [f for f in (".claude/settings.json", ".codex/hooks.json") if (ws / f).is_file()]
-    if hooks and not (ws / "tools/guard.py").is_file():
-        out.append(("ERROR", f"{hooks[0]} runs tools/guard.py, which is missing, so agent file edits may all be "
-                             f"blocked. Run upgrade from your Living System folder to restore it"))
-    elif not hooks and "tools/guard.py" in manifest.get("files", {}):
-        out.append(("INFO", "the write guard's hook files are gone, so agents are no longer stopped from editing "
-                            "decisions/ directly; run upgrade to restore them"))
+    for problem_level, message in guard_problems(ws, manifest):
+        out.append((problem_level, message))
     kernel = manifest.get("files", {})
     tool = ws / "tools/review.py"
     if "tools/review.py" in kernel and not tool.is_file():
@@ -1394,6 +1489,9 @@ def main(argv=None):
     w.add_argument("--stages", required=True, help="comma-separated stage names in order, e.g. research,draft,review")
     w.add_argument("--goal", default="")
     w.add_argument("--apply", action="store_true")
+    pt = sub.add_parser("protect", help="put back a missing write guard or hook file (plan unless --apply)")
+    pt.add_argument("workspace")
+    pt.add_argument("--apply", action="store_true")
     ex = sub.add_parser("export", help="pack the workspace into one zip file (plan unless --apply)")
     ex.add_argument("workspace")
     ex.add_argument("file", help="the .zip file to create, outside the workspace")
@@ -1444,6 +1542,11 @@ def main(argv=None):
             print(format_upgrade_plan(plan))
             if any(act not in ("same",) for act, *_ in plan):
                 print("Upgraded." if a.apply else "Nothing was written. Run again with --apply to upgrade.")
+        elif a.cmd == "protect":
+            missing = protect(a.workspace, a.apply)
+            print("Nothing is missing: the guard and both hook files are in place." if not missing else
+                  ("Put back: " if a.apply else "Would put back: ") + ", ".join(missing) +
+                  ("" if a.apply else ". Nothing was written. Run again with --apply."))
         elif a.cmd == "export":
             files = export(a.workspace, os.path.expanduser(a.file), a.apply)
             print(f"{len(files)} files" + (f" saved to {Path(a.file).expanduser().resolve()}." if a.apply else

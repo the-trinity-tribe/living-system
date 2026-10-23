@@ -87,5 +87,18 @@ class TestRuns(unittest.TestCase):
         self.assertEqual(run("--add", "Bad Name").returncode, 2)
 
 
+
+class TestRunsReview4(unittest.TestCase):
+    def test_malformed_entries_are_refused_and_status_survives(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ws = L.init(Path(tmp) / "ws", "student", "en")
+            for bad in ('{"work":{"weekly-update":{}}}', '{"work":{"weekly-update":{"count":"3","first":"","last":"","decision":null}}}',
+                        '{"work":{"Bad Name":{"count":1,"first":"","last":"","decision":null}}}', '[]'):
+                with self.subTest(content=bad):
+                    (ws / L.RUNS_FILE).write_text(bad, encoding="utf-8")
+                    with self.assertRaises(L.Refusal):
+                        L.runs(ws)
+                    self.assertIn("unexpected structure" if bad != "[]" else "unexpected structure", L.status(ws))
+
 if __name__ == "__main__":
     unittest.main()

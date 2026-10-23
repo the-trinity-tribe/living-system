@@ -54,6 +54,7 @@ Nothing in the workspace changes. The zip contains every file except: `.living/l
 
 ## What can go wrong, and how do you undo it?
 
-- **The file already exists:** choose a new name; the export never overwrites.
+- **The file already exists:** choose a new name; the export never overwrites, even if the file appears while it runs.
+- **"another review is running" or "another Living System command is changing this workspace":** the export waits for nothing and refuses, so it never captures a half-finished change. Try again when the other command has finished.
 - **You restored and the agent asks where Living System is:** run `upgrade` on the restored folder (step 3).
 - **Limits:** the zip holds whatever is in your workspace, including private notes. Store it like any other private file. A `.git` history is not included; copy it separately if you use git.

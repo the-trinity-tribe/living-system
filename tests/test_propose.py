@@ -114,5 +114,22 @@ class TestCLI(Case):
         self.assertEqual(R.current_decisions(self.ws), [], "propose never approves")
 
 
+
+class TestReview4(Case):
+    def test_failure_after_writing_leaves_no_proposal(self):
+        from unittest import mock
+        before = snapshot(self.ws)
+        with mock.patch.object(R, "check", side_effect=UnicodeDecodeError("utf-8", b"x", 0, 1, "bad")), \
+                mock.patch.object(L, "review_tool", return_value=R):
+            with self.assertRaises(UnicodeDecodeError):
+                self.propose(apply=True)
+        self.assertEqual(snapshot(self.ws), before)
+
+    def test_titles_in_non_latin_scripts(self):
+        self.assertEqual(L.slugify("只有我能发送报价"), "只有我能发送报价")
+        self.assertEqual(L.slugify("Только я отправляю"), "только-я-отправляю")
+        rel, _ = L.propose(self.ws, "new", "只有我能发送报价", "只有我能发送报价。", "setup", date=DATE, apply=True)
+        self.assertEqual(R.review(self.ws, rel, "approve", "Owner", date=DATE)[0], "promoted")
+
 if __name__ == "__main__":
     unittest.main()

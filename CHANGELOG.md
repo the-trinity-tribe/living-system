@@ -22,7 +22,7 @@ From a governance demo to a workspace you can install and grow.
 - **`status`:** what needs your attention (proposals to review, drafts, the last next step), with the exact review command for each waiting proposal.
 - **Obsidian guide:** how to open a workspace as an Obsidian vault, approve drafts through the `status` property, and what not to edit by hand; workspace `.gitignore` leaves out Obsidian's window layout files.
 - **Shared skills** for Claude Code and Codex (`living-status`, `first-decision`, `propose-change`, `wrap-up`): one source in `core/skills/`, copied to `.claude/skills/` and `.agents/skills/` by `init` and `upgrade`, so both agents get the same short procedures.
-- **Write guard:** `tools/guard.py`, wired into Claude Code (`.claude/settings.json`) and Codex (`.codex/hooks.json`), blocks agent edits to `decisions/`, approvals of `SYSTEM.md`/`PRINCIPLES.md`, hand-set proposal outcomes and changes to the guard itself. Live-tested in Claude Code; in Codex it needs your trust first.
+- **Write guard:** `tools/guard.py`, wired into Claude Code (`.claude/settings.json`) and Codex (`.codex/hooks.json`), blocks agent edits to `decisions/`, approvals of `SYSTEM.md`/`PRINCIPLES.md`, hand-set proposal outcomes and changes to the guard itself. Live-tested in Claude Code; in Codex it needs your trust first. `living.py protect` puts back a missing guard or hook file.
 - **Third-Run counter:** `runs` keeps a visible count of repeated work in `.living/runs.json` (short names and dates only); at the third run the agent offers a module, a workflow or keeping it manual, and records your decision. Workspaces record the Living System folder in `.living/local.json`, which a new `.gitignore` keeps out of shared repositories.
 - **`propose`** writes a correctly formatted proposal of any kind, including the target's current text and fingerprint, and never approves anything. **Guided first decision:** right after setup, the agent helps turn one rule from your answers into your first approved decision; you approve it yourself.
 - **`upgrade`:** brings a workspace up to date, updating only files you never changed.
@@ -37,7 +37,7 @@ From a governance demo to a workspace you can install and grow.
 
 ### Fixed
 
-Three read-only code reviews (Codex, high effort) found 59 defects; all were checked against the code and fixed, each with a test. Examples: a differently spelled path could leave two "current" decisions; line breaks in a reviewer name could inject metadata; links could make the tools write into protected folders; interrupted writes could leave half-made files. Text is always read and written as UTF-8 with LF line endings.
+Four read-only code reviews (Codex, high effort) found 80 defects; all were checked against the code and fixed, each with a test. Examples: a differently spelled path could leave two "current" decisions; line breaks in a reviewer name could inject metadata; links could make the tools write into protected folders; interrupted writes could leave half-made files. Text is always read and written as UTF-8 with LF line endings.
 
 ### Known limitations
 

@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if command -v python3 >/dev/null 2>&1; then python3 \"$CLAUDE_PROJECT_DIR/tools/guard.py\"; else python \"$CLAUDE_PROJECT_DIR/tools/guard.py\"; fi",
+            "command": "f=\"$CLAUDE_PROJECT_DIR/tools/guard.py\"; [ -f \"$f\" ] || exit 0; if command -v python3 >/dev/null 2>&1; then python3 \"$f\"; else python \"$f\"; fi",
             "timeout": 10
           }
         ]

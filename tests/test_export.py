@@ -1,5 +1,6 @@
 """Exporting a workspace to one zip file, and restoring it on another computer."""
 import json, os, sys, tempfile, unittest, zipfile
+from unittest import mock
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
@@ -73,6 +74,53 @@ class TestExport(unittest.TestCase):
         (self.ws / "knowledge/link.txt").symlink_to(self.base / "secret.txt")
         self.assertNotIn("knowledge/link.txt", L.export(self.ws, self.base / "b.zip"))
 
+
+
+class TestExportReview4(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.base = Path(self.tmp.name)
+        self.ws = L.init(self.base / "ws", "student", "en")
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_review_lock_is_left_out_and_blocks_a_half_way_export(self):
+        (self.ws / ".review.lock").write_text("", encoding="utf-8")
+        self.assertNotIn(".review.lock", L.export_files(self.ws))
+        with self.assertRaises(L.Refusal):
+            L.export(self.ws, self.base / "b.zip", apply=True)
+        self.assertFalse((self.base / "b.zip").exists())
+
+    @unittest.skipIf(os.name == "nt", "creating links needs extra rights on Windows")
+    def test_a_file_swapped_for_a_link_is_refused(self):
+        (self.base / "private.txt").write_text("private", encoding="utf-8")
+        (self.ws / "knowledge/source.md").write_text("ok", encoding="utf-8")
+        real = L.export_files
+
+        def swap(ws):
+            files = real(ws)
+            (self.ws / "knowledge/source.md").unlink()
+            (self.ws / "knowledge/source.md").symlink_to(self.base / "private.txt")
+            return files
+
+        with mock.patch.object(L, "export_files", swap):
+            with self.assertRaises(L.Refusal):
+                L.export(self.ws, self.base / "b.zip", apply=True)
+        self.assertFalse((self.base / "b.zip").exists())
+
+    def test_a_destination_that_appears_is_not_overwritten(self):
+        import zipfile as zf
+        real = zf.ZipFile.close
+
+        def appear(self_zip):
+            real(self_zip)
+            (self.base / "b.zip").write_text("someone else's file", encoding="utf-8")
+
+        with mock.patch.object(zf.ZipFile, "close", appear):
+            with self.assertRaises(L.Refusal):
+                L.export(self.ws, self.base / "b.zip", apply=True)
+        self.assertEqual((self.base / "b.zip").read_text(encoding="utf-8"), "someone else's file")
 
 if __name__ == "__main__":
     unittest.main()

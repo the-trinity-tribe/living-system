@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if command -v python3 >/dev/null 2>&1; then python3 tools/guard.py; else python tools/guard.py; fi",
+            "command": "d=\"$PWD\"; while [ ! -f \"$d/tools/guard.py\" ] && [ \"$d\" != \"/\" ] && [ -n \"$d\" ]; do d=$(dirname \"$d\"); done; f=\"$d/tools/guard.py\"; [ -f \"$f\" ] || exit 0; if command -v python3 >/dev/null 2>&1; then python3 \"$f\"; else python \"$f\"; fi",
             "timeout": 10
           }
         ]

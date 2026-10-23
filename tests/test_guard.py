@@ -145,13 +145,106 @@ class TestWorkspaceWiring(GuardCase):
 
     def test_doctor_reports_a_missing_guard(self):
         (self.ws / "tools/guard.py").unlink()
-        self.assertIn("tools/guard.py, which is missing", L.format_doctor(L.doctor(self.ws)))
+        self.assertIn("tools/guard.py is missing", L.format_doctor(L.doctor(self.ws)))
 
     def test_review_still_works_with_the_guard_installed(self):
         rel, _ = L.propose(self.ws, "new", "First", "A rule.", "test", date="2026-10-24", apply=True)
         R = L.review_tool()
         self.assertEqual(R.review(self.ws, rel, "approve", "Owner", date="2026-10-24")[0], "promoted")
 
+
+
+class TestFourthReview(GuardCase):
+    """Bypasses and false blocks found in the fourth review."""
+
+    def cmd(self, c, cwd=None):
+        event = {"tool_name": "Bash", "tool_input": {"command": c}}
+        if cwd:
+            event["cwd"] = str(cwd)
+        return event
+
+    def test_shell_cannot_approve_drafts_or_set_outcomes(self):
+        for c in ("sed -i 's/status: draft/status: approved/' SYSTEM.md",
+                  "sed -i 's/status: proposed/status: promoted/' proposals/2026-10-02-p.md",
+                  "printf '---\nstatus: approved\n---\n' > PRINCIPLES.md",
+                  "python3 -c \"import pathlib; p=pathlib.Path('SYSTEM.md'); p.write_text(p.read_text().replace('draft','approved'))\""):
+            with self.subTest(cmd=c):
+                self.blocked(self.cmd(c))
+        self.allowed(self.cmd("sed -i 's/(name)/Alex/' SYSTEM.md"))
+
+    def test_patch_text_does_not_hide_other_commands(self):
+        self.blocked(self.cmd("printf '%s\\n' '*** Begin Patch'; rm decisions/2026-10-01-x.md"))
+
+    def test_removing_folders_that_hold_protected_files(self):
+        for c in ("rm -rf .claude", "rm -rf tools", "rm -rf .codex", "rm -rf decisions", "rm -rf .", "mv tools /tmp/t"):
+            with self.subTest(cmd=c):
+                self.blocked(self.cmd(c))
+        self.allowed(self.cmd("rm -rf workflows/old"))
+
+    def test_patch_result_is_checked_not_only_added_lines(self):
+        write(self.ws / "knowledge/approved.md", "---\nstatus: approved\n---\n\n# Old title\n")
+        move = {"tool_name": "apply_patch", "tool_input": {"command":
+                "*** Begin Patch\n*** Update File: knowledge/approved.md\n*** Move to: PRINCIPLES.md\n@@\n-# Old title\n+# New title\n*** End Patch\n"}}
+        self.blocked(move)
+        example = {"tool_name": "apply_patch", "tool_input": {"command":
+                   "*** Begin Patch\n*** Update File: proposals/2026-10-02-p.md\n@@\n # Proposal: P\n+\n+Example: `status: rejected` means closed.\n*** End Patch\n"}}
+        self.allowed(example)
+
+    def test_quotes_line_breaks_cd_and_copy_options(self):
+        spaced = Path(self.tmp.name) / "with space"
+        spaced.mkdir()
+        ws2 = L.init(spaced / "ws", "student", "en")
+        r = subprocess.run([sys.executable, "-B", str(ws2 / "tools/guard.py")], input=json.dumps(self.cmd(
+            f'echo changed > "{ws2}/decisions/new.md"')), capture_output=True, text=True)
+        self.assertEqual(r.returncode, 2)
+        self.blocked(self.cmd("cd decisions\nrm 2026-10-01-x.md"))
+        self.blocked(self.cmd("cp projects/p.md decisions/x.md --verbose"))
+        self.blocked(self.cmd("cp --target-directory=decisions projects/p.md"))
+        self.blocked(self.cmd("cp -t decisions projects/p.md"))
+
+    @unittest.skipUnless(os.name != "nt", "creating links needs extra rights on Windows")
+    def test_writing_through_a_link_inside_decisions(self):
+        outside = Path(self.tmp.name) / "outside.md"
+        outside.write_text("x", encoding="utf-8")
+        (self.ws / "decisions/linked.md").symlink_to(outside)
+        self.blocked({"tool_name": "Write", "tool_input": {"file_path": "decisions/linked.md", "content": "y"}})
+
+    def test_odd_encoding_does_not_crash_the_guard(self):
+        (self.ws / "SYSTEM.md").write_bytes(b"---\nstatus: draft\n---\n\n\x96 dash\n")
+        self.blocked({"tool_name": "Write", "tool_input": {"file_path": "SYSTEM.md",
+                                                           "content": "---\nstatus: approved\n---\n"}})
+
+    def test_reading_and_text_that_mentions_commands_are_not_blocked(self):
+        for c in ("python3 -c \"print(open('decisions/2026-10-01-x.md').read())\"",
+                  "grep 'rm' decisions/2026-10-01-x.md",
+                  "python3 tools/review.py review proposals/2026-10-02-p.md --outcome approve --by Me --note 'rm old wording'",
+                  "cat decisions/2026-10-01-x.md | wc -l", "echo 'the decisions/ folder is protected'"):
+            with self.subTest(cmd=c):
+                self.allowed(self.cmd(c))
+
+    @unittest.skipIf(os.name == "nt", "the hook command is a POSIX shell command")
+    def test_codex_hook_works_from_a_subfolder_and_without_a_guard(self):
+        cmd = json.loads((self.ws / ".codex/hooks.json").read_text(encoding="utf-8"))["hooks"]["PreToolUse"][0]["hooks"][0]["command"]
+        sub = self.ws / "projects"
+        block = json.dumps({"tool_name": "Bash", "cwd": str(sub), "tool_input": {"command": "rm ../decisions/2026-10-01-x.md"}})
+        read = json.dumps({"tool_name": "Bash", "cwd": str(sub), "tool_input": {"command": "ls"}})
+        run = lambda payload: subprocess.run(["sh", "-c", cmd], input=payload, capture_output=True, text=True, cwd=sub)
+        self.assertEqual(run(block).returncode, 2)
+        self.assertEqual(run(read).returncode, 0)
+        (self.ws / "tools/guard.py").unlink()
+        self.assertEqual(run(read).returncode, 0, "a missing guard must not block all work")
+
+    def test_doctor_checks_the_hooks_really_run_the_guard_and_protect_restores(self):
+        (self.ws / ".codex/hooks.json").write_text('{"hooks": {}}', encoding="utf-8")
+        self.assertIn(".codex/hooks.json does not run tools/guard.py", L.format_doctor(L.doctor(self.ws)))
+        (self.ws / ".claude/settings.json").unlink()
+        (self.ws / "tools/guard.py").unlink()
+        self.assertEqual(sorted(L.protect(self.ws)), [".claude/settings.json", "tools/guard.py"])
+        self.assertFalse((self.ws / "tools/guard.py").exists(), "plan only without --apply")
+        L.protect(self.ws, apply=True)
+        self.assertTrue((self.ws / "tools/guard.py").is_file())
+        self.assertFalse([m for _, m in L.doctor(self.ws) if "guard.py is missing" in m or "settings.json is missing" in m])
+        self.assertIn('{"hooks": {}}', (self.ws / ".codex/hooks.json").read_text(encoding="utf-8"), "never overwrites")
 
 if __name__ == "__main__":
     unittest.main()

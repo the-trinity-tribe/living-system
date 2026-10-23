@@ -256,5 +256,17 @@ class TestValueScore(InitCase):
         self.assertTrue((target / "AGENTS.md").is_file())
 
 
+
+class TestLocalFileShapes(unittest.TestCase):
+    def test_wrong_shapes_do_not_crash_doctor_or_upgrade(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ws = L.init(Path(tmp) / "ws", "student", "en")
+            for bad in ("[]", '{"product_folder": 3}', "{", '"text"'):
+                with self.subTest(content=bad):
+                    (ws / ".living/local.json").write_text(bad, encoding="utf-8")
+                    self.assertIn("does not point at a Living System folder", L.format_doctor(L.doctor(ws)))
+                    L.upgrade(ws, apply=True)
+                    self.assertTrue(L.local_folder(ws))
+
 if __name__ == "__main__":
     unittest.main()
