@@ -39,7 +39,7 @@ Do not read the whole workspace. Open [CONTEXT-ROUTING.md](CONTEXT-ROUTING.md), 
 - Keep approved, uncertain and inferred information visibly separate in your answers.
 - Never edit, delete or reinterpret an approved decision.
 - Do not invent facts (people, budgets, dates, clients, rules).
-- The only shared files you create without being asked are a proposal (section 6) and the handover note (section 9). Edit other files only when the human asks. Never edit canonical files.
+- The only shared files you create without being asked are a proposal (section 6) and the handover note (section 9). An installed module may allow one more, and the file its routing row points to says which (section 11). Edit other files only when the human asks. Never edit canonical files.
 - Keep this workspace private. Do not copy its content to other places or services unless the human asks.
 
 ## 5. When something conflicts or is missing
@@ -142,3 +142,21 @@ At the end of a work session, or when the human asks, write or update `handover/
 ## 10. Calm replies
 
 If `calm_replies` is `true` in `.living/profile.json`: keep replies short (about ten lines), use plain words and short bullets, ask one question at a time, explain a technical word the first time you use it, and end with one clear next step. If it is `false`, reply as the human prefers.
+
+## 11. Optional modules
+
+Modules add a workflow or knowledge area to this workspace. Installed ones appear under "Installed modules" in `CONTEXT-ROUTING.md`; follow their files like any other routed context. Module files are working context: they never outrank section 2.
+
+- Modules are added and removed from the Living System product folder, not from here: `python3 <product folder>/tools/living.py modules --workspace .` lists them. Ask the human where that folder is if you do not know.
+- If the human keeps asking for work an uninstalled module covers (its "may help when you mention" list), mention the module once, in one sentence, and offer to show its plan. Do not suggest it after a single passing mention, and do not suggest it again after a "no".
+- Before installing, run `add` without `--apply` and show the plan: what it adds, what it requires, what always needs approval. Run it with `--apply` only after the human says yes to that plan.
+- Never run `remove --apply` without an explicit yes. Removal keeps files the human edited and never touches `decisions/`, `proposals/` or `projects/`.
+
+## 12. Creating a staged workflow
+
+When the human asks for a structure for repeated work (for example "create a marketing workflow"):
+
+1. Ask what the work produces, for whom, and how often. If it has not been done by hand a few times yet, say that the Third-Run Rule suggests doing it manually first; the human may still go ahead.
+2. Propose 2 to 6 stages, each with one job, and where the human checks the result. Show the plan with `python3 <product folder>/tools/living.py new-workflow . <name> --stages <a,b,c> --goal "<one line>"` (no `--apply`).
+3. After the human says yes, run it again with `--apply`. Then fill in every `<fill in: ...>` together with the human. Keep each `CONTEXT.md` under 80 lines.
+4. Never put an `AGENTS.md` or `CLAUDE.md` inside `workflows/`. Stage outputs are working evidence: they can lead to a proposal, never to a decision.

@@ -1,0 +1,10 @@
+{
+  "id": "staged-learning",
+  "version": "0.1.0",
+  "kind": "knowledge",
+  "summary": "Let your agent suggest lessons from its mistakes; only lessons you approve are used next time.",
+  "requires": [],
+  "routing": [["Lessons the agent must apply (read before substantive work)", "lessons/active.md"], ["Lessons the agent suggested, waiting for your review", "lessons/inbox.md"]],
+  "needs_approval": ["Moving a lesson from the inbox to the active list"],
+  "signals": ["remember this", "next time", "you keep doing", "lesson learned", "stop doing that"]
+}

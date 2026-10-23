@@ -52,6 +52,33 @@ python3 tools/review.py --root ~/my-workspace check
 
 Your starter `SYSTEM.md` and `PRINCIPLES.md` are **drafts** until you change them to `status: approved` yourself.
 
+### Add only what you need
+
+Optional modules add a ready-made workflow or knowledge area. Nothing is installed unless you ask, and every command only shows a plan until you add `--apply`.
+
+| Module | What it gives you |
+| --- | --- |
+| `weekly-update` | A three-step weekly update: gather facts, draft, check who approves. You send it. |
+| `meeting-notes` | Meeting notes become clean notes, actions, and proposals for anything that would change a rule. |
+| `staged-learning` | Your agent suggests lessons from its mistakes; only lessons you approve are used next time. |
+
+```sh
+python3 tools/living.py modules --workspace ~/my-workspace        # what is available
+python3 tools/living.py add ~/my-workspace weekly-update          # see the plan
+python3 tools/living.py add ~/my-workspace weekly-update --apply  # install it
+python3 tools/living.py remove ~/my-workspace weekly-update       # see what removal would do
+```
+
+`add` never overwrites a file. `remove` deletes only files you have not edited, and never touches your decisions, proposals or projects. Each module's `README.md` in [modules/](modules/) answers the same ten questions (template: [docs/features/_template.md](docs/features/_template.md)).
+
+**Your own workflow:** ask your agent, for example, *"Create a workflow for planning a launch post."* It proposes the stages, shows the plan, and after your yes creates the folders with `new-workflow` (staged in the style of ICM, see [CREDITS.md](CREDITS.md)):
+
+```sh
+python3 tools/living.py new-workflow ~/my-workspace launch-post --stages research,draft,review --goal "A launch post ready for my review"
+```
+
+**Health check:** `python3 tools/living.py doctor ~/my-workspace` reads your workspace and lists problems in plain words (for example a draft you have not approved yet, a workflow step left unfinished, or demo material that slipped in). It changes nothing.
+
 ### Explore the demo
 
 ```sh
@@ -113,6 +140,7 @@ See [CREDITS.md](CREDITS.md).
 - There is no automatic approval, secret store, multi-user authorization, hosted product, automatic private-data extraction, or guarantee that an agent will comply with instructions.
 - Starter files are written in English; your agent writes new content in the language you choose, but the starter files are not translated for you.
 - The profile files (`student`, `professional`, `employee`, `manager`) are small starting points, not tested against real use.
+- Modules, `new-workflow` and `doctor` are new and experimental. Module suggestions by the agent are instructions only: nothing watches your work or counts your requests.
 - The fictional organisation is a demonstration, not a recommended deployment with real client or personal data. Review any material before putting it in an AI agent's context or publishing a repository.
 
 ## Licensing, community and credit

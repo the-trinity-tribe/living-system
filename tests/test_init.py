@@ -218,6 +218,32 @@ class TestValueScore(InitCase):
         with self.assertRaises(L.Refusal):
             L.value_score(ws)
 
+    def test_missing_table_is_refused_not_scored_as_zero(self):
+        ws = self.ws("student")
+        (ws / "value-check/questions.md").write_text("# Questions\n\nI wrote prose instead of a table.\n")
+        with self.assertRaises(L.Refusal):
+            L.value_score(ws)
+
+    def test_escaped_pipe_in_question_keeps_columns(self):
+        ws = self.ws("student")
+        (ws / "value-check/questions.md").write_text(
+            "| # | Question | Before | After |\n| --- | --- | --- | --- |\n"
+            "| 1 | Do we use A \\| B for invoices? | wrong | right |\n")
+        counts, _ = L.value_score(ws)
+        self.assertEqual((counts["before"]["wrong"], counts["after"]["right"]), (1, 1))
+
+    def test_existing_empty_folder_is_used_and_restored_on_failure(self):
+        target = self.base / "empty"
+        target.mkdir()
+        with mock.patch.object(L.os, "rename", side_effect=OSError("simulated")):
+            with self.assertRaises(OSError):
+                L.init(target, "student", "en")
+        self.assertTrue(target.is_dir())
+        self.assertEqual(list(target.iterdir()), [])
+        self.assertEqual(sorted(p.name for p in self.base.iterdir()), ["empty"])
+        L.init(target, "student", "en")
+        self.assertTrue((target / "AGENTS.md").is_file())
+
 
 if __name__ == "__main__":
     unittest.main()

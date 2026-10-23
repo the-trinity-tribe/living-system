@@ -9,7 +9,7 @@ This is your own workspace. It was created by `tools/living.py init`. It is plai
 1. Open this folder in Claude Code or Codex. The agent reads `AGENTS.md` first.
 2. Read `SYSTEM.md` and `PRINCIPLES.md`. They are **drafts**. When you are happy with one, change `status: draft` to `status: approved` yourself.
 3. Run the value check (`value-check/README.md`) before you rely on it.
-4. Check the structure any time: `python3 tools/review.py check` (prints `ok` when fine).
+4. Check the structure any time: `python3 tools/review.py check` (prints `ok` when fine). For a fuller check in plain words, run `python3 <Living System folder>/tools/living.py doctor .`
 
 ## What is in here
 

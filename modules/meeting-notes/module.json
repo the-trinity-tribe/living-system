@@ -1,0 +1,10 @@
+{
+  "id": "meeting-notes",
+  "version": "0.1.0",
+  "kind": "workflow",
+  "summary": "Turn meeting notes into clean notes, actions and proposals; nothing becomes a rule without your review.",
+  "requires": [],
+  "routing": [["Turn meeting or call notes into actions and proposals (staged workflow)", "workflows/meeting-notes/CONTEXT.md"]],
+  "needs_approval": ["Approving any proposal it stages", "Sharing the notes with anyone"],
+  "signals": ["meeting notes", "minutes", "notes from a call", "what did we agree", "action items"]
+}

@@ -1,0 +1,10 @@
+{
+  "id": "weekly-update",
+  "version": "0.1.0",
+  "kind": "workflow",
+  "summary": "Prepare a short weekly update in three checked steps; a human approves and sends it.",
+  "requires": [],
+  "routing": [["Write a weekly update (staged workflow)", "workflows/weekly-update/CONTEXT.md"]],
+  "needs_approval": ["Sending the update to anyone", "Deciding who approves it when no decision says so"],
+  "signals": ["weekly update", "status update", "progress report", "Friday update", "update for my manager or client"]
+}

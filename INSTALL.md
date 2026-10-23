@@ -84,7 +84,9 @@ Continue? (yes / no)
 5. Show the human what you drafted. Tell them: **to accept `SYSTEM.md`, change `status: draft` to `status: approved` yourself.** The same for `PRINCIPLES.md`.
 6. If the human named a rule in answer 4 (for example "Only I send things to clients"), offer to write it as a **proposal** (`kind: new`, see the workspace `AGENTS.md` section 6b). Do not write it as a decision. The human approves it with `review.py review` when ready.
 7. Suggest the **value check first**: "Before you rely on this, write 5 questions about your work in `value-check/questions.md` and test a fresh session. Instructions are in `value-check/README.md`."
-8. Tell the human how to start working: open the new folder (not this repository) in Claude Code or Codex.
+8. If answer 3 names repeated work that an optional module covers (`python3 tools/living.py modules`), mention that module in one sentence. Do not install it now unless the human asks; show `add` without `--apply` first.
+9. Run `python3 tools/living.py doctor <folder>`. On a new workspace it should only warn that `SYSTEM.md` and `PRINCIPLES.md` are drafts.
+10. Tell the human how to start working: open the new folder (not this repository) in Claude Code or Codex.
 
 ## If something goes wrong
 
