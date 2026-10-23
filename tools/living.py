@@ -9,6 +9,7 @@
   living.py new-workflow <ws> <name> --stages a,b,c [--goal "..."] [--apply]
   living.py doctor <ws>
   living.py status <ws>
+  living.py propose <ws> --kind new|exception|replace|retire --title ... --rule ... --evidence ... [--apply]
   living.py upgrade <ws> [--apply]
 
 `init` writes into a NEW folder, built in a temporary folder next to it and renamed
@@ -822,6 +823,78 @@ def workflow_files(slug, stages, goal):
     return files
 
 
+PROPOSE_KINDS = ("new", "exception", "replace", "retire")
+
+
+def slugify(title):
+    """A plain file-name part from a title in any language: 'Nur ich schicke Angebote' -> 'nur-ich-schicke-angebote'."""
+    import unicodedata
+    s = title.lower().replace("ß", "ss").replace("ł", "l")
+    s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode("ascii")
+    s = re.sub(r"[^a-z0-9]+", "-", s).strip("-")[:50].strip("-")
+    if not s:
+        raise Refusal("the title needs at least one letter or digit")
+    return s
+
+
+def propose(ws, kind, title, rule, evidence, why="", proposed_by="agent", target=None, date=None, apply=False):
+    """Write a correctly formatted proposal (never a decision). Returns (path, text). Plan only unless apply."""
+    import datetime
+    ws = Path(ws)
+    read_manifest(ws)
+    R = review_tool()
+    if kind not in PROPOSE_KINDS:
+        raise Refusal(f"kind must be one of {', '.join(PROPOSE_KINDS)}")
+    for value, what in ((title, "the title"), (evidence, "the evidence"), (proposed_by, "--by"), (target or "", "--target")):
+        R.one_line(value, what)
+    if not title.strip() or not rule.strip() or not evidence.strip():
+        raise Refusal("a proposal needs a title, the rule (or for retire: the reason) and the evidence")
+    if re.search(r"^\s*#", why, re.M):
+        raise Refusal("the why text must not contain headings")
+    date = date or datetime.date.today().isoformat()
+    rel = f"proposals/{date}-{slugify(title)}.md"
+    refuse_links(ws, [rel])
+    if (ws / rel).exists():
+        raise Refusal(f"{rel} already exists; choose another title")
+    quote = "\n".join("> " + line.rstrip() if line.strip() else ">" for line in rule.strip().splitlines())
+    why = why.strip() or "Not recorded yet. A human should add why this rule is wanted and anything still unclear."
+    front = ["status: proposed"]
+    if kind == "new":
+        if target:
+            raise Refusal("kind new has no target; it creates a first rule")
+        front += ["kind: new", "target: none"]
+        intro = "Not current truth. Nothing changes until a human approves it with `tools/review.py review`."
+        middle = ""
+    else:
+        if not target:
+            raise Refusal(f"kind {kind} needs --target: the current decision it changes")
+        R.safe_rel(ws, target, "decisions/")
+        if target not in R.current_decisions(ws):
+            raise Refusal(f"{target} is not a current decision; `python3 tools/review.py current` lists them")
+        _, _, tbody = R.split_frontmatter((ws / target).read_text(encoding="utf-8"), target)
+        current = R.section(tbody, "Rule", target)
+        front += [f"kind: {kind}", f"target: {target}", f"target_sha256: {R.sha256(ws / target)}"]
+        intro = "Not current truth. The approved decision in `target` stays in force until a human approves a change."
+        middle = ("## Current canonical state\n\n" + "\n".join("> " + l if l.strip() else ">" for l in current.splitlines())
+                  + f"\n\n## New evidence\n\n{evidence.strip()}. Any attribution in it is not verified.\n\n")
+    front += [f"evidence: {evidence.strip()}", f"proposed_by: {proposed_by.strip() or 'agent'}", f"date: {date}"]
+    text = ("---\n" + "\n".join(front) + "\n---\n\n" + f"# Proposal: {title.strip()}\n\n{intro}\n\n" + middle
+            + f"## Proposed future state\n\n{quote}\n\n## Why and open questions\n\n{why}\n")
+    meta, _, body = R.split_frontmatter(text, rel)  # the same checks review.py will apply later
+    R.proposal_kind(meta, rel)
+    R.single_blockquote(R.section(body, "Proposed future state", rel), rel)
+    if apply:
+        (ws / "proposals").mkdir(exist_ok=True)
+        fd = os.open(ws / rel, os.O_CREAT | os.O_EXCL | os.O_WRONLY | getattr(os, "O_BINARY", 0))
+        with os.fdopen(fd, "wb") as f:
+            f.write(text.encode("utf-8"))
+        problems = [x for x in R.check(ws) if rel in x]
+        if problems:
+            (ws / rel).unlink()
+            raise Refusal("the proposal did not pass check and was removed: " + "; ".join(problems))
+    return rel, text
+
+
 def new_workflow(ws, slug, stages, goal="", apply=False):
     ws = Path(ws)
     read_manifest(ws)
@@ -864,6 +937,7 @@ def review_tool():
         spec.loader.exec_module(mod)
     finally:
         sys.dont_write_bytecode = saved
+    mod.Refusal = Refusal  # one refusal type, so the CLI reports review.py's refusals as plain messages
     return mod
 
 
@@ -1069,6 +1143,16 @@ def main(argv=None):
     w.add_argument("--stages", required=True, help="comma-separated stage names in order, e.g. research,draft,review")
     w.add_argument("--goal", default="")
     w.add_argument("--apply", action="store_true")
+    pr = sub.add_parser("propose", help="plan (or with --apply, write) a proposal; never approves anything")
+    pr.add_argument("workspace")
+    pr.add_argument("--kind", required=True, choices=PROPOSE_KINDS)
+    pr.add_argument("--title", required=True)
+    pr.add_argument("--rule", required=True, help="the proposed rule; for retire, why it no longer applies")
+    pr.add_argument("--evidence", required=True, help="what this comes from, e.g. 'setup answer, 2026-10-24'")
+    pr.add_argument("--why", default="")
+    pr.add_argument("--by", default="agent")
+    pr.add_argument("--target", help="for exception, replace and retire: the current decision it changes")
+    pr.add_argument("--apply", action="store_true")
     d = sub.add_parser("doctor", help="read-only health check of a workspace")
     d.add_argument("workspace")
     s = sub.add_parser("status", help="what needs your attention, in plain words (read-only)")
@@ -1098,6 +1182,12 @@ def main(argv=None):
             print(format_upgrade_plan(plan))
             if any(act not in ("same",) for act, *_ in plan):
                 print("Upgraded." if a.apply else "Nothing was written. Run again with --apply to upgrade.")
+        elif a.cmd == "propose":
+            rel, text = propose(a.workspace, a.kind, a.title, a.rule, a.evidence, a.why, a.by, a.target, apply=a.apply)
+            print(text)
+            print(f"Written {rel}. It is not a rule yet. Read it; when you have decided, run in the workspace:\n"
+                  f"  python3 tools/review.py review {rel} --outcome approve|reject|defer --by \"Your Name\""
+                  if a.apply else f"Nothing was written. Run again with --apply to create {rel}.")
         elif a.cmd == "status":
             print(status(a.workspace))
         elif a.cmd == "doctor":

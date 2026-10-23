@@ -41,6 +41,12 @@ Plain steps:
 3. Decide. Tell your agent the outcome for that named proposal, or run the review yourself.
 4. If you approve, a new decision file appears. The proposal is marked `promoted`.
 
+### Writing a proposal without typing the format
+
+`python3 tools/living.py propose ~/my-workspace --kind new --title "Only I send things to clients" --rule "Nothing goes to a client without my OK." --evidence "setup answer"` shows a correctly formatted proposal; add `--apply` to write it. For `exception`, `replace` and `retire`, add `--target decisions/<file>.md`: the tool copies the current rule into the proposal and records the fingerprint for you. It never approves anything; it prints the review command for you to run.
+
+**Your first decision:** after setup, say to your agent "Help me make my first decision from my setup answers." It drafts the rule from what you said, asks you about the wording, writes the proposal, and you approve it (workspace `AGENTS.md` section 6e).
+
 ### The four kinds of proposal
 
 The `kind:` line in the proposal's front matter says what an approval does.

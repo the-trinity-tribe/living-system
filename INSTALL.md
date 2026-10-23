@@ -84,7 +84,7 @@ Continue? (yes / no)
 
    It should print `ok`. If it does not, show the output and stop.
 5. Show the human what you drafted. Tell them: **to accept `SYSTEM.md`, change `status: draft` to `status: approved` yourself.** The same for `PRINCIPLES.md`.
-6. If the human named a rule in answer 4 (for example "Only I send things to clients"), offer to write it as a **proposal** (`kind: new`, see the workspace `AGENTS.md` section 6b). Do not write it as a decision. The human approves it with `review.py review` when ready.
+6. If the human named a rule in answer 4 (for example "Only I send things to clients"), offer a **guided first decision**: "Shall we turn that into your first rule? It takes two minutes, and you approve it yourself." On a yes, follow the workspace `AGENTS.md` section 6e: show the proposal with `python3 tools/living.py propose <folder> --kind new --title "..." --rule "..." --evidence "setup answer, <date>"`, write it with `--apply` after the human agrees to the wording, and let the human approve it with the review command it prints. Never write the decision file yourself.
 7. Suggest the **value check first**: "Before you rely on this, write 5 questions about your work in `value-check/questions.md` and test a fresh session. Instructions are in `value-check/README.md`."
 8. If answer 3 names repeated work that an optional module covers (`python3 tools/living.py modules`), mention that module in one sentence. Do not install it now unless the human asks; show `add` without `--apply` first.
 9. Run `python3 tools/living.py doctor <folder>`. On a new workspace it should only warn that `SYSTEM.md` and `PRINCIPLES.md` are drafts.

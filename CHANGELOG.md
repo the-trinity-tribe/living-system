@@ -17,7 +17,8 @@ From a governance demo to a workspace you can install and grow.
 - **Optional modules:** `modules`, `add`, `remove`, with three modules: `weekly-update`, `meeting-notes`, `staged-learning`. Plans are shown before anything is written; removal keeps files you edited and never touches decisions, proposals or projects. New workspaces list the available modules in `.living/catalog.md`.
 - **Workflow generator:** `new-workflow` creates a staged workflow folder in the style of Interpretable Context Methodology (see `CREDITS.md`).
 - **`doctor`:** a read-only health check in plain words.
-- **`status`:** what needs your attention (proposals to review, drafts, the last next step).
+- **`status`:** what needs your attention (proposals to review, drafts, the last next step), with the exact review command for each waiting proposal.
+- **`propose`** writes a correctly formatted proposal of any kind, including the target's current text and fingerprint, and never approves anything. **Guided first decision:** right after setup, the agent helps turn one rule from your answers into your first approved decision; you approve it yourself.
 - **`upgrade`:** brings a workspace up to date, updating only files you never changed.
 - **Release safety check** (`tools/release_check.py`) and automatic tests on Linux, Windows and macOS (`.github/workflows/tests.yml`).
 - **Docs:** one page per feature following `docs/features/_template.md`, and `demo/WALKTHROUGH.md` with recorded live runs in Claude Code and Codex.

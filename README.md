@@ -81,6 +81,8 @@ python3 tools/living.py remove ~/my-workspace weekly-update       # see what rem
 python3 tools/living.py new-workflow ~/my-workspace launch-post --stages research,draft,review --goal "A launch post ready for my review"
 ```
 
+**Your first rule in two minutes:** after setup, tell your agent *"Help me make my first decision from my setup answers."* It drafts the rule, asks you about the wording, and you approve it yourself. (`python3 tools/living.py propose` writes any proposal in the right format without you typing it.)
+
 **What needs my attention?** `python3 tools/living.py status ~/my-workspace` lists the proposals waiting for your review, lesson suggestions, drafts you have not approved, and where the last session stopped. It changes nothing.
 
 **Health check:** `python3 tools/living.py doctor ~/my-workspace` reads your workspace and lists problems in plain words (for example a draft you have not approved yet, a workflow step left unfinished, or demo material that slipped in). It changes nothing.

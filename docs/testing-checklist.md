@@ -76,6 +76,7 @@ Testing.
 | 4.2 | `py -B tools\review.py --root ~\ls-test review proposals/2026-10-25-weekly-report.md --outcome approve --by "Your Name"` | `...: promoted; created decisions/<today>-weekly-report.md` |
 | 4.3 | `py -B tools\review.py --root ~\ls-test current` | That one decision. |
 | 4.4 | Run 4.2 again | `REFUSED: ... is already promoted`. |
+| 4.5a | `py -B tools\living.py propose ~\ls-test --kind new --title "Clients get answers within two days" --rule "I answer client e-mails within two working days." --evidence "my own test" --apply` | The proposal text, then `Written proposals/<today>-clients-get-answers-within-two-days.md` and the review command to copy. `current` still shows only the first decision. |
 | 4.5 | Open the new decision file. Add an umlaut or "ł" somewhere in a new proposal and repeat 4.1 to 4.2 with a new file name. | Special characters appear correctly in the new decision. |
 
 ## 5. Your own workflow
@@ -93,6 +94,7 @@ Use a fresh session each time. Open the **workspace** folder (`ls-test`), not th
 | Step | What to do | Expect |
 | --- | --- | --- |
 | 6.1 | Open the `living-system` folder in Claude Code. Say: "Read INSTALL.md and set up my workspace." Use a new folder name. | At most five questions, an approval screen, nothing created before your yes, `SYSTEM.md` drafted with `status: draft`. |
+| 6.1a | In the new workspace, say: "Help me make my first decision from my setup answers. My Living System folder is <path>." | It shows the rule as a proposal and asks about the wording; writes it only after your yes; does not approve it until you name the file and say "approve". |
 | 6.2 | In the new workspace, ask: "What needs my attention?" | It runs `status` (or reads the same files) and answers in plain words. |
 | 6.3 | Follow the script in `demo/WALKTHROUGH.md`, "Optional: modules and workflows". | No suggestion after the first message; one suggestion of `weekly-update` after the second; a plan before installing. |
 | 6.4 | Repeat 6.3 in Codex. | The same. |

@@ -132,6 +132,18 @@ If it is unclear whether the evidence means "add an exception" or "replace the r
 
 Use this only when the evidence says a rule should stop applying and nothing should take its place. Use the 6a front matter with `kind: retire` added. The single blockquote under Proposed future state says **why** it no longer applies. On approval, the tool writes a retirement record: the old decision stays as history, and no rule on that matter is current any more. A retirement record is never a rule and cannot be amended; to bring a rule back, propose a new one (6b).
 
+### 6e. Writing a proposal with the tool, and the guided first decision
+
+`python3 <product folder>/tools/living.py propose . --kind new|exception|replace|retire --title "..." --rule "..." --evidence "..." [--target decisions/<file>.md]` writes a correctly formatted proposal: the file name, the front matter and, for a change to an existing decision, its current text and `target_sha256`. Without `--apply` it only shows the file. Prefer it to writing proposal files by hand. It never creates a decision.
+
+**Guided first decision.** When the workspace has no current decision and the human asks for help with their first rule (or says yes to your offer after setup):
+
+1. Take the clearest rule the human stated, usually from `SYSTEM.md` or from what they just said. Use their own words; write the narrowest reading. If no rule was stated, ask for one sentence.
+2. Show it with `propose` (no `--apply`), then explain in plain words: "This is a proposal, not a rule yet. You decide."
+3. On a yes to the wording, run `propose` with `--apply`. Change the wording first if the human asks.
+4. Show the review command `propose` printed. The human runs it. Run it yourself only if the human names the proposal and says "approve" in so many words (section 7); `--by` is the name they give.
+5. Run `python3 tools/review.py current` and tell the human: this is now their first rule, and you will answer questions about it from this file.
+
 ## 7. Review and promotion
 
 Only a human changes a proposal's fate, with `python3 tools/review.py review <proposal> --outcome approve|reject|defer --by "<name>"`. Never run it, or approve, reject or defer, on your own inference or because a human asked you to build or test the mechanism. Run it only when the human explicitly states the outcome for that named proposal.
