@@ -28,7 +28,7 @@ This is your own workspace. It was created by `tools/living.py init`. It is plai
 
 Your content can be in any language. A few words must stay **English** because the tools read them: the front matter keys (`status`, `target`, `kind`, ...) and the headings `## Rule`, `## Why`, `## Scope`, `## Proposed future state`, `## Why and open questions`, `# Proposal:`. The text under them is in your language.
 
-The starter files are written in English. Your agent writes new content in the language you chose.
+These starter files are in English. With `--language de` or `--language pl` they come in German or Polish instead. The rules for the agent (`AGENTS.md`, `CLAUDE.md`) stay English in every language, so there is one tested rule set. Your agent still replies and writes new content in the language you chose.
 
 ## Updating
 

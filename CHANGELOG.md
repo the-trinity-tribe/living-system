@@ -10,7 +10,7 @@ From a governance demo to a workspace you can install and grow.
 
 - **Your own workspace:** `tools/living.py init` creates a private workspace in a separate folder (never inside this repository), with nothing half-made if it fails. `INSTALL.md` lets Claude Code or Codex guide you through it with at most five questions.
 - **Profiles:** `student`, `professional`, `employee`, `manager`, each with small starting files and personal goals kept apart from shared rules (`me/`, private by default for employees).
-- **Language choice** and an optional **calm replies** setting for shorter, plainer agent answers.
+- **Language choice**, with German and Polish starter files (`core/i18n/`), and an optional **calm replies** setting for shorter, plainer agent answers. The agent's rule files stay English in every language. The value check accepts German and Polish column names and score words.
 - **Value check:** a 10-minute before/after test you run yourself, and `value-score` to count the results.
 - **Handover note:** `handover/LATEST.md`, so the next session (with any agent) starts where the last one stopped.
 - **Decision kinds:** proposals can now add a first rule (`kind: new`), replace a rule completely (`kind: replace`) or retire one (`kind: retire`), besides adding an exception. Old decision files are never edited.

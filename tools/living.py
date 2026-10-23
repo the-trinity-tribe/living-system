@@ -50,8 +50,10 @@ def check_target(target):
         raise Refusal("the workspace must be outside the Living System repository folder")
 
 
-def copy_tree(src, dst):
+def copy_tree(src, dst, translation=False):
     for p in sorted(src.rglob("*")):
+        if translation and p.name in NOT_TRANSLATED:
+            continue
         rel = p.relative_to(src)
         if p.is_dir():
             (dst / rel).mkdir(parents=True, exist_ok=True)
@@ -62,12 +64,28 @@ def copy_tree(src, dst):
             shutil.copyfile(p, dst / rel)
 
 
-def apply_appends(profile_dir, dst):
+I18N = CORE / "i18n"
+# Agent instruction files stay English in every language: one tested rule set. The agent still replies and
+# writes new content in the chosen language (AGENTS.md section 8).
+NOT_TRANSLATED = ("AGENTS.md", "AGENTS.append.md", "CLAUDE.md", "gitignore")
+
+
+def language_dir(language):
+    """core/i18n/<language>, or the base language (de for de-AT), or None for English starter files."""
+    for code in dict.fromkeys((language.lower(), language.split("-")[0].lower())):
+        if (I18N / code).is_dir():
+            return I18N / code
+    return None
+
+
+def apply_appends(profile_dir, dst, translated_dir=None):
     """`X.append.md` in a profile is inserted into X at the marker, or added at the end."""
     for p in sorted(profile_dir.rglob("*.append.md")):
         rel = p.relative_to(profile_dir)
         base = dst / rel.parent / (p.name[: -len(".append.md")] + ".md")
-        text, add = base.read_text(encoding="utf-8"), p.read_text(encoding="utf-8")
+        src = translated_dir / rel if translated_dir and (translated_dir / rel).is_file() \
+            and p.name not in NOT_TRANSLATED else p
+        text, add = base.read_text(encoding="utf-8"), src.read_text(encoding="utf-8")
         text = text.replace(MARKER, add.rstrip("\n") + "\n" + MARKER, 1) if MARKER in text else text.rstrip("\n") + "\n" + add
         base.write_text(text, encoding="utf-8", newline="\n")
 
@@ -91,9 +109,15 @@ def write_manifest(ws):
 
 
 def build(ws, profile, language, calm_replies):
+    lang = language_dir(language)
     copy_tree(CORE / "template", ws)
+    if lang and (lang / "template").is_dir():
+        copy_tree(lang / "template", ws, translation=True)
     copy_tree(CORE / "profiles" / profile, ws)
-    apply_appends(CORE / "profiles" / profile, ws)
+    translated_profile = lang / "profiles" / profile if lang else None
+    if translated_profile and translated_profile.is_dir():
+        copy_tree(translated_profile, ws, translation=True)
+    apply_appends(CORE / "profiles" / profile, ws, translated_profile)
     strip_markers(ws)
     (ws / "tools").mkdir()
     shutil.copyfile(HERE / "review.py", ws / "tools" / "review.py")
@@ -150,6 +174,12 @@ def init(target, profile, language, calm_replies=False):
 
 
 SCORES = ("right", "wrong", "made up", "don't know")
+# Column names and score words in the translated starter files; results are counted under the English names.
+COLUMN_WORDS = {"before": ("before", "vorher", "przed"), "after": ("after", "nachher", "po")}
+SCORE_WORDS = {word: score for score, words in {
+    "right": ("right", "richtig", "dobrze"), "wrong": ("wrong", "falsch", "\u017ale"),
+    "made up": ("made up", "erfunden", "zmy\u015blone"),
+    "don't know": ("don't know", "wei\u00df nicht", "weiss nicht", "nie wiem")}.items() for word in words}
 
 
 def value_score(ws):
@@ -164,19 +194,20 @@ def value_score(ws):
             continue
         cells = [c.strip().replace("\\|", "|") for c in re.split(r"(?<!\\)\|", line.strip().strip("|"))]
         low = [c.lower() for c in cells]
-        if "before" in low and "after" in low:
-            cols = {"before": low.index("before"), "after": low.index("after")}
+        found = {which: next((i for i, c in enumerate(low) if c in words), None) for which, words in COLUMN_WORDS.items()}
+        if None not in found.values():
+            cols = found
             continue
         if cols is None or set("".join(cells)) <= set("-: "):
             continue
         for which, i in cols.items():
             v = cells[i].strip("`").lower().replace("’", "'") if i < len(cells) else ""
-            if v in counts[which]:
-                counts[which][v] += 1
+            if v in SCORE_WORDS:
+                counts[which][SCORE_WORDS[v]] += 1
             elif v == "":
                 unscored[which] += 1
             else:
-                raise Refusal(f"{path}: '{cells[i]}' is not one of: {', '.join(SCORES)}")
+                raise Refusal(f"{path}: '{cells[i]}' is not a score word; use one of: {', '.join(SCORE_WORDS)}")
     if cols is None:
         raise Refusal(f"{path}: no table with 'Before' and 'After' columns found")
     return counts, unscored
@@ -931,17 +962,21 @@ def doctor(ws):
     return out
 
 
+NEXT_STEP = r"next step|n\u00e4chste[rn]? schritt|n\u00e4chster schritt|nast\u0119pny krok|kolejny krok"
+
+
 def handover_next_step(ws):
     """The 'next step' line from handover/LATEST.md, or None if the note has none yet."""
     note = Path(ws) / "handover/LATEST.md"
     if not note.is_file():
         return None
     lines = note.read_text(encoding="utf-8", errors="replace").splitlines()
-    if any("No session has been handed over yet" in l for l in lines):
+    if any("<!-- handover:empty -->" in l or "No session has been handed over yet" in l for l in lines):
         return None
     for i, line in enumerate(lines):
-        if re.search(r"(?i)next step", line):
-            text = re.sub(r"(?i)^[\s*#-]*(\*\*)?[^:*]*next step[^:*]*(\*\*)?\s*:?\s*(\*\*)?\s*", "", line).strip(" *")
+        if re.search(NEXT_STEP, line, re.I):
+            text = re.sub(r"^[\s*#-]*(\*\*)?[^:*]*?(" + NEXT_STEP + r")[^:*]*(\*\*)?\s*:?\s*(\*\*)?\s*", "",
+                          line, flags=re.I).strip(" *")
             if not text:  # a heading or label: the step is the next line with text
                 text = next((l.strip(" -*") for l in lines[i + 1:] if l.strip(" -*")), "")
             return text or None

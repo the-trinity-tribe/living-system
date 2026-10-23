@@ -146,7 +146,7 @@ See [CREDITS.md](CREDITS.md).
 - Living System is designed to support fresh-session reuse through explicit, human-readable context and governance rules.
 - There is **no authentication or identity attestation**: `--by`, `approved_by` and similar labels are unverified declarations.
 - There is no automatic approval, secret store, multi-user authorization, hosted product, automatic private-data extraction, or guarantee that an agent will comply with instructions.
-- Starter files are written in English; your agent writes new content in the language you choose, but the starter files are not translated for you.
+- Starter files come in English, German and Polish. The agent's rule files stay English in every language, and the tools print English messages. The German and Polish texts would benefit from review by native speakers.
 - The profile files (`student`, `professional`, `employee`, `manager`) are small starting points, not tested against real use.
 - Modules, `new-workflow` and `doctor` are new and experimental. Module suggestions by the agent are instructions only: nothing watches your work or counts your requests.
 - The fictional organisation is a demonstration, not a recommended deployment with real client or personal data. Review any material before putting it in an AI agent's context or publishing a repository.

@@ -2,6 +2,7 @@
 
 Not canonical. This note helps the next session pick up where the last one stopped. It never outranks approved files.
 
+<!-- handover:empty -->
 No session has been handed over yet.
 
 When a session ends, the agent replaces this text with:

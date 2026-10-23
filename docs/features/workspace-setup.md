@@ -85,7 +85,7 @@ Only the `employee` profile creates a `.gitignore`.
 
 Both are saved in `.living/profile.json`. `AGENTS.md` tells the agent to read that file once per session.
 
-- **Language.** The agent writes replies and new content in your language. The starter files stay in English and are not translated. A few words must stay **English** because the tools read them: the front matter keys (`status`, `target`, `kind`, and so on) and the headings `## Rule`, `## Why`, `## Scope`, `## Proposed future state`, `## Why and open questions` and `# Proposal:`. The text under them is in your language.
+- **Language.** The agent writes replies and new content in your language. The starter files come in English, German (`de`) or Polish (`pl`); a regional code such as `de-AT` uses German, and any other language gets the English files. The agent's rule files (`AGENTS.md`, `CLAUDE.md`) stay English in every language, so there is one tested rule set. The messages printed by the tools (`status`, `doctor` and so on) are English. A few words must stay **English** because the tools read them: the front matter keys (`status`, `target`, `kind`, and so on) and the headings `## Rule`, `## Why`, `## Scope`, `## Proposed future state`, `## Why and open questions` and `# Proposal:`. The text under them is in your language.
 - **Calm replies.** If on, the agent is told to keep replies to about ten lines, use plain words and short bullets, ask one question at a time, explain a technical word the first time, and end with one clear next step. This is an instruction, not something the tools enforce.
 
 ## Example scenarios
@@ -140,4 +140,4 @@ If setup fails partway, the temporary folder is deleted. An empty folder you mad
 
 - **Undo:** delete the workspace folder. Nothing else was changed.
 - **Check it:** `python3 tools/review.py --root <folder> check` prints `ok`. On a new workspace, `doctor` should only warn that `SYSTEM.md` and `PRINCIPLES.md` are drafts.
-- **Limits:** the starter files are English only. The profiles are small and untested against real use. Nothing here proves who you are or makes the agent obey; see [AI tools](../ai-tools.md).
+- **Limits:** starter files exist in English, German and Polish only, and the German and Polish texts would benefit from review by native speakers. The profiles are small and untested against real use. Nothing here proves who you are or makes the agent obey; see [AI tools](../ai-tools.md).
