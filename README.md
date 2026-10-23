@@ -1,6 +1,6 @@
 # Living System
 
-**Experimental · local-first Human–AI governance Kernel**
+**Experimental · local-first Human–AI work environment**
 
 Living System is a way to give your AI agent a **written memory you control**.
 
