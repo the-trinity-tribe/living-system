@@ -18,6 +18,8 @@ Created and architected by **Adrianna Mamczarz**, through **The Trinity Tribe**.
 
 > **Status:** An experimental, educational reference implementation. Not a security boundary, identity-verification system, or production-ready access-control product. Moss & Circuit, Riverside Community Garden and every person named in the example (including Maya Chen, Leo and Sam) are fictional, and all project details in the example are invented.
 
+**New here?** Read [docs/ai-tools.md](docs/ai-tools.md) to see which AI tool you need, then follow the quick start below. Every feature has a plain-language page in [docs/](docs/README.md).
+
 ## Three things to keep apart
 
 | | What it is | Where |
