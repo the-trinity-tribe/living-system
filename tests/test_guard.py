@@ -209,6 +209,12 @@ class TestFourthReview(GuardCase):
         (self.ws / "decisions/linked.md").symlink_to(outside)
         self.blocked({"tool_name": "Write", "tool_input": {"file_path": "decisions/linked.md", "content": "y"}})
 
+    def test_windows_drive_paths_are_read_as_paths(self):
+        sys.path.insert(0, str(self.ws / "tools"))
+        import guard as G
+        self.assertEqual(G.split_commands(r"copy x C:\Users\RUNNER~1\org\decisions\y.md"),
+                         [["copy", "x", "C:/Users/RUNNER~1/org/decisions/y.md"]])
+
     def test_odd_encoding_does_not_crash_the_guard(self):
         (self.ws / "SYSTEM.md").write_bytes(b"---\nstatus: draft\n---\n\n\x96 dash\n")
         self.blocked({"tool_name": "Write", "tool_input": {"file_path": "SYSTEM.md",

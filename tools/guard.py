@@ -240,7 +240,7 @@ def check_patch(patch, cwd):
 
 def split_commands(cmd):
     """Commands as lists of words, split at ; && || | & and line breaks, honouring quotes."""
-    cmd = re.sub(r"(?<=[\w.])\\(?=[\w.])", "/", cmd)  # Windows paths such as decisions\\x.md
+    cmd = re.sub(r"(?<=[\w.:~-])\\(?=[\w.~-])", "/", cmd)  # Windows paths such as D:\\work\\decisions\\x.md
     lex = shlex.shlex(cmd, posix=True, punctuation_chars=";&|()<>\n")
     lex.whitespace = " \t\r"
     lex.whitespace_split = True
