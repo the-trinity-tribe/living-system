@@ -8,7 +8,7 @@ Status: EXPERIMENTAL. Version: 0.2.0.
 
 ## Why would someone need it?
 
-A workspace is plain files, so it is easy to break by accident: a draft you forgot to approve, a half-finished workflow, a module with a missing file, or demo material copied in. `doctor` finds these. It also reports anything that looks like a password or key, invisible characters, and files with text addressed to an AI (details: `living.py scan`).
+A workspace is plain files, so it is easy to break by accident: a draft you forgot to approve, a half-finished workflow, a module with a missing file, or demo material copied in. `doctor` finds these. It also points out workflows and knowledge that refer to a replaced, retired or missing decision; knowledge files that look like duplicates; a `knowledge/` folder that has grown flat (time for topic drawers); and an `AGENTS.md` that has grown much longer than installed. It also reports anything that looks like a password or key, invisible characters, and files with text addressed to an AI (details: `living.py scan`).
 
 ## What problem does it solve?
 

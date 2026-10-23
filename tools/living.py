@@ -1399,6 +1399,7 @@ def doctor(ws):
     else:
         if org is not None and not re.fullmatch(MODULE_ID, str(read_profile(ws).get("role", ""))):
             out.append(("WARN", "linked to a company workspace but no role is recorded; link again with --role <role>"))
+    out += knowledge_upkeep(ws, R)
     steering = set()
     for level, rel, line, what in scan(ws):
         if level == "ERROR" or what.startswith("invisible"):
@@ -2369,6 +2370,61 @@ def write_handbook(ws, target, text, mark=None, what="handbook"):
         Path(tmp).unlink(missing_ok=True)
         raise
     return target
+
+
+DRAWER_AT = 15       # flat files in knowledge/ before doctor suggests topic folders
+INSTRUCTION_GROWTH = 60  # lines added to AGENTS.md beyond the installed version before doctor notes it
+
+
+def knowledge_upkeep(ws, R):
+    """Doctor notes on references to replaced or missing decisions, duplicate knowledge, drawers and long instructions."""
+    ws = Path(ws)
+    out = []
+    decs = R.decisions(ws) if (ws / "decisions").is_dir() else {}
+    replaced_by = {m["supersedes"]: k for k, m in decs.items() if m.get("status") == "approved" and "supersedes" in m}
+
+    def newest(k, seen=()):
+        return newest(replaced_by[k], seen + (k,)) if k in replaced_by and k not in seen else k
+    places = [p for top in ("workflows", "knowledge", "roles") if (ws / top).is_dir() for p in sorted((ws / top).rglob("*.md"))]
+    for p in places:
+        if p.is_symlink():
+            continue
+        rel = p.relative_to(ws).as_posix()
+        text = p.read_text(encoding="utf-8", errors="replace")
+        for ref in sorted(set(re.findall(r"`?(decisions/[\w.-]+\.md)`?", text))):
+            if ref in replaced_by:
+                now = newest(ref)
+                gone = decs.get(now, {}).get("kind") == R.RETIREMENT
+                out.append(("WARN", f"{rel} points to {ref}, which was " + ("retired; no rule replaces it" if gone else
+                                    f"replaced; the rule now is {now}") + ". Update the reference"))
+            elif ref not in decs:
+                out.append(("WARN", f"{rel} points to {ref}, which does not exist"))
+    titles, texts = {}, {}
+    for p in sorted((ws / "knowledge").rglob("*.md")) if (ws / "knowledge").is_dir() else []:
+        rel = p.relative_to(ws).as_posix()
+        if p.is_symlink() or (p.parent == ws / "knowledge" and p.name in KNOWLEDGE_SKIP):
+            continue
+        text = p.read_text(encoding="utf-8", errors="replace")
+        m = re.search(r"^# (.+)$", text, re.M)
+        if m:
+            titles.setdefault(" ".join(m.group(1).casefold().split()), []).append(rel)
+        texts.setdefault(R.text_sha(text), []).append(rel)
+    for group in [g for g in texts.values() if len(g) > 1] + [g for g in titles.values() if len(g) > 1]:
+        out.append(("INFO", f"{' and '.join(group)} look like the same knowledge (same title or text); merge them if so"))
+    flat = [p for p in (ws / "knowledge").glob("*.md") if p.name not in KNOWLEDGE_SKIP] if (ws / "knowledge").is_dir() else []
+    if len(flat) > DRAWER_AT:
+        out.append(("INFO", f"knowledge/ has {len(flat)} files in one folder; group files that share a topic in a "
+                            f"subfolder (a drawer) once about five of them belong together"))
+    agents = ws / "AGENTS.md"
+    if agents.is_file():
+        lines = lambda f: f.read_text(encoding="utf-8").count("\n")
+        installed = lines(CORE / "template/AGENTS.md") + max(
+            [lines(f) for f in (CORE / "profiles").glob("*/AGENTS.append.md")], default=0)
+        added = agents.read_text(encoding="utf-8", errors="replace").count("\n") - installed
+        if added > INSTRUCTION_GROWTH:
+            out.append(("INFO", f"AGENTS.md is about {added} lines longer than installed; long instruction files make "
+                                f"agents miss rules. Move procedures into knowledge/ or a workflow"))
+    return out
 
 
 def format_doctor(results):
