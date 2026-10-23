@@ -46,6 +46,8 @@ Plain words first. Exact commands are under the heading that needs them. Every f
 
 ## For contributors
 
+- [Roadmap and capability review](roadmap.md): what exists, what comes next, and what will not be built, with reasons.
+
 - [Manual test checklist](testing-checklist.md): a step-by-step check of a release on a real computer, Windows first.
 - [Changelog](../CHANGELOG.md): what changed in each version.
 - [Feature template](features/_template.md): the ten headings every feature page keeps, in this order.
