@@ -28,7 +28,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-KERNEL_VERSION = "0.2.0-dev"
+KERNEL_VERSION = "0.2.0"
 PROFILES = ("student", "professional", "employee", "manager")
 MARKER = "<!-- profile:append -->"
 HERE = Path(__file__).resolve().parent

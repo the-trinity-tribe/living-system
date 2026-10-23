@@ -1,6 +1,6 @@
 # Living System docs
 
-Status: EXPERIMENTAL. Version: 0.2.0-dev.
+Status: EXPERIMENTAL. Version: 0.2.0.
 
 Plain words first. Exact commands are under the heading that needs them. Every feature page answers the same ten questions, in the same order, using [the feature template](features/_template.md).
 

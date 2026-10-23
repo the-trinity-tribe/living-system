@@ -1,6 +1,6 @@
 # Feature: workflow generator
 
-Status: EXPERIMENTAL. Version: 0.2.0-dev.
+Status: EXPERIMENTAL. Version: 0.2.0.
 
 ## What does this feature do?
 

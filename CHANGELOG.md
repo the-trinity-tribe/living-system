@@ -30,7 +30,7 @@ From a governance demo to a workspace you can install and grow.
 
 ### Fixed
 
-Two read-only code reviews (Codex, high effort) found 44 defects; all were reproduced and fixed, each with a test. Examples: a differently spelled path could leave two "current" decisions; line breaks in a reviewer name could inject metadata; links could make the tools write into protected folders; interrupted writes could leave half-made files. Text is always read and written as UTF-8 with LF line endings.
+Three read-only code reviews (Codex, high effort) found 59 defects; all were checked against the code and fixed, each with a test. Examples: a differently spelled path could leave two "current" decisions; line breaks in a reviewer name could inject metadata; links could make the tools write into protected folders; interrupted writes could leave half-made files. Text is always read and written as UTF-8 with LF line endings.
 
 ### Known limitations
 
