@@ -115,8 +115,19 @@ class TestInit(InitCase):
         self.assertTrue((emp / "me/goals.md").is_file())
         self.assertIn("you propose, you do not approve", (emp / "AGENTS.md").read_text(encoding="utf-8").lower())
         mgr = self.ws("manager")
-        self.assertFalse((mgr / ".gitignore").exists())
+        self.assertNotIn("me/", (mgr / ".gitignore").read_text(encoding="utf-8").splitlines())
         self.assertTrue((mgr / "me/goals.md").is_file())
+        for ws in (emp, mgr):  # the local product path never goes into a shared repository
+            self.assertIn(".living/local.json", (ws / ".gitignore").read_text(encoding="utf-8").splitlines())
+            self.assertTrue((ws / "tools").is_dir())
+            import json
+            folder = json.loads((ws / ".living/local.json").read_text(encoding="utf-8"))["product_folder"]
+            self.assertTrue((Path(folder) / "tools/living.py").is_file())
+
+    def test_doctor_warns_when_the_product_folder_moved(self):
+        ws = self.ws("student")
+        (ws / ".living/local.json").write_text('{"product_folder": "/nowhere"}\n', encoding="utf-8", newline="\n")
+        self.assertIn("does not point at a Living System folder", L.format_doctor(L.doctor(ws)))
 
     def test_student_has_no_team_files(self):
         ws = self.ws("student")

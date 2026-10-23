@@ -84,6 +84,8 @@ python3 tools/living.py new-workflow ~/my-workspace launch-post --stages researc
 
 **Your first rule in two minutes:** after setup, tell your agent *"Help me make my first decision from my setup answers."* It drafts the rule, asks you about the wording, and you approve it yourself. (`python3 tools/living.py propose` writes any proposal in the right format without you typing it.)
 
+**Automate only what really repeats:** your agent counts repeated work (`python3 tools/living.py runs ~/my-workspace` shows the count) and asks you at the third time whether to automate it, keep it manual or decide later.
+
 **What needs my attention?** `python3 tools/living.py status ~/my-workspace` lists the proposals waiting for your review, lesson suggestions, drafts you have not approved, and where the last session stopped. It changes nothing.
 
 **Health check:** `python3 tools/living.py doctor ~/my-workspace` reads your workspace and lists problems in plain words (for example a draft you have not approved yet, a workflow step left unfinished, or demo material that slipped in). It changes nothing.
@@ -151,7 +153,7 @@ See [CREDITS.md](CREDITS.md).
 - There is no automatic approval, secret store, multi-user authorization, hosted product, automatic private-data extraction, or guarantee that an agent will comply with instructions.
 - Starter files come in English, German and Polish. The agent's rule files stay English in every language, and the tools print English messages. The German and Polish texts would benefit from review by native speakers.
 - The profile files (`student`, `professional`, `employee`, `manager`) are small starting points, not tested against real use.
-- Modules, `new-workflow` and `doctor` are new and experimental. Module suggestions by the agent are instructions only: nothing watches your work or counts your requests.
+- Modules, `new-workflow` and `doctor` are new and experimental. Module suggestions and counting repeated work are instructions to the agent: nothing watches your work in the background, and the count holds only short names and dates.
 - The fictional organisation is a demonstration, not a recommended deployment with real client or personal data. Review any material before putting it in an AI agent's context or publishing a repository.
 
 ## Licensing, community and credit

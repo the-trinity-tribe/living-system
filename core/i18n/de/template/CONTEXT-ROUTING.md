@@ -19,4 +19,5 @@
 Tipps:
 
 - Bei einer Projektaufgabe beginne mit der Projektdatei. Sie verweist auf die Entscheidungen, die gelten.
+- Arbeit, die sich meist wiederholt (ein Update, Gesprächsnotizen, ein Newsletter), wird jedes Mal gezählt; siehe `AGENTS.md` Abschnitt 11.
 - Alles zu Genehmigungen ist eine Frage an die Entscheidungen. Schau in `decisions/`, nicht in Rollenbeschreibungen. Nennt die Frage ein Projekt, lies auch dessen Projektdatei: Ihre Arbeitsnotizen können neuere Aussagen enthalten, die einer Entscheidung widersprechen (siehe `AGENTS.md` Abschnitt 5). Notizen gehen nie vor die Entscheidung.

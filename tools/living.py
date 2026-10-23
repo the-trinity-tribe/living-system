@@ -9,6 +9,7 @@
   living.py new-workflow <ws> <name> --stages a,b,c [--goal "..."] [--apply]
   living.py doctor <ws>
   living.py status <ws>
+  living.py runs <ws> [--add NAME | --decide NAME automate|manual|later | --forget NAME]
   living.py propose <ws> --kind new|exception|replace|retire --title ... --rule ... --evidence ... [--apply]
   living.py upgrade <ws> [--apply]
 
@@ -127,6 +128,10 @@ def build(ws, profile, language, calm_replies):
         {"profile": profile, "language": language, "calm_replies": bool(calm_replies)}, indent=2) + "\n",
         encoding="utf-8", newline="\n")
     (ws / ".living" / "catalog.md").write_text(catalog_text(), encoding="utf-8", newline="\n")
+    # Where the tools live on this computer, so agents can run status, runs or doctor without asking.
+    # Listed in .gitignore: it contains a local path.
+    (ws / ".living" / "local.json").write_text(json.dumps({"product_folder": str(HERE.parent)}, indent=2) + "\n",
+                                                 encoding="utf-8", newline="\n")
     write_manifest(ws)
 
 
@@ -823,6 +828,97 @@ def workflow_files(slug, stages, goal):
     return files
 
 
+RUNS_FILE = ".living/runs.json"
+THIRD_RUN = 3
+RUN_DECISIONS = ("automate", "manual", "later")
+RUNS_ABOUT = ("Third-Run Rule counts: how often a kind of work came up. Only short names, dates and your decisions; "
+              "never content or names of people or clients. Delete an entry with: living.py runs . --forget <name>")
+
+
+def read_runs(ws):
+    path = Path(ws) / RUNS_FILE
+    if not path.is_file():
+        return {"_about": RUNS_ABOUT, "work": {}}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (ValueError, UnicodeDecodeError):
+        raise Refusal(f"{RUNS_FILE} is damaged; delete it to start counting again") from None
+    if not isinstance(data, dict) or not isinstance(data.get("work"), dict):
+        raise Refusal(f"{RUNS_FILE} has an unexpected structure; delete it to start counting again")
+    return data
+
+
+def run_is_due(entry):
+    """True when this kind of work has reached the third run and still waits for a human decision."""
+    if entry["count"] < THIRD_RUN:
+        return False
+    if entry.get("decision") in (None, ""):
+        return True
+    return entry.get("decision") == "later" and entry["count"] >= entry.get("remind_after", 0)
+
+
+def runs(ws, add=None, decide=None, decision=None, after=None, forget=None, date=None):
+    """Count a kind of work, record the human's decision, or forget it. Returns (entries, message)."""
+    import datetime
+    ws = Path(ws)
+    read_manifest(ws)
+    name = add or decide or forget
+    if name is None:
+        return read_runs(ws)["work"], ""
+    if not re.fullmatch(MODULE_ID, name):
+        raise Refusal(f"{name!r} is not a short name (lowercase letters, digits and hyphens, e.g. weekly-update)")
+    refuse_links(ws, [RUNS_FILE])
+    date = date or datetime.date.today().isoformat()
+    with workspace_lock(ws):
+        data = read_runs(ws)
+        work = data["work"]
+        if add:
+            others = sorted(n for n in work if n != name)
+            new = name not in work
+            e = work.setdefault(name, {"count": 0, "first": date, "last": date, "decision": None})
+            e["count"] += 1
+            e["last"] = date
+            message = (f"{name}: run {e['count']}. " + (
+                f"This is run {e['count']}: by the Third-Run Rule it is time to decide. Choose: automate "
+                f"(a module or a workflow), manual (keep doing it by hand) or later (ask again after a few more runs). "
+                f"Record it with: living.py runs . --decide {name} automate|manual|later" if run_is_due(e) else
+                "Counted. Nothing else happens before the third run." if e["count"] < THIRD_RUN else
+                f"Counted. You chose 'later'; you will be asked again at run {e['remind_after']}."
+                if e.get("decision") == "later" else f"Counted. Your decision on record: {e['decision']}."))
+            if new and others:
+                message += (f"\nNew name. Already counted: {', '.join(others)}. If this is the same kind of work as one "
+                            f"of those, undo with --forget {name} and count it under that name instead.")
+        elif decide:
+            if name not in work:
+                raise Refusal(f"{name} has not been counted yet")
+            if decision not in RUN_DECISIONS:
+                raise Refusal(f"decision must be one of {', '.join(RUN_DECISIONS)}")
+            e = work[name]
+            e.update(decision=decision, decided=date)
+            e.pop("remind_after", None)
+            if decision == "later":
+                e["remind_after"] = e["count"] + (after or 3)
+            message = f"{name}: decision '{decision}' recorded" + (
+                f"; you will be asked again at run {e['remind_after']}." if decision == "later" else ".")
+        else:
+            if name not in work:
+                raise Refusal(f"{name} is not in {RUNS_FILE}")
+            del work[name]
+            message = f"{name}: forgotten."
+        write_json(ws / RUNS_FILE, data)
+    return work, message
+
+
+def format_runs(work):
+    if not work:
+        return "Nothing counted yet."
+    lines = []
+    for name, e in sorted(work.items()):
+        state = "decide now" if run_is_due(e) else (e.get("decision") or "counting")
+        lines.append(f"{name}: {e['count']} run(s), first {e['first']}, last {e['last']}, {state}")
+    return "\n".join(lines)
+
+
 PROPOSE_KINDS = ("new", "exception", "replace", "retire")
 
 
@@ -1010,6 +1106,15 @@ def doctor(ws):
             out.append(("ERROR", f"{rel}: agent settings folder below the workspace root; agents may load it"))
         if sha256(p) in demo or (p.suffix == ".md" and DEMO_BANNER in p.read_text(encoding="utf-8", errors="replace")):
             out.append(("ERROR", f"{rel}: demo sandbox content; keep demo material out of your workspace"))
+    local = ws / ".living/local.json"
+    if local.is_file():
+        try:
+            folder = json.loads(local.read_text(encoding="utf-8")).get("product_folder", "")
+        except ValueError:
+            folder = ""
+        if not folder or not (Path(folder) / "tools/living.py").is_file():
+            out.append(("WARN", ".living/local.json does not point at a Living System folder on this computer; run "
+                                "upgrade from your Living System folder to fix it, or edit product_folder"))
     kernel = manifest.get("files", {})
     tool = ws / "tools/review.py"
     if "tools/review.py" in kernel and not tool.is_file():
@@ -1132,6 +1237,15 @@ def status(ws):
     due = [rel for rel, days, problem in knowledge_ages(ws) if problem or (days is not None and days > STALE_DAYS)]
     if due:
         todo.append(f"{len(due)} knowledge file(s) due for a re-check, e.g. {due[0]}")
+    try:
+        counted = read_runs(ws)["work"]
+    except Refusal as e:
+        counted = {}
+        todo.append(str(e))
+    for n, e in sorted(counted.items()):
+        if run_is_due(e):
+            todo.append(f"'{n}' has come up {e['count']} times: decide whether to automate it, keep it manual or "
+                        f"decide later (living.py runs . --decide {n} automate|manual|later)")
     inbox = ws / "lessons/inbox.md"
     if inbox.is_file():
         n = inbox.read_text(encoding="utf-8", errors="replace").count("---lesson---")
@@ -1192,6 +1306,13 @@ def main(argv=None):
     w.add_argument("--stages", required=True, help="comma-separated stage names in order, e.g. research,draft,review")
     w.add_argument("--goal", default="")
     w.add_argument("--apply", action="store_true")
+    rn = sub.add_parser("runs", help="Third-Run Rule: count a kind of work, record a decision, or list counts")
+    rn.add_argument("workspace")
+    g = rn.add_mutually_exclusive_group()
+    g.add_argument("--add", metavar="NAME", help="count one more run of this kind of work")
+    g.add_argument("--decide", nargs=2, metavar=("NAME", "DECISION"), help="automate, manual or later")
+    g.add_argument("--forget", metavar="NAME", help="delete this entry")
+    rn.add_argument("--after", type=int, help="with --decide NAME later: ask again after this many more runs")
     pr = sub.add_parser("propose", help="plan (or with --apply, write) a proposal; never approves anything")
     pr.add_argument("workspace")
     pr.add_argument("--kind", required=True, choices=PROPOSE_KINDS)
@@ -1231,6 +1352,10 @@ def main(argv=None):
             print(format_upgrade_plan(plan))
             if any(act not in ("same",) for act, *_ in plan):
                 print("Upgraded." if a.apply else "Nothing was written. Run again with --apply to upgrade.")
+        elif a.cmd == "runs":
+            name, decision = (a.decide or (None, None))
+            work, message = runs(a.workspace, add=a.add, decide=name, decision=decision, after=a.after, forget=a.forget)
+            print(message or format_runs(work))
         elif a.cmd == "propose":
             rel, text = propose(a.workspace, a.kind, a.title, a.rule, a.evidence, a.why, a.by, a.target, apply=a.apply)
             print(text)

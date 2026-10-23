@@ -1,2 +1,6 @@
 # Private to you; keep out of any shared repository.
 me/
+
+# This computer only.
+.living/local.json
+.living/.lock

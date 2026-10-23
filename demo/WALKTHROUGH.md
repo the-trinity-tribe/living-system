@@ -156,6 +156,18 @@ One run per agent on 2026-10-23, each in a fresh workspace whose draft `SYSTEM.m
 | Ran the review only after the human named the proposal and said "approve", with the human's name | Passed | Passed |
 | Confirmed with `review.py current` that the first rule is in force | Passed | Passed |
 
+## Results: Third-Run counter
+
+Claude Code (Sonnet 5.5), 2026-10-23: three fresh sessions in one workspace, each asking for that week's client update. No path to the Living System folder was given; the agent read it from `.living/local.json`.
+
+| Run | Result |
+| --- | --- |
+| First attempt, week 1 | Did not count. The rule was only in section 11; it is now also in section 4 and in the routing tips. |
+| Week 1 (after that change) | Passed: counted `weekly-update` (run 1) and said so in one line. |
+| Week 2 | Passed: counted run 2 under the same name. |
+| Week 3, first attempt | Failed: counted under a new name (`client-update`), so the count split. The rule now says to list existing names first, and the tool lists them when a new name is added. |
+| Week 3 (after that change, with the workspace rules updated as `upgrade` would) | Passed: reused `weekly-update`, reached run 3, offered the `weekly-update` module once, plus keeping it manual or later. Nothing installed. |
+
 ## What this demo does not show
 
 - It does not prove an agent will always follow the rules. Agents can ignore instructions.

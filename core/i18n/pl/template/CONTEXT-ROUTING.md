@@ -19,4 +19,5 @@
 Wskazówki:
 
 - Przy zadaniu projektowym zacznij od pliku projektu. Wskazuje on decyzje, które obowiązują.
+- Pracę, która zwykle się powtarza (aktualizacja, notatki z rozmowy, newsletter), liczymy za każdym razem; zobacz `AGENTS.md`, sekcja 11.
 - Wszystko, co dotyczy zatwierdzania, to pytanie do decyzji. Zajrzyj do `decisions/`, a nie do opisów ról. Jeśli pytanie dotyczy konkretnego projektu, przeczytaj też jego plik: notatki robocze mogą zawierać nowsze twierdzenia sprzeczne z decyzją (zobacz `AGENTS.md`, sekcja 5). Notatki nigdy nie mają pierwszeństwa przed decyzją.

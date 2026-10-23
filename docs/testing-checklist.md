@@ -98,6 +98,7 @@ Use a fresh session each time. Open the **workspace** folder (`ls-test`), not th
 | 6.2 | In the new workspace, ask: "What needs my attention?" | It runs `status` (or reads the same files) and answers in plain words. |
 | 6.3 | Follow the script in `demo/WALKTHROUGH.md`, "Optional: modules and workflows". | No suggestion after the first message; one suggestion of `weekly-update` after the second; a plan before installing. |
 | 6.4 | Repeat 6.3 in Codex. | The same. |
+| 6.5 | In three fresh sessions, ask for "this week's client update" (different details each time). | Each time it says it counted `weekly-update`; the third time it offers the module, manual or later. `py tools\living.py runs ~\ls-test` shows 3. |
 
 ## 7. The pitch page
 

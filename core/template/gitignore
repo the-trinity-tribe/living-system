@@ -1,0 +1,3 @@
+# This computer only; keep out of any shared repository.
+.living/local.json
+.living/.lock

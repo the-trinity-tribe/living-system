@@ -19,4 +19,5 @@
 Tips:
 
 - For a project task, start with the project file. It links to the decisions that apply.
+- Work that usually repeats (an update, call notes, a newsletter) is counted each time; see `AGENTS.md` section 11.
 - Anything about approvals is a decision question. Check `decisions/`, not role descriptions. If the question names a project, also read that project file: its working notes may contain newer claims that conflict with a decision (see `AGENTS.md` section 5). Notes never override the decision.
