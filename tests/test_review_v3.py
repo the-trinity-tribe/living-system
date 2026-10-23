@@ -79,12 +79,12 @@ class TestReplace(Case):
         self.assertEqual(R.check(self.root), [])
         status, new = self.review(rel)
         self.assertEqual((status, new), ("promoted", "decisions/2026-10-21-sam-owns-update.md"))
-        text = (self.root / new).read_text()
+        text = (self.root / new).read_text(encoding="utf-8")
         self.assertIn(f"supersedes: {OLD}\n", text)
         self.assertIn("# Sam owns the weekly client update\n", text)
         self.assertIn("## Rule\n\nSam prepares the weekly client update every Friday. Alex reviews it.\n", text)
         self.assertNotIn("Alex prepares and sends", text, "a replacement does not carry the old rule")
-        self.assertEqual((self.root / OLD).read_text(), OLD_TEXT, "the old decision is never edited")
+        self.assertEqual((self.root / OLD).read_text(encoding="utf-8"), OLD_TEXT, "the old decision is never edited")
         self.assertEqual(R.current_decisions(self.root), [new])
         self.assertEqual(R.check(self.root), [])
 
@@ -126,7 +126,7 @@ class TestRetire(Case):
 
     def test_retire_leaves_no_current_rule_and_keeps_history(self):
         record = self.retire()
-        text = (self.root / record).read_text()
+        text = (self.root / record).read_text(encoding="utf-8")
         self.assertIn("kind: retirement\n", text)
         self.assertIn(f"supersedes: {OLD}\n", text)
         self.assertIn("# Retired: Alex owns the weekly client update\n", text)
@@ -134,7 +134,7 @@ class TestRetire(Case):
         self.assertIn("## Why\n\nThe client now gets a monthly report instead.\n", text)
         self.assertNotIn("## Rule", text)
         self.assertEqual(R.current_decisions(self.root), [])
-        self.assertEqual((self.root / OLD).read_text(), OLD_TEXT)
+        self.assertEqual((self.root / OLD).read_text(encoding="utf-8"), OLD_TEXT)
         self.assertEqual(R.check(self.root), [])
 
     def test_retirement_record_cannot_be_amended_replaced_or_retired(self):

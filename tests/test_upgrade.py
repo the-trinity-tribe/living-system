@@ -28,7 +28,7 @@ class Case(unittest.TestCase):
         self.tmp.cleanup()
 
     def manifest(self):
-        return json.loads((self.ws / ".living/manifest.json").read_text())
+        return json.loads((self.ws / ".living/manifest.json").read_text(encoding="utf-8"))
 
     def save(self, m):
         (self.ws / ".living/manifest.json").write_text(json.dumps(m, indent=2) + "\n", encoding="utf-8", newline="\n")
@@ -54,23 +54,23 @@ class TestUpgrade(Case):
         self.assertEqual(snapshot(self.ws), before)
 
     def test_unchanged_old_file_is_updated_after_apply_only(self):
-        new = (self.ws / "AGENTS.md").read_text()
+        new = (self.ws / "AGENTS.md").read_text(encoding="utf-8")
         self.make_old("AGENTS.md", "# AGENTS.md\n\nold rules\n")
         before = snapshot(self.ws)
         plan = L.upgrade(self.ws)
         self.assertEqual(self.actions(plan), {("update", "AGENTS.md")})
         self.assertEqual(snapshot(self.ws), before, "the plan writes nothing")
         L.upgrade(self.ws, apply=True)
-        self.assertEqual((self.ws / "AGENTS.md").read_text(), new)
+        self.assertEqual((self.ws / "AGENTS.md").read_text(encoding="utf-8"), new)
         self.assertEqual(self.actions(L.upgrade(self.ws)), set(), "a second upgrade has nothing to do")
 
     def test_edited_file_is_kept_and_new_version_saved_beside(self):
-        new = (self.ws / "AGENTS.md").read_text()
+        new = (self.ws / "AGENTS.md").read_text(encoding="utf-8")
         (self.ws / "AGENTS.md").write_text(new + "\nMy own extra rule.\n", encoding="utf-8", newline="\n")
         self.make_old_hash_only("AGENTS.md", "older text\n")
         L.upgrade(self.ws, apply=True)
-        self.assertIn("My own extra rule.", (self.ws / "AGENTS.md").read_text())
-        self.assertEqual((self.ws / ".living/upgrade/AGENTS.md").read_text(), new)
+        self.assertIn("My own extra rule.", (self.ws / "AGENTS.md").read_text(encoding="utf-8"))
+        self.assertEqual((self.ws / ".living/upgrade/AGENTS.md").read_text(encoding="utf-8"), new)
         self.assertIn(("keep", "AGENTS.md"), self.actions(L.upgrade(self.ws)))
 
     def make_old_hash_only(self, rel, old_text):
@@ -100,20 +100,20 @@ class TestUpgrade(Case):
         self.make_old("AGENTS.md", "old\n")
         L.upgrade(self.ws, apply=True)
         for rel in ("decisions/2026-10-01-x.md", "proposals/2026-10-01-y.md", "projects/p.md"):
-            self.assertEqual((self.ws / rel).read_text(), "mine\n")
-        self.assertEqual((self.ws / "me/goals.md").read_text(), "my goals\n")
+            self.assertEqual((self.ws / rel).read_text(encoding="utf-8"), "mine\n")
+        self.assertEqual((self.ws / "me/goals.md").read_text(encoding="utf-8"), "my goals\n")
         self.assertEqual((self.ws / ".living/profile.json").read_bytes(), prof)
 
     def test_routing_update_keeps_installed_module_rows(self):
         L.add_module(self.ws, "weekly-update", apply=True)
         r = self.ws / "CONTEXT-ROUTING.md"
-        text = r.read_text()
+        text = r.read_text(encoding="utf-8")
         base = L.without_modules_block(text)
         old_base = base.replace("Start with the smallest route.", "Old wording.")
         r.write_text(old_base.rstrip("\n") + "\n\n" + L.modules_block(text), encoding="utf-8", newline="\n")
         self.make_old_hash_only("CONTEXT-ROUTING.md", old_base)
         L.upgrade(self.ws, apply=True)
-        after = r.read_text()
+        after = r.read_text(encoding="utf-8")
         self.assertIn("Start with the smallest route.", after)
         self.assertIn("<!-- module:weekly-update -->", after)
         self.assertEqual(L.doctor(self.ws)[0][0], "WARN", "no errors after upgrade")
@@ -121,11 +121,11 @@ class TestUpgrade(Case):
 
     def test_module_files_and_rows_are_refreshed(self):
         L.add_module(self.ws, "staged-learning", apply=True)
-        new_inbox = (self.ws / "lessons/inbox.md").read_text()
+        new_inbox = (self.ws / "lessons/inbox.md").read_text(encoding="utf-8")
         self.make_old("lessons/inbox.md", "# old inbox\n", module="staged-learning")
         (self.ws / "lessons/active.md").write_text("## Active lessons\n\n- mine\n", encoding="utf-8", newline="\n")
         r = self.ws / "CONTEXT-ROUTING.md"
-        r.write_text("".join(l for l in r.read_text().splitlines(True) if "lessons/README.md" not in l), encoding="utf-8", newline="\n")
+        r.write_text("".join(l for l in r.read_text(encoding="utf-8").splitlines(True) if "lessons/README.md" not in l), encoding="utf-8", newline="\n")
         m = self.manifest()  # an older install recorded the routing without the README row
         m["modules"]["staged-learning"]["routing"] = [row for row in m["modules"]["staged-learning"]["routing"]
                                                        if row[1] != "lessons/README.md"]
@@ -133,9 +133,9 @@ class TestUpgrade(Case):
         plan = L.upgrade(self.ws, apply=True)
         self.assertIn(("update", "lessons/inbox.md"), self.actions(plan))
         self.assertIn(("routing", "staged-learning"), self.actions(plan))
-        self.assertEqual((self.ws / "lessons/inbox.md").read_text(), new_inbox)
-        self.assertEqual((self.ws / "lessons/active.md").read_text(), "## Active lessons\n\n- mine\n")
-        self.assertIn("`lessons/README.md` <!-- module:staged-learning -->", r.read_text())
+        self.assertEqual((self.ws / "lessons/inbox.md").read_text(encoding="utf-8"), new_inbox)
+        self.assertEqual((self.ws / "lessons/active.md").read_text(encoding="utf-8"), "## Active lessons\n\n- mine\n")
+        self.assertIn("`lessons/README.md` <!-- module:staged-learning -->", r.read_text(encoding="utf-8"))
         self.assertFalse([x for x in L.doctor(self.ws) if x[0] == "ERROR"])
 
     def test_failure_restores_everything(self):
@@ -194,7 +194,7 @@ class TestUpgradeSafety(Case):
         with mock.patch.object(L, "plan_upgrade", then_edit):
             with self.assertRaises(L.Refusal):
                 L.upgrade(self.ws, apply=True)
-        self.assertEqual((self.ws / "AGENTS.md").read_text(), "edited meanwhile\n")
+        self.assertEqual((self.ws / "AGENTS.md").read_text(encoding="utf-8"), "edited meanwhile\n")
 
     def test_rollback_keeps_an_edit_made_after_our_write(self):
         self.make_old("AGENTS.md", "old\n")
@@ -207,7 +207,7 @@ class TestUpgradeSafety(Case):
         with mock.patch.object(L, "write_json", edit_then_fail):
             with self.assertRaises(OSError):
                 L.upgrade(self.ws, apply=True)
-        self.assertEqual((self.ws / "AGENTS.md").read_text(), "human edit after upgrade wrote\n")
+        self.assertEqual((self.ws / "AGENTS.md").read_text(encoding="utf-8"), "human edit after upgrade wrote\n")
 
     def test_identical_human_file_is_not_claimed_by_a_module(self):
         L.add_module(self.ws, "weekly-update", apply=True)
@@ -238,20 +238,20 @@ class TestUpgradeSafety(Case):
     def test_human_edited_module_row_is_kept(self):
         L.add_module(self.ws, "weekly-update", apply=True)
         r = self.ws / "CONTEXT-ROUTING.md"
-        r.write_text(r.read_text().replace("Write a weekly update (staged workflow)", "My Friday update"),
+        r.write_text(r.read_text(encoding="utf-8").replace("Write a weekly update (staged workflow)", "My Friday update"),
                      encoding="utf-8", newline="\n")
         m = self.manifest()
         m["modules"]["weekly-update"]["routing"] = [["Old wording", "workflows/weekly-update/CONTEXT.md"]]
         self.save(m)
         plan = L.upgrade(self.ws, apply=True)
         self.assertIn(("routing-kept", "weekly-update"), self.actions(plan))
-        self.assertIn("My Friday update", r.read_text())
+        self.assertIn("My Friday update", r.read_text(encoding="utf-8"))
         self.assertTrue((self.ws / ".living/upgrade/CONTEXT-ROUTING.weekly-update.md").is_file())
 
     def test_damaged_markers_are_refused(self):
         L.add_module(self.ws, "weekly-update", apply=True)
         r = self.ws / "CONTEXT-ROUTING.md"
-        r.write_text(r.read_text().replace(L.ROUTING_START, ""), encoding="utf-8", newline="\n")
+        r.write_text(r.read_text(encoding="utf-8").replace(L.ROUTING_START, ""), encoding="utf-8", newline="\n")
         before = snapshot(self.ws)
         for call in (lambda: L.upgrade(self.ws, apply=True), lambda: L.add_module(self.ws, "meeting-notes", apply=True),
                      lambda: L.remove_module(self.ws, "weekly-update", apply=True)):

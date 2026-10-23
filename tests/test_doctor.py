@@ -32,7 +32,7 @@ class TestDoctor(unittest.TestCase):
     def test_approved_drafts_and_modules_are_clean(self):
         for f in ("SYSTEM.md", "PRINCIPLES.md"):
             p = self.ws / f
-            p.write_text(p.read_text().replace("status: draft", "status: approved", 1), encoding="utf-8", newline="\n")
+            p.write_text(p.read_text(encoding="utf-8").replace("status: draft", "status: approved", 1), encoding="utf-8", newline="\n")
         for mid in ("weekly-update", "meeting-notes", "staged-learning"):
             L.add_module(self.ws, mid, apply=True)
         self.assertEqual(L.doctor(self.ws), [])
@@ -61,7 +61,7 @@ class TestDoctor(unittest.TestCase):
     def test_routing_and_manifest_out_of_sync(self):
         L.add_module(self.ws, "weekly-update", apply=True)
         r = self.ws / "CONTEXT-ROUTING.md"
-        r.write_text(L.routing_without(r.read_text(), "weekly-update"), encoding="utf-8", newline="\n")
+        r.write_text(L.routing_without(r.read_text(encoding="utf-8"), "weekly-update"), encoding="utf-8", newline="\n")
         shutil.rmtree(self.ws / "workflows/weekly-update/01-gather")
         text = L.format_doctor(L.doctor(self.ws))
         self.assertIn("ERROR: module weekly-update is installed but has no row", text)

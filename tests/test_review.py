@@ -48,7 +48,7 @@ class TestSlice3(Fixture):
         status, result = self.run_review("approve")
         self.assertEqual((status, result), ("promoted", NEW))
         self.assertEqual(self.changed(), {NEW, PROPOSAL})  # nothing beyond target/result
-        old = (FIX / TARGET).read_text()
+        old = (FIX / TARGET).read_text(encoding="utf-8")
         expected = f"""---
 status: approved
 approved_by: Test Reviewer
@@ -81,10 +81,10 @@ Applies to every client-facing deliverable, for every client and project, regard
 
 Promoted from `{PROPOSAL}` and supersedes `{TARGET}`. `approved_by` is attribution, not verified identity.
 """
-        self.assertEqual((self.root / NEW).read_text(), expected)
-        self.assertEqual((self.root / TARGET).read_text(), old)  # history untouched
+        self.assertEqual((self.root / NEW).read_text(encoding="utf-8"), expected)
+        self.assertEqual((self.root / TARGET).read_text(encoding="utf-8"), old)  # history untouched
         self.assertEqual(R.current_decisions(self.root), [NEW])
-        p = (self.root / PROPOSAL).read_text()
+        p = (self.root / PROPOSAL).read_text(encoding="utf-8")
         self.assertIn("status: promoted\n", p)
         self.assertIn(f"resulting_decision: {NEW}\n", p)
         self.assertIn("reviewed_by: Test Reviewer\n", p)
@@ -103,7 +103,7 @@ Promoted from `{PROPOSAL}` and supersedes `{TARGET}`. `approved_by` is attributi
     def _non_canonical(self, outcome, status):
         self.run_review(outcome, note="needs Maya confirmation")
         self.assertEqual(self.changed(), {PROPOSAL})
-        p = (self.root / PROPOSAL).read_text()
+        p = (self.root / PROPOSAL).read_text(encoding="utf-8")
         self.assertIn(f"status: {status}\n", p)
         self.assertIn(f"| {outcome} | by Test Reviewer", p)
         self.assertIn("note: needs Maya confirmation", p)
@@ -120,7 +120,7 @@ Promoted from `{PROPOSAL}` and supersedes `{TARGET}`. `approved_by` is attributi
     def test_defer_then_approve(self):
         self.run_review("defer")
         self.run_review("approve")
-        p = (self.root / PROPOSAL).read_text()
+        p = (self.root / PROPOSAL).read_text(encoding="utf-8")
         self.assertEqual(p.count("reviewed_by:"), 1)
         self.assertEqual(p.count("\n- 2026-10-08 |"), 2)
         self.assertEqual(R.current_decisions(self.root), [NEW])
@@ -133,7 +133,7 @@ Promoted from `{PROPOSAL}` and supersedes `{TARGET}`. `approved_by` is attributi
 
     def test_stale_target(self):
         t = self.root / TARGET
-        t.write_text(t.read_text() + "\nExtra line.\n")
+        t.write_text(t.read_text(encoding="utf-8") + "\nExtra line.\n")
         self.refuses()
 
     def test_second_promotion(self):
@@ -148,13 +148,13 @@ Promoted from `{PROPOSAL}` and supersedes `{TARGET}`. `approved_by` is attributi
     def test_second_proposal_on_superseded_target(self):
         self.run_review("approve")
         other = "proposals/2026-10-01-other.md"
-        text = (FIX / PROPOSAL).read_text()
+        text = (FIX / PROPOSAL).read_text(encoding="utf-8")
         (self.root / other).write_text(text)
         self.refuses(proposal=other)
 
     def test_malformed_future_state(self):
         p = self.root / PROPOSAL
-        s = p.read_text()
+        s = p.read_text(encoding="utf-8")
         two = s.replace("## Why and open questions", "> second quote\n\n## Why and open questions")
         p.write_text(two)
         self.refuses()
@@ -165,7 +165,7 @@ Promoted from `{PROPOSAL}` and supersedes `{TARGET}`. `approved_by` is attributi
 
     def test_missing_hash_and_bad_input(self):
         p = self.root / PROPOSAL
-        s = p.read_text()
+        s = p.read_text(encoding="utf-8")
         p.write_text("\n".join(l for l in s.split("\n") if not l.startswith("target_sha256")))
         self.refuses()
         p.write_text(s)
@@ -189,17 +189,17 @@ class TestRealRepoState(unittest.TestCase):
 
     def test_pinned_hash_matches_old_target(self):
         h = hashlib.sha256((REPO / TARGET).read_bytes()).hexdigest()
-        self.assertIn(f"target_sha256: {h}\n", (REPO / PROPOSAL).read_text())
+        self.assertIn(f"target_sha256: {h}\n", (REPO / PROPOSAL).read_text(encoding="utf-8"))
 
     def test_real_promotion_recorded(self):
-        meta, _, body = R.split_frontmatter((REPO / PROPOSAL).read_text(), PROPOSAL)
+        meta, _, body = R.split_frontmatter((REPO / PROPOSAL).read_text(encoding="utf-8"), PROPOSAL)
         self.assertEqual(meta["status"], "promoted")
         self.assertEqual(meta["reviewed_by"], "Maya Chen")
         self.assertEqual(meta["resulting_decision"], self.NEWREAL)
         self.assertEqual(R.current_decisions(REPO), [self.NEWREAL])
-        d, _, dbody = R.split_frontmatter((REPO / self.NEWREAL).read_text(), self.NEWREAL)
+        d, _, dbody = R.split_frontmatter((REPO / self.NEWREAL).read_text(encoding="utf-8"), self.NEWREAL)
         self.assertEqual((d["status"], d["supersedes"], d["source_proposal"]), ("approved", TARGET, PROPOSAL))
-        quote = R.single_blockquote(R.section(R.split_frontmatter((FIX / PROPOSAL).read_text(), "f")[2],
+        quote = R.single_blockquote(R.section(R.split_frontmatter((FIX / PROPOSAL).read_text(encoding="utf-8"), "f")[2],
                                               "Proposed future state", "f"), "f")
         self.assertIn(f"### Exception\n\n{quote}\n", dbody)
 
@@ -213,28 +213,28 @@ class TestSlice1And2Regression(unittest.TestCase):
         self.assertEqual(R.check(REPO), [])
 
     def test_slice1_entry_and_authority(self):
-        agents = (REPO / "AGENTS.md").read_text()
+        agents = (REPO / "AGENTS.md").read_text(encoding="utf-8")
         self.assertIn("CONTEXT-ROUTING.md", agents)
         self.assertIn("Task authority is not canonical authority", agents)
         self.assertIn("Proposals are not on this list", agents)
-        self.assertEqual((REPO / "CLAUDE.md").read_text().strip(), "@AGENTS.md")
-        self.assertIn("status: approved", (REPO / "SYSTEM.md").read_text())
+        self.assertEqual((REPO / "CLAUDE.md").read_text(encoding="utf-8").strip(), "@AGENTS.md")
+        self.assertIn("status: approved", (REPO / "SYSTEM.md").read_text(encoding="utf-8"))
 
     def test_slice2_proposal_shape(self):
-        text = (FIX / PROPOSAL).read_text()
+        text = (FIX / PROPOSAL).read_text(encoding="utf-8")
         meta, _, body = R.split_frontmatter(text, PROPOSAL)
         self.assertEqual(meta["target"], TARGET)
         for h in ("Current canonical state", "New evidence", "Proposed future state", "Why and open questions"):
             R.section(body, h, PROPOSAL)
         quoted = R.section(body, "Current canonical state", PROPOSAL)
-        rule = R.section(R.split_frontmatter((FIX / TARGET).read_text(), TARGET)[2], "Rule", TARGET)
+        rule = R.section(R.split_frontmatter((FIX / TARGET).read_text(encoding="utf-8"), TARGET)[2], "Rule", TARGET)
         self.assertIn(rule, quoted)  # quoted exactly from target
         self.assertTrue(text.split("---\n", 2)[2].lstrip().startswith("# Proposal:"))
         self.assertIn("Not current truth.", text)
 
     def test_approved_decision_unchanged(self):
         # Slice 1 canonical decision must keep its approved content.
-        t = (REPO / TARGET).read_text()
+        t = (REPO / TARGET).read_text(encoding="utf-8")
         self.assertIn("approved_by: Maya Chen", t)
         self.assertIn("All client-facing deliverables require Maya Chen's approval before they are sent.", t)
 
@@ -243,7 +243,7 @@ class TestSlice4(unittest.TestCase):
     CURRENT = TestRealRepoState.NEWREAL
 
     def test_project_routes_to_current_decision(self):
-        text = (REPO / "projects/riverside-community-garden.md").read_text()
+        text = (REPO / "projects/riverside-community-garden.md").read_text(encoding="utf-8")
         applies = text.split("## Decisions that apply", 1)[1].split("\n## ", 1)[0]
         self.assertIn(self.CURRENT, applies)
         self.assertNotIn(TARGET, applies)
@@ -260,7 +260,7 @@ class TestSlice4(unittest.TestCase):
             self.assertEqual(R.check(root), [f"projects/other.md: references superseded decision {TARGET}"])
 
     def test_agents_promoted_proposal_rule(self):
-        agents = (REPO / "AGENTS.md").read_text()
+        agents = (REPO / "AGENTS.md").read_text(encoding="utf-8")
         self.assertIn("Promoted proposals are provenance only.", agents)
         self.assertIn("must not override, narrow or reopen", agents)
 

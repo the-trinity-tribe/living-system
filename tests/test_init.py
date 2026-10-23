@@ -12,7 +12,7 @@ TTT_NAME = ("TTT" + "-System", "TTT" + " System")  # split so this file does not
 
 
 def all_text(root):
-    return "\n".join(p.read_text() for p in sorted(Path(root).rglob("*")) if p.is_file() and p.suffix != ".pyc")
+    return "\n".join(p.read_text(encoding="utf-8") for p in sorted(Path(root).rglob("*")) if p.is_file() and p.suffix != ".pyc")
 
 
 class InitCase(unittest.TestCase):
@@ -40,7 +40,7 @@ class TestInit(InitCase):
                 r = self.review(ws, "check")
                 self.assertEqual((r.returncode, r.stdout.strip()), (0, "ok"), r.stdout + r.stderr)
                 self.assertEqual(self.review(ws, "current").stdout.strip(), "")
-                prof = json.loads((ws / ".living/profile.json").read_text())
+                prof = json.loads((ws / ".living/profile.json").read_text(encoding="utf-8"))
                 self.assertEqual(prof["profile"], p)
 
     def test_no_demo_names_anywhere(self):
@@ -53,14 +53,14 @@ class TestInit(InitCase):
     def test_starts_as_drafts(self):
         ws = self.ws("manager")
         for f in ("SYSTEM.md", "PRINCIPLES.md"):
-            self.assertTrue((ws / f).read_text().startswith("---\nstatus: draft\n---\n"))
-        self.assertEqual((ws / "CLAUDE.md").read_text().strip(), "@AGENTS.md")
-        principles = (ws / "PRINCIPLES.md").read_text()
+            self.assertTrue((ws / f).read_text(encoding="utf-8").startswith("---\nstatus: draft\n---\n"))
+        self.assertEqual((ws / "CLAUDE.md").read_text(encoding="utf-8").strip(), "@AGENTS.md")
+        principles = (ws / "PRINCIPLES.md").read_text(encoding="utf-8")
         self.assertIn("Third-Run Rule", principles)
         self.assertEqual(len(re.findall(r"^\d\. \*\*", principles, re.M)), 6)
 
     def test_agents_rules_present(self):
-        text = (self.ws() / "AGENTS.md").read_text()
+        text = (self.ws() / "AGENTS.md").read_text(encoding="utf-8")
         for s in ("only if it says `status: approved`", "## 8. Language", "## 9. Handover note", "## 10. Calm replies",
                   "kind: new", "target: none", "Task authority is not canonical authority"):
             self.assertIn(s, text)
@@ -76,7 +76,7 @@ class TestInit(InitCase):
         f.write_text("x", encoding="utf-8", newline="\n")
         with self.assertRaises(L.Refusal):
             L.init(f, "student", "en")
-        self.assertEqual(f.read_text(), "x")
+        self.assertEqual(f.read_text(encoding="utf-8"), "x")
 
     def test_accepts_existing_empty_dir(self):
         d = self.base / "empty"
@@ -111,9 +111,9 @@ class TestInit(InitCase):
 
     def test_employee_me_is_gitignored_others_not_required(self):
         emp = self.ws("employee")
-        self.assertIn("me/", (emp / ".gitignore").read_text().splitlines())
+        self.assertIn("me/", (emp / ".gitignore").read_text(encoding="utf-8").splitlines())
         self.assertTrue((emp / "me/goals.md").is_file())
-        self.assertIn("you propose, you do not approve", (emp / "AGENTS.md").read_text().lower())
+        self.assertIn("you propose, you do not approve", (emp / "AGENTS.md").read_text(encoding="utf-8").lower())
         mgr = self.ws("manager")
         self.assertFalse((mgr / ".gitignore").exists())
         self.assertTrue((mgr / "me/goals.md").is_file())
@@ -124,15 +124,15 @@ class TestInit(InitCase):
         self.assertEqual([n for n in names if "team" in n.lower()], [])
         self.assertTrue((ws / "me/goals.md").is_file())
         self.assertTrue((ws / "projects/study-project-template.md").is_file())
-        self.assertIn("your own commitments", (ws / "AGENTS.md").read_text())
+        self.assertIn("your own commitments", (ws / "AGENTS.md").read_text(encoding="utf-8"))
 
     def test_professional_and_manager_overlays(self):
         pro = self.ws("professional")
         self.assertTrue((pro / "projects/client-project-template.md").is_file())
         self.assertTrue((pro / "me/goals.md").is_file())
         mgr = self.ws("manager")
-        self.assertIn("Roles and approval rules", (mgr / "SYSTEM.md").read_text())
-        self.assertTrue((mgr / "SYSTEM.md").read_text().startswith("---\nstatus: draft\n---\n"))
+        self.assertIn("Roles and approval rules", (mgr / "SYSTEM.md").read_text(encoding="utf-8"))
+        self.assertTrue((mgr / "SYSTEM.md").read_text(encoding="utf-8").startswith("---\nstatus: draft\n---\n"))
         self.assertTrue((mgr / "knowledge/team-onboarding.md").is_file())
 
     def test_no_leftover_markers(self):
@@ -141,14 +141,14 @@ class TestInit(InitCase):
 
     def test_language_and_calm_replies_stored(self):
         ws = self.ws("student", language="pl", calm_replies=True)
-        self.assertEqual(json.loads((ws / ".living/profile.json").read_text()),
+        self.assertEqual(json.loads((ws / ".living/profile.json").read_text(encoding="utf-8")),
                          {"profile": "student", "language": "pl", "calm_replies": True})
         ws2 = self.ws("professional")
-        self.assertFalse(json.loads((ws2 / ".living/profile.json").read_text())["calm_replies"])
+        self.assertFalse(json.loads((ws2 / ".living/profile.json").read_text(encoding="utf-8"))["calm_replies"])
 
     def test_manifest_matches_files(self):
         ws = self.ws("manager")
-        m = json.loads((ws / ".living/manifest.json").read_text())
+        m = json.loads((ws / ".living/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(m["kernel_version"], L.KERNEL_VERSION)
         self.assertEqual(m["files"]["tools/review.py"], L.sha256(REPO / "tools/review.py"))
         on_disk = {p.relative_to(ws).as_posix() for p in ws.rglob("*") if p.is_file()} - {".living/manifest.json"}

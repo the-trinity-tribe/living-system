@@ -115,9 +115,9 @@ class TestNewDecision(EmptyWorkspace):
     def test_approve_creates_exact_decision(self):
         status, result = self.run_review("approve")
         self.assertEqual((status, result), ("promoted", NEW))
-        self.assertEqual((self.root / NEW).read_text(), EXPECTED)
+        self.assertEqual((self.root / NEW).read_text(encoding="utf-8"), EXPECTED)
         self.assertEqual(R.current_decisions(self.root), [NEW])
-        meta, _, body = R.split_frontmatter((self.root / PROPOSAL).read_text(), PROPOSAL)
+        meta, _, body = R.split_frontmatter((self.root / PROPOSAL).read_text(encoding="utf-8"), PROPOSAL)
         self.assertEqual(meta["status"], "promoted")
         self.assertEqual(meta["resulting_decision"], NEW)
         self.assertIn("| approve | by Test Reviewer (attribution, not verified)", body)
@@ -270,7 +270,7 @@ class TestHardening(EmptyWorkspace):
         (self.root / NEW).symlink_to(target)
         self.before = snapshot(self.root)
         self.assertRefused()
-        self.assertEqual(target.read_text(), "keep me\n")
+        self.assertEqual(target.read_text(encoding="utf-8"), "keep me\n")
 
     def test_concurrent_review_is_refused_and_lock_is_released(self):
         (self.root / ".review.lock").write_text("", encoding="utf-8", newline="\n")

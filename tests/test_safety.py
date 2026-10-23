@@ -94,7 +94,7 @@ class TestLinks(Case):
     def test_planted_manifest_temp_link_is_not_followed(self):
         (self.ws / ".living/.manifest.json.tmp").symlink_to(self.outside / "keep.md")
         L.add_module(self.ws, "weekly-update", apply=True)
-        self.assertEqual((self.outside / "keep.md").read_text(), "keep me\n")
+        self.assertEqual((self.outside / "keep.md").read_text(encoding="utf-8"), "keep me\n")
         self.assertFalse((self.ws / ".living/manifest.json").is_symlink())
 
     def test_review_refuses_linked_proposals_and_decisions_folders(self):
@@ -144,11 +144,11 @@ class TestModuleRules(Case):
         L.add_module(self.ws, "weekly-update", apply=True)
         mine = self.ws / "projects/mine.md"
         mine.write_text("my project\n", encoding="utf-8", newline="\n")
-        m = json.loads((self.ws / ".living/manifest.json").read_text())
+        m = json.loads((self.ws / ".living/manifest.json").read_text(encoding="utf-8"))
         m["modules"]["weekly-update"]["files"]["projects/mine.md"] = L.sha256(mine)
         (self.ws / ".living/manifest.json").write_text(json.dumps(m), encoding="utf-8", newline="\n")
         self.refused(L.remove_module, self.ws, "weekly-update", apply=True)
-        self.assertEqual(mine.read_text(), "my project\n")
+        self.assertEqual(mine.read_text(encoding="utf-8"), "my project\n")
 
 
 class TestAtomicity(Case):
@@ -163,7 +163,7 @@ class TestAtomicity(Case):
         with mock.patch.object(L, "routing_without", edit_meanwhile):
             delete, keep, _ = L.remove_module(self.ws, "staged-learning", apply=True)
         self.assertIn("lessons/active.md", keep)
-        self.assertIn("saved while removing", (self.ws / "lessons/active.md").read_text())
+        self.assertIn("saved while removing", (self.ws / "lessons/active.md").read_text(encoding="utf-8"))
 
     def test_failed_removal_restores_everything(self):
         L.add_module(self.ws, "staged-learning", apply=True)
@@ -213,9 +213,9 @@ class TestAtomicity(Case):
     def test_human_note_in_modules_section_survives_last_removal(self):
         L.add_module(self.ws, "weekly-update", apply=True)
         r = self.ws / "CONTEXT-ROUTING.md"
-        r.write_text(r.read_text().replace(L.ROUTING_END, "My own note about modules.\n\n" + L.ROUTING_END), encoding="utf-8", newline="\n")
+        r.write_text(r.read_text(encoding="utf-8").replace(L.ROUTING_END, "My own note about modules.\n\n" + L.ROUTING_END), encoding="utf-8", newline="\n")
         L.remove_module(self.ws, "weekly-update", apply=True)
-        self.assertIn("My own note about modules.", r.read_text())
+        self.assertIn("My own note about modules.", r.read_text(encoding="utf-8"))
 
     def test_decision_that_appears_during_review_is_not_overwritten(self):
         prop = self.ws / "proposals/2026-10-20-x.md"
@@ -232,8 +232,8 @@ class TestAtomicity(Case):
         with mock.patch.object(R, "build_new_decision", appears):
             with self.assertRaises(R.Refusal):
                 R.review(self.ws, "proposals/2026-10-20-x.md", "approve", "Owner", date="2026-10-21")
-        self.assertEqual((self.ws / "decisions/2026-10-21-x.md").read_text(), "written by a human meanwhile\n")
-        self.assertIn("status: proposed", prop.read_text())
+        self.assertEqual((self.ws / "decisions/2026-10-21-x.md").read_text(encoding="utf-8"), "written by a human meanwhile\n")
+        self.assertIn("status: proposed", prop.read_text(encoding="utf-8"))
 
     def test_quoted_code_fence_in_rule_is_refused(self):
         with self.assertRaises(R.Refusal):
@@ -244,7 +244,7 @@ class TestDoctorAccuracy(Case):
     def approve_drafts(self):
         for f in ("SYSTEM.md", "PRINCIPLES.md"):
             p = self.ws / f
-            p.write_text(p.read_text().replace("status: draft", "status: approved", 1), encoding="utf-8", newline="\n")
+            p.write_text(p.read_text(encoding="utf-8").replace("status: draft", "status: approved", 1), encoding="utf-8", newline="\n")
 
     def text(self):
         return L.format_doctor(L.doctor(self.ws))
@@ -253,7 +253,7 @@ class TestDoctorAccuracy(Case):
         self.approve_drafts()
         L.add_module(self.ws, "weekly-update", apply=True)
         r = self.ws / "CONTEXT-ROUTING.md"
-        r.write_text(r.read_text().replace("workflows/weekly-update/CONTEXT.md", "workflows/weekly-update/NOT-HERE.md"), encoding="utf-8", newline="\n")
+        r.write_text(r.read_text(encoding="utf-8").replace("workflows/weekly-update/CONTEXT.md", "workflows/weekly-update/NOT-HERE.md"), encoding="utf-8", newline="\n")
         (self.ws / "tools/review.py").unlink()
         t = self.text()
         self.assertIn("sends agents to workflows/weekly-update/NOT-HERE.md", t)
@@ -262,7 +262,7 @@ class TestDoctorAccuracy(Case):
     def test_status_need_not_be_the_first_field(self):
         self.approve_drafts()
         p = self.ws / "SYSTEM.md"
-        p.write_text(p.read_text().replace("---\nstatus: approved\n", "---\nreviewed_by: Owner\nstatus: approved\n", 1), encoding="utf-8", newline="\n")
+        p.write_text(p.read_text(encoding="utf-8").replace("---\nstatus: approved\n", "---\nreviewed_by: Owner\nstatus: approved\n", 1), encoding="utf-8", newline="\n")
         self.assertNotIn("SYSTEM.md is not approved", self.text())
 
     def test_damaged_manifest_gives_a_readable_refusal(self):

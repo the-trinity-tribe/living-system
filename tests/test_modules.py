@@ -7,7 +7,7 @@ REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO / "tools"))
 import living as L
 
-FEATURE_HEADINGS = re.findall(r"^## (.+)$", (REPO / "docs/features/_template.md").read_text(), re.M)
+FEATURE_HEADINGS = re.findall(r"^## (.+)$", (REPO / "docs/features/_template.md").read_text(encoding="utf-8"), re.M)
 
 
 def snapshot(root):
@@ -50,26 +50,26 @@ class TestShippedModules(unittest.TestCase):
         for mid in ids:
             with self.subTest(module=mid):
                 m = L.load_module(mid)
-                readme = (m["dir"] / "README.md").read_text()
+                readme = (m["dir"] / "README.md").read_text(encoding="utf-8")
                 self.assertEqual(re.findall(r"^## (.+)$", readme, re.M), FEATURE_HEADINGS)
                 self.assertIn(f"Module id: `{mid}`", readme)
-                self.assertNotIn("Moss", readme + "".join((m["dir"] / "files" / f).read_text() for f in m["files"]))
+                self.assertNotIn("Moss", readme + "".join((m["dir"] / "files" / f).read_text(encoding="utf-8") for f in m["files"]))
 
     def test_new_workspace_lists_available_modules(self):
         with tempfile.TemporaryDirectory() as tmp:
             ws = L.init(Path(tmp) / "ws", "student", "en")
-            catalog = (ws / ".living/catalog.md").read_text()
+            catalog = (ws / ".living/catalog.md").read_text(encoding="utf-8")
             for d in sorted(L.MODULES.iterdir()):
                 if (d / "module.json").is_file():
                     m = L.load_module(d.name)
                     self.assertIn(f"| `{m['id']}` | {m['summary']} |", catalog)
-            self.assertIn("`.living/catalog.md`", (ws / "CONTEXT-ROUTING.md").read_text())
+            self.assertIn("`.living/catalog.md`", (ws / "CONTEXT-ROUTING.md").read_text(encoding="utf-8"))
             self.assertNotIn(str(REPO), catalog, "the catalog must not reveal local paths")
 
     def test_workflow_stage_files_stay_short_and_complete(self):
         for ctx in L.MODULES.glob("*/files/workflows/*/[0-9][0-9]-*/CONTEXT.md"):
             with self.subTest(stage=str(ctx.relative_to(L.MODULES))):
-                text = ctx.read_text()
+                text = ctx.read_text(encoding="utf-8")
                 self.assertLess(len(text.splitlines()), 80)
                 for h in ("## Inputs", "## Process", "## Outputs", "## Checkpoint"):
                     self.assertIn(h, text)
@@ -98,10 +98,10 @@ class TestAddRemove(ModuleCase):
     def test_apply_installs_files_routing_and_manifest(self):
         L.add_module(self.ws, "weekly-update", apply=True)
         self.assertTrue((self.ws / "workflows/weekly-update/02-draft/CONTEXT.md").is_file())
-        routing = (self.ws / "CONTEXT-ROUTING.md").read_text()
+        routing = (self.ws / "CONTEXT-ROUTING.md").read_text(encoding="utf-8")
         self.assertIn("## Installed modules", routing)
         self.assertIn("`workflows/weekly-update/CONTEXT.md` <!-- module:weekly-update --> |", routing)
-        entry = json.loads((self.ws / ".living/manifest.json").read_text())["modules"]["weekly-update"]
+        entry = json.loads((self.ws / ".living/manifest.json").read_text(encoding="utf-8"))["modules"]["weekly-update"]
         self.assertEqual(entry["files"]["workflows/weekly-update/CONTEXT.md"],
                          L.sha256(self.ws / "workflows/weekly-update/CONTEXT.md"))
         self.assertEqual(self.check(), "ok")
@@ -122,15 +122,15 @@ class TestAddRemove(ModuleCase):
         self.assertEqual(snapshot(self.ws), mid)
         self.assertEqual(keep, ["lessons/active.md"])
         L.remove_module(self.ws, "staged-learning", apply=True)
-        self.assertEqual((self.ws / "lessons/active.md").read_text().splitlines()[-1], "- mine")
+        self.assertEqual((self.ws / "lessons/active.md").read_text(encoding="utf-8").splitlines()[-1], "- mine")
         self.assertFalse((self.ws / "lessons/inbox.md").exists())
-        self.assertNotIn("modules", json.loads((self.ws / ".living/manifest.json").read_text()))
+        self.assertNotIn("modules", json.loads((self.ws / ".living/manifest.json").read_text(encoding="utf-8")))
 
     def test_remove_never_touches_human_folders(self):
         L.add_module(self.ws, "meeting-notes", apply=True)
         (self.ws / "proposals/2026-10-23-x.md").write_text("mine", encoding="utf-8", newline="\n")
         L.remove_module(self.ws, "meeting-notes", apply=True)
-        self.assertEqual((self.ws / "proposals/2026-10-23-x.md").read_text(), "mine")
+        self.assertEqual((self.ws / "proposals/2026-10-23-x.md").read_text(encoding="utf-8"), "mine")
 
     def test_existing_file_blocks_install(self):
         (self.ws / "workflows/weekly-update").mkdir()

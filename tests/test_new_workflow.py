@@ -31,12 +31,12 @@ class TestNewWorkflow(unittest.TestCase):
         wf = self.ws / "workflows/campaign"
         self.assertEqual(sorted(p.name for p in wf.iterdir()),
                          ["01-research", "02-draft", "03-review", "CONTEXT.md", "references"])
-        root = (wf / "CONTEXT.md").read_text()
+        root = (wf / "CONTEXT.md").read_text(encoding="utf-8")
         for h in ("## Stages", "## Decisions that apply", "## Never do"):
             self.assertIn(h, root)
         self.assertIn("Goal: A launch post plan", root)
         for i, stage in enumerate(("01-research", "02-draft", "03-review")):
-            text = (wf / stage / "CONTEXT.md").read_text()
+            text = (wf / stage / "CONTEXT.md").read_text(encoding="utf-8")
             self.assertLess(len(text.splitlines()), 80)
             for h in ("## Inputs", "## Process", "## Outputs", "## Checkpoint"):
                 self.assertIn(h, text)
@@ -44,7 +44,7 @@ class TestNewWorkflow(unittest.TestCase):
             if i:
                 self.assertIn(f"`{('01-research', '02-draft')[i - 1]}/output/`", text)
         self.assertFalse(list(wf.rglob("AGENTS.md")) + list(wf.rglob("CLAUDE.md")))
-        self.assertIn(L.FILL, (wf / "02-draft/CONTEXT.md").read_text())
+        self.assertIn(L.FILL, (wf / "02-draft/CONTEXT.md").read_text(encoding="utf-8"))
 
     def test_refusals_write_nothing(self):
         (self.ws / "workflows/taken").mkdir()
