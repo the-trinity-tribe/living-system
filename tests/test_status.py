@@ -48,6 +48,7 @@ class TestStatus(unittest.TestCase):
         write(self.ws / "handover/LATEST.md", "# Handover: latest\n\n- **One next step for you:** review the report proposal\n")
         text = L.status(self.ws)
         self.assertIn("Review proposals/2026-10-20-x.md (new rule): Submit the report on Mondays", text)
+        self.assertIn("python3 tools/review.py review proposals/2026-10-20-x.md --outcome approve|reject|defer", text)
         self.assertNotIn("2026-10-01-done", text)
         self.assertIn("1 lesson suggestion(s)", text)
         self.assertNotIn("SYSTEM.md", text)

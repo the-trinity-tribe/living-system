@@ -47,7 +47,7 @@ Nothing. Status only reads files:
 | Line | Where it comes from |
 | --- | --- |
 | Rules in force | the number of current decisions, the same list as `review.py current` |
-| Proposals to review | files in `proposals/` whose status is `proposed` or `deferred` |
+| Proposals to review | files in `proposals/` whose status is `proposed` or `deferred`, each with the exact review command to copy once you have decided |
 | Lesson suggestions | `---lesson---` blocks in `lessons/inbox.md`, if that module is installed |
 | Drafts | `SYSTEM.md` and `PRINCIPLES.md` without `status: approved` |
 | Last session's next step | the "next step" line in `handover/LATEST.md` |

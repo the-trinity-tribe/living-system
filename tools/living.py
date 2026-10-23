@@ -972,6 +972,8 @@ def status(ws):
             what = {"new": "new rule", "replace": "replaces a rule", "retire": "retires a rule"}.get(
                 meta.get("kind"), "exception to a rule")
             todo.append(f"Review proposals/{p.name} ({what}): {title.group(1).strip() if title else 'no title'}")
+            todo.append(f"    when you have decided, run in the workspace: python3 tools/review.py review "
+                        f"proposals/{p.name} --outcome approve|reject|defer --by \"Your Name\"")
     inbox = ws / "lessons/inbox.md"
     if inbox.is_file():
         n = inbox.read_text(encoding="utf-8", errors="replace").count("---lesson---")
