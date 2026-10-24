@@ -50,7 +50,8 @@ python3 tools/living.py delegate ~/my-workspace "weekly update drafts" draft --e
 ## Example scenarios
 
 - After six weekly updates you used unchanged, you delegate "weekly update drafts" at `draft`, and later "weekly update facts gathering" at `bounded`, with the scope "read project files only" and a review in six weeks.
-- You try to delegate "send client emails" at `bounded`. The tool refuses: sending always keeps your yes; the highest level for it is `act-with-approval`.
+- You try to delegate "send client emails" at `bounded`. The tool refuses: sending always keeps your yes; the highest level for it is `act-with-approval`. (This is a keyword check that catches common wordings; the agent rule covers the rest.)
+- You delegate the same kind of work again at a new level: `delegate` writes a replacement for the old delegation, so two levels never compete.
 - A new colleague asks what the agent may do in the team workspace. `agency` shows it, including that the team rule is enforced and the delegations are instructions.
 
 ## What changes inside the system when it runs?

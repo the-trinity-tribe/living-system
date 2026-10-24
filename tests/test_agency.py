@@ -80,7 +80,7 @@ class TestAgencyView(unittest.TestCase):
     def test_marks_what_is_enforced_and_what_is_not(self):
         ws = L.init(self.base / "ws", "manager", "en", team=True)
         text = L.agency(ws)
-        self.assertIn("[enforced] Team workspace: whoever proposed a change cannot approve it.", text)
+        self.assertIn("[enforced] Team workspace: review.py refuses an approval by whoever proposed the change.", text)
         self.assertIn("[enforced] The write guard runs in Claude Code and Codex", text)
         self.assertIn("Everything else: draft", text)
         self.assertIn("Not provided: login", text)

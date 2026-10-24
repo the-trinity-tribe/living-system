@@ -42,4 +42,4 @@ Wenn der Agent mir Zeit spart, füllt er sie nicht mit mehr Arbeit. Ich nutze si
 
 ## Wie ich etwas zurücknehme
 
-Ich kann hier jederzeit alles ändern oder löschen und in einer Sitzung "Stopp" oder "rückgängig" sagen. Ruhige Antworten, Coach und Fokus schalte ich mit `living.py` um.
+Ich kann hier jederzeit alles ändern oder löschen und in einer Sitzung "Stopp" oder "rückgängig" sagen. Den Fokusmodus schalte ich mit `living.py focus . on` oder `off`. Ruhige Antworten und Coach sind `calm_replies` und `coach` in `.living/profile.json`; mein Agent kann sie für mich ändern.

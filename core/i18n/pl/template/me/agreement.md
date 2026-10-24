@@ -42,4 +42,4 @@ Kiedy agent oszczędza mi czas, nie wypełnia go dodatkową pracą. Zachowuję g
 
 ## Jak coś cofam
 
-Mogę tu w każdej chwili wszystko zmienić lub usunąć, a w sesji powiedzieć "stop" albo "cofnij". Spokojne odpowiedzi, coacha i tryb skupienia przełączam przez `living.py`.
+Mogę tu w każdej chwili wszystko zmienić lub usunąć, a w sesji powiedzieć "stop" albo "cofnij". Tryb skupienia przełączam przez `living.py focus . on` albo `off`. Spokojne odpowiedzi i coach to `calm_replies` i `coach` w `.living/profile.json`; mój agent może je dla mnie zmienić.

@@ -42,4 +42,4 @@ When the agent saves me time, it does not fill it with more work. I keep it for:
 
 ## How I take something back
 
-I can change or delete anything here at any time, and say "stop" or "undo" in a session. The settings for calm replies, coach and focus are switched with `living.py`.
+I can change or delete anything here at any time, and say "stop" or "undo" in a session. Focus mode is switched with `living.py focus . on` or `off`. Calm replies and coach are `calm_replies` and `coach` in `.living/profile.json`; ask your agent to change them.

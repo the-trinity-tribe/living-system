@@ -46,6 +46,6 @@ Nothing runs. It is a plain file the agent reads. `living.py agency` shows wheth
 
 ## What can go wrong, and how do you undo it?
 
-- **It is an instruction, not a lock.** An agent can miss it; remind it, and use the [focus](parking-and-tending.md) and [coach](learning-mode.md) settings for the parts that have a switch.
+- **It is an instruction, not a lock.** An agent can miss it; remind it, and use [focus mode](parking-and-tending.md) (`living.py focus`) and the `coach` and `calm_replies` settings in `.living/profile.json` for the parts that have a switch.
 - **It gets long.** Keep it to what you actually want followed; shorter is read more reliably.
 - **Want it gone?** Delete the file. Nothing else depends on it.

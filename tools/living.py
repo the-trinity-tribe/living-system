@@ -764,6 +764,7 @@ def upgrade(ws, apply=False):
 
         def put(rel, data, expect, owner=None):
             p = ws / rel
+            refuse_links(ws, [rel])  # checked again right before writing: a folder may have become a link meanwhile
             now = p.read_bytes() if p.is_file() else None
             if (None if now is None else sha256_bytes(now)) != expect or (now is None and p.is_symlink()):
                 changed_meanwhile(rel)
@@ -1174,6 +1175,9 @@ def propose(ws, kind, title, rule, evidence, why="", proposed_by="agent", target
         R.one_line(value, what)
     if not title.strip() or not rule.strip() or not evidence.strip():
         raise Refusal("a proposal needs a title, the rule (or for retire: the reason) and the evidence")
+    if guard_tool().secrets_in(" ".join((title, rule, evidence, why))):
+        raise Refusal("that looks like a password, key or token; secrets never go into the workspace. Write where "
+                      "to find it instead")
     if re.search(r"^\s*#", why, re.M):
         raise Refusal("the why text must not contain headings")
     date = date or datetime.date.today().isoformat()
@@ -1234,9 +1238,11 @@ LEVELS = {
 }
 DEFAULT_LEVEL = "draft"
 # Kinds of work that always keep the human's yes: never delegated beyond act-with-approval.
-ALWAYS_APPROVAL = re.compile(r"(?i)\b(publish\w*|post\w*|send\w*|messag\w*|e-?mail\w*|spend\w*|pay\w*|buy\w*|purchas\w*|"
-                             r"delet\w*|remov\w*|rule\w*|decision\w*|approv\w*|system\.md|principles\.md|money|invoice\w*|"
-                             r"contract\w*|sign\w*)\b")
+# A keyword check, not complete policy: it catches common wordings; the agent rule in AGENTS.md section 15 covers the rest.
+ALWAYS_APPROVAL = re.compile(r"(?i)\b(publish\w*|post(?:s|ed|ing)?|send\w*|sent|messag\w*|e-?mail\w*|spend\w*|pay\w*|buy\w*|"
+                             r"purchas\w*|delet\w*|remov\w*|eras\w*|wip(?:e|es|ed|ing)|purg\w*|destroy\w*|trash\w*|"
+                             r"discard\w*|rules?|decisions?|approv\w*|system\.md|principles\.md|money|invoic\w*|contract\w*|"
+                             r"sign(?:s|ed|ing)?|signatur\w*|transfer\w*)\b")
 DELEGATION = re.compile(r"^Delegation:\s*(.+?)\s*=\s*(" + "|".join(LEVELS) + r")\b(.*)$", re.M)
 
 
@@ -1250,6 +1256,15 @@ def delegate(ws, work, level, evidence, scope="", review=None, by="agent", apply
         raise Refusal("name the kind of work in a few words (at most 80 characters, no '='), e.g. 'weekly update drafts'")
     if level not in LEVELS:
         raise Refusal(f"level must be one of: {', '.join(LEVELS)}")
+    if re.search(r"(?i)look again on|scope:|delegation:", work + " " + scope):
+        raise Refusal("leave 'Look again on', 'Scope:' and 'Delegation:' out of the work and scope; they are added for you")
+    if review is not None:
+        if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", review):
+            raise Refusal("give the review date as YYYY-MM-DD")
+        try:
+            review = datetime.date.fromisoformat(review).isoformat()
+        except ValueError:
+            raise Refusal(f"{review} is not a real date") from None
     if level == "bounded" and ALWAYS_APPROVAL.search(work + " " + scope):
         raise Refusal("publishing, sending, spending, deleting, signing and changing rules always keep the human's yes; "
                       "the highest level for them is act-with-approval")
@@ -1270,6 +1285,9 @@ def delegate(ws, work, level, evidence, scope="", review=None, by="agent", apply
     rule += " The write guard and the always-approval list still apply."
     why = (f"Evidence: {evidence.strip()}. This delegation is an instruction to the agent, not a technical permission. "
            f"Withdraw it at any time by retiring the decision.")
+    same = [k for w, _, _, k, _ in delegations(ws, today) if w.casefold() == work.casefold()]
+    if same:  # one delegation per kind of work: a new level replaces the old decision instead of competing with it
+        return propose(ws, "replace", f"Delegation: {work} at {level}", rule, evidence, why, by, target=same[0], apply=apply)
     return propose(ws, "new", f"Delegation: {work} at {level}", rule, evidence, why, by, apply=apply)
 
 
@@ -1289,14 +1307,22 @@ def delegations(ws, today=None):
             rule = R.section(R.split_frontmatter((ws / k).read_text(encoding="utf-8"), k)[2], "Rule", k)
         except (Refusal, OSError):
             continue
-        m = DELEGATION.search(rule)
-        if m:
-            due = re.search(r"Look again on (\d{4}-\d{2}-\d{2})", rule)
-            scope = re.search(r"Scope: (.+?)\.(?: Look again| The write guard|$)", rule)
-            rest = " ".join(x for x in ((f"Scope: {scope.group(1)}." if scope else ""),
-                                        (f"Look again on {due.group(1)}." if due else "")) if x)
-            out.append((m.group(1), m.group(2), rest, k,
-                        bool(due) and datetime.date.fromisoformat(due.group(1)) <= today))
+        found = DELEGATION.findall(rule)
+        if not found:
+            continue
+        order = list(LEVELS)
+        # an amendment can add a second clause; the lowest level named wins, so authority is never read too high
+        work, level = found[0][0], min((lv for _, lv, _ in found), key=order.index)
+        dues = re.findall(r"Look again on (\d{4}-\d{2}-\d{2})", rule)
+        scope = re.search(r"Scope: (.+?)\.(?: Look again| The write guard|$)", rule)
+        try:
+            due = bool(dues) and datetime.date.fromisoformat(dues[-1]) <= today
+        except ValueError:
+            due = True  # an unreadable date asks for a look rather than being silently ignored
+        rest = " ".join(x for x in ((f"Scope: {scope.group(1)}." if scope else ""),
+                                    (f"Look again on {dues[-1]}." if dues else ""),
+                                    ("(amended)" if len(found) > 1 else "")) if x)
+        out.append((work, level, rest, k, due))
     return out
 
 
@@ -1319,9 +1345,11 @@ def agency(ws):
     E, I = "[enforced]", "[instruction]"
     lines = [f"Agency in {ws.resolve().name}: who may do what. {E} = a tool refuses otherwise; {I} = the agent is told to.",
              "", "Rules and approvals:",
-             f"  {E} Only `tools/review.py review` turns a proposal into a rule, and it refuses invalid or stale proposals.",
-             f"  {I} The agent runs it only when the human names the proposal and states the outcome.",
-             f"  {E if team else I} " + ("Team workspace: whoever proposed a change cannot approve it."
+             f"  {E} When `tools/review.py review` runs, it refuses invalid, stale or (in a team) self-approved proposals,",
+             f"      writes the new decision without editing the old one, and records the review.",
+             f"  {I} Rules come only through that review, run when the human names the proposal and states the outcome.",
+             f"      A person can still write a decision by hand; `review.py verify` then lists it as written by hand.",
+             f"  {E if team else I} " + ("Team workspace: review.py refuses an approval by whoever proposed the change."
                                          if team else "Not a team workspace: the person who proposes may also approve."),
              f"  {E} Every review is recorded; `review.py verify` shows later changes.",
              "", "Protections:"]
@@ -1457,7 +1485,10 @@ def hook_runs_guard(path):
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
         groups = data["hooks"]["PreToolUse"]
-        return any("tools/guard.py" in h.get("command", "") for g in groups for h in g.get("hooks", []))
+        # the hook must fire on file writes and actually run the guard with Python
+        writes = lambda m: any(re.fullmatch(m, tool) for tool in ("Edit", "Write")) if m else True
+        return any(writes(g.get("matcher", "")) and re.search(r"python3?\b", h.get("command", ""))
+                   and "guard.py" in h.get("command", "") for g in groups for h in g.get("hooks", []))
     except (OSError, ValueError, KeyError, TypeError, AttributeError):
         return False
 
@@ -2087,6 +2118,8 @@ def share(ws, rel, shared_as=None, apply=False, today=None):
     if text.startswith("---\n"):
         meta, _, body = review_tool().split_frontmatter(text, rel)
         carried = {k: meta[k] for k in ("last_verified",) if re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(meta.get(k, "")))}
+        if meta.get("confidence") in CONFIDENCE:
+            carried["confidence"] = meta["confidence"]
     problems = [f"line {n}: {what}" for n, what in personal_data(body)]
     problems += [f"line {n}: {what.split(';')[0]}" for n, level, what in scan_text(body)]
     label = shared_as or ""
@@ -2671,9 +2704,9 @@ def atlas(ws, today=None):
     for top in ("projects", "workflows", "knowledge", "roles"):
         for p in sorted((ws / top).rglob("*.md")) if (ws / top).is_dir() else []:
             rel = p.relative_to(ws).as_posix()
-            if p.is_symlink() or not p.is_file() or archived(rel):
+            if p.is_symlink() or not p.is_file() or archived(rel) or linked_part(ws, rel):
                 continue
-            for ref in set(re.findall(r"(?<![\w./\\-])(decisions/[\w.-]+\.md)", p.read_text(encoding="utf-8", errors="replace"))):
+            for ref in decision_refs(ws, ws / rel, p.read_text(encoding="utf-8", errors="replace")):
                 refs.setdefault(ref, []).append(rel)
     out = [ATLAS_MARK, f"# Atlas: {ws.resolve().name}", "",
            f"Made on {today} with `living.py atlas`. A map built from the files, which stay the source. It changes nothing.", ""]
@@ -2704,13 +2737,15 @@ def atlas(ws, today=None):
     out += ["", "## References to rules that are not in force", ""]
     out += [f"- `{ref}` ({'history' if ref in decs else 'missing'}) is still named in "
             f"{', '.join(f'`{u}`' for u in sorted(users))}" for ref, users in stale] or ["None."]
-    flows = sorted((ws / "workflows").glob("*/CONTEXT.md")) if (ws / "workflows").is_dir() else []
+    flows = [c for c in sorted((ws / "workflows").glob("*/CONTEXT.md")) if not linked_part(ws, c.relative_to(ws).as_posix())] \
+        if (ws / "workflows").is_dir() else []
     out += ["", f"## Workflows ({len(flows)})", ""]
     for ctx in flows:
         stages = [s.name for s in sorted(ctx.parent.iterdir()) if s.is_dir() and re.match(r"\d\d-", s.name)]
         out.append(f"- `{ctx.parent.relative_to(ws).as_posix()}/`: {len(stages)} stage(s)")
-    knowledge = [p for p in (ws / "knowledge").rglob("*.md") if p.is_file() and p.name not in KNOWLEDGE_SKIP] \
-        if (ws / "knowledge").is_dir() else []
+    knowledge = [p for p in (ws / "knowledge").rglob("*.md") if p.is_file()
+                 and not (p.parent == ws / "knowledge" and p.name in KNOWLEDGE_SKIP)
+                 and not linked_part(ws, p.relative_to(ws).as_posix())] if (ws / "knowledge").is_dir() else []
     kept = [p for p in knowledge if not archived(p.relative_to(ws).as_posix())]
     drawers = sorted({p.parent.relative_to(ws).as_posix() for p in kept})
     out += ["", "## Knowledge", "", f"- {len(kept)} file(s) in use, {len(knowledge) - len(kept)} in the archive",
@@ -2854,11 +2889,29 @@ def write_handbook(ws, target, text, mark=None, what="handbook"):
 
 
 CONFIDENCE = ("low", "medium", "high")
+DECISION_REF = re.compile(r"(?<![\w./\\-])(decisions/[\w.-]+\.md)")
+MD_LINK = re.compile(r"\]\(([^)\s]+?\.md)(?:#[^)]*)?\)")
+
+
+def decision_refs(ws, path, text):
+    """Decision files a workspace file names: written paths like `decisions/x.md`, and Markdown links relative to it."""
+    refs = set(DECISION_REF.findall(text))
+    for target in MD_LINK.findall(text):
+        if "://" in target:
+            continue
+        rel = Path(os.path.normpath(Path(path).parent / target))
+        try:
+            rel = rel.relative_to(Path(ws)).as_posix()
+        except ValueError:
+            continue
+        if rel.startswith("decisions/") and rel.count("/") == 1:
+            refs.add(rel)
+    return refs
 ARCHIVE = "knowledge/archive/"
 
 
 def archived(rel):
-    return rel.startswith(ARCHIVE)
+    return rel.casefold().startswith(ARCHIVE)  # case-blind: Windows and macOS treat Archive/ and archive/ as one folder
 
 
 def compost(ws, rel, reason, apply=False, today=None):
@@ -2872,6 +2925,8 @@ def compost(ws, rel, reason, apply=False, today=None):
             or (rel.count("/") == 1 and Path(rel).name in KNOWLEDGE_SKIP):
         raise Refusal(f"{rel}: only knowledge files can be composted (not the archive, README, inbox or template)")
     reason = " ".join((reason or "").split())
+    if guard_tool().secrets_in(reason):
+        raise Refusal("that looks like a password, key or token; leave it out of the reason")
     if not reason or len(reason) > 200:
         raise Refusal("say why in one line (at most 200 characters), e.g. 'replaced by the 2026 price list'")
     dest = ARCHIVE + rel[len("knowledge/"):]
@@ -2881,20 +2936,30 @@ def compost(ws, rel, reason, apply=False, today=None):
         raise Refusal(f"{rel} does not exist")
     if (ws / dest).exists():
         raise Refusal(f"{dest} already exists; rename one of them first")
-    text = src.read_text(encoding="utf-8")
+    def archived_text(text):
+        body = text.lstrip("\ufeff")
+        return (body.replace("---\n", "---\n" + head, 1) if body.startswith("---\n") else f"---\n{head}---\n\n{body}")
     day = (today or datetime.date.today()).isoformat()
     head = f"archived_on: {day}\narchive_reason: {reason}\n"
-    out = (text.replace("---\n", "---\n" + head, 1) if text.startswith("---\n")
-           else f"---\n{head}---\n\n{text}")
+    text = src.read_text(encoding="utf-8")
+    out = archived_text(text)
     if apply:
         with workspace_lock(ws):
+            text = src.read_text(encoding="utf-8")  # read again under the lock, so a save just now is not lost
+            out = archived_text(text)
             (ws / dest).parent.mkdir(parents=True, exist_ok=True)
+            mode = os.stat(src).st_mode & 0o777  # the archive copy is no more readable than the original
             try:
-                with open(ws / dest, "x", encoding="utf-8", newline="\n") as f:
-                    f.write(out)
-                src.unlink()
+                fd = os.open(ws / dest, os.O_CREAT | os.O_EXCL | os.O_WRONLY | getattr(os, "O_BINARY", 0), mode)
             except FileExistsError:
                 raise Refusal(f"{dest} appeared meanwhile; nothing was changed") from None
+            try:
+                with os.fdopen(fd, "wb") as f:
+                    f.write(out.encode("utf-8"))
+                os.chmod(ws / dest, mode)
+                if src.read_text(encoding="utf-8") != text:
+                    raise Refusal(f"{rel} changed while it was being archived; nothing was changed")
+                src.unlink()
             except BaseException:
                 if src.is_file():
                     (ws / dest).unlink(missing_ok=True)  # all or nothing: the original stays where it was
@@ -2920,11 +2985,11 @@ def knowledge_upkeep(ws, R):
         return newest(replaced_by[k], seen + (k,)) if k in replaced_by and k not in seen else k
     places = [p for top in ("workflows", "knowledge", "roles") if (ws / top).is_dir() for p in sorted((ws / top).rglob("*.md"))]
     for p in places if decs is not None else []:
-        if p.is_symlink() or not p.is_file():
-            continue
         rel = p.relative_to(ws).as_posix()
+        if p.is_symlink() or not p.is_file() or archived(rel) or linked_part(ws, rel):
+            continue
         text = p.read_text(encoding="utf-8", errors="replace")
-        for ref in sorted(set(re.findall(r"(?<![\w./\\-])(decisions/[\w.-]+\.md)", text))):
+        for ref in sorted(decision_refs(ws, ws / rel, text)):
             if ref in replaced_by:
                 now = newest(ref)
                 gone = decs.get(now, {}).get("kind") == R.RETIREMENT

@@ -8,7 +8,7 @@ Living System is built so that people keep control of their work and their skill
 
 | Guardrail | How it is upheld | Enforced or rule |
 | --- | --- | --- |
-| Humans decide what is true | Only `review.py review` turns a proposal into a rule; agents may only propose. The write guard blocks agent edits to decisions and approvals. | Enforced (the review tool; the guard in Claude Code, and in Codex once trusted) |
+| Humans decide what is true | Agents may only propose. `review.py review` refuses invalid, stale or self-approved proposals and records each review; the write guard blocks agent edits to decisions and approvals. A person can still write a decision by hand, and `review.py verify` then lists it. | Enforced within the review tool and the guard (Claude Code; Codex once trusted); writing by hand is shown, not prevented |
 | Nobody approves their own change in a team | `review.py` and `role-review` refuse the same name as proposer and approver in a team workspace. | Enforced, but names are labels, not proof of identity |
 | No surveillance | No tool watches your screen, apps, keystrokes or time. Nothing runs in the background. Counts store short names and dates only. | Enforced by design: the code does not do it |
 | No hidden profiling | Settings and your work agreement are plain files you write; agents may not add to them or guess things about you. | Rule |
