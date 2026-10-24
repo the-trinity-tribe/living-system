@@ -4,6 +4,7 @@ All notable changes. Dates are when a version was prepared. Versions before 1.0 
 
 ## Unreleased
 
+- New headline for the whole system: "Your context, your rules, any AI agent". The README banner and benefits now lead with owning your context, switching agents without starting over, a lean context instead of growing memory, and modules that grow with you; the human review is the proof of trust.
 - Start in one sentence: paste one sentence into Claude Code, Codex, Hermes or another agent in an empty folder and it downloads Living System and starts the guided setup (tested live in Claude Code and Codex). Added to the README, INSTALL, TESTING, the release notes and the pitch page, and the README now leads with benefits.
 - Works with more agents, stated honestly: the README, INSTALL and the AI tools guide now cover Hermes Agent, other agents that read `AGENTS.md`, and local models, with what was checked (Hermes: source code and one live question) and what was not. The AI tools guide also corrects the size of `AGENTS.md` (about 29 KB, under Codex's 32 KiB limit).
 - README redesigned: a compact header with badges and links, the demo first, then quick start, one "how it works" diagram and features as text and tables. The slide-style feature images are replaced by three small diagrams with dark and light variants.

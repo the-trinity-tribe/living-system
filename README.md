@@ -13,9 +13,9 @@
 [![License](https://img.shields.io/badge/license-MPL--2.0-161616?style=flat-square)](LICENSE)
 [![Status](https://img.shields.io/badge/status-experimental-D6C4A8?style=flat-square)](#limitations)
 
-**Your AI agents remember your rules, and you decide what changes.**<br>
-Write your rules and working knowledge down once. Your agent reads them every session,<br>
-suggests changes instead of making them, and waits for your yes. Free, and it all stays on your computer.
+Keep your rules, knowledge, goals and workflows in plain files you own.<br>
+Switch between Claude Code, Codex, Hermes or a local model without starting over,<br>
+and decide yourself what changes. Free, open source, and it all stays on your computer.
 
 [Start in one sentence](#start-in-one-sentence) · [Quick start](#quick-start) · [Works with](#works-with) · [How it works](#how-it-works) · [Features](#features) · [Docs](docs/README.md) · [Help test it](#help-test-it) · [Discussions](https://github.com/the-trinity-tribe/living-system/discussions)
 
@@ -44,12 +44,12 @@ We tried this sentence in fresh Claude Code and Codex sessions ([results](demo/W
 
 ## What changes for you
 
-Every AI session usually starts from zero: you explain the same rules again, and after a few weeks nobody can say which version of a rule is current or who agreed to it.
+Most AI tools keep their own memory of you: locked inside one product, growing on its own, and hard to check. Living System turns that around.
 
-- **Say it once, every session knows.** Your rules, preferences and working knowledge live in plain files your agent reads at the start of every session.
-- **Nothing changes without your yes.** Your agent writes a proposal instead of editing a rule. You approve, reject or defer it, and a record shows if an approved rule was changed later.
+- **Own it, take it anywhere.** Your rules, knowledge, goals and workflows live in plain files on your own computer, not inside one AI product. Use them with Claude Code, Codex, Hermes or a local model, for work or personal projects, and switch without starting over.
+- **Lean and true, not bloated.** Instead of a memory that keeps growing and filling the context window, you keep a curated set of files, and a routing guide points your agent to just what a task needs. Your agent suggests changes instead of making them; you decide what becomes true, and a record shows any later change.
+- **Grows with you.** Optional [modules](#optional-modules) for weekly updates, meeting notes, research, client intake, content and careful multi-step work, plus learning, coaching and [team workspaces](#knowledge-that-outlives-a-role).
 - **More freedom for your agent, one step at a time.** Let it do more in one kind of work once it has earned it, and take that back in one step. Sending, publishing, spending and deleting always wait for you.
-- **Knowledge that stays when people move on.** A shared company workspace next to private personal ones, with a gentle reading path for the next person.
 - **Calm, not another dashboard.** Ask what needs you, catch up after time away, park an idea without losing focus. No tracking, no productivity scores.
 
 No server, no account, no tie to one AI vendor or model: just Python's standard library and Markdown files.
