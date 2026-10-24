@@ -10,7 +10,7 @@ Living System's look is a direct sibling of **The Trinity Tribe**'s design syste
 
 The red triangle comes from The Trinity Tribe's logo. Inside it, a vein is cut out like a leaf or a young tree: a system that grows. The single cream dot where the vein starts is the person at its centre, the one who decides. It follows the Trinity Tribe icon rules: a 140-unit grid, filled red shapes with details cut out in 6-unit gaps, and exactly one small cream accent.
 
-Use it on dark grounds (`#161616` or darker). Keep clear space of at least a quarter of its width around it. Do not recolour, outline, rotate or add effects.
+On dark grounds (`#161616` or darker) the dot is cream; on light grounds it is charcoal (`#161616`), so it always stays visible. `mark.svg` switches by itself with the viewer's light or dark setting. Keep clear space of at least a quarter of its width around it. Do not recolour, outline, rotate or add effects.
 
 ## Colours
 

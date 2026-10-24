@@ -13,5 +13,6 @@
     </mask>
   </defs>
   <polygon points="70,14 130,117.92 10,117.92" fill="#EB5757" mask="url(#ls-veins)"/>
-  <circle cx="70" cy="54" r="7" fill="#FFEDC9"/>
+  <style>.ls-dot{fill:#FFEDC9}@media (prefers-color-scheme:light){.ls-dot{fill:#161616}}</style>
+  <circle class="ls-dot" cx="70" cy="54" r="7"/>
 </svg>
