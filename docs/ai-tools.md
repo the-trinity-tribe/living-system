@@ -7,7 +7,8 @@ This page explains, in plain words, which AI tools work with Living System, what
 ## The short version
 
 - Living System is a **folder of files on your computer**. An AI tool that can **open that folder** can use it.
-- Two tools do this and are covered here: **Claude Code** (from Anthropic) and **Codex** (from OpenAI).
+- Living System is built and tested with **Claude Code** (from Anthropic) and **Codex** (from OpenAI). They are covered in detail here.
+- Other agents that read `AGENTS.md`, such as **Hermes Agent**, can use the same files, including with **local models**. See [Other agents and local models](#other-agents-and-local-models) for what we checked and what to watch.
 - A normal **chat in your browser** can explain Living System, but it does not work inside your folder.
 - AI tools can change files on your computer. Read what they ask before you say yes.
 - Living System's rules are **instructions**. They do not force an agent to obey.
@@ -75,10 +76,40 @@ Verified differences from Anthropic's [memory page](https://code.claude.com/docs
 
 - It starts at the project root (usually the Git root) and walks down to the folder you are in. In each folder it checks `AGENTS.override.md`, then `AGENTS.md`, and uses at most one file per folder.
 - A file named `CLAUDE.md` is **ignored** unless you add that name to a fallback list in Codex's settings. This does not matter here: the rules are in `AGENTS.md`.
-- Combined size is capped at 32 KiB by default. The `AGENTS.md` that `init` creates is about 13 KB before the short profile section.
+- Combined size is capped at 32 KiB by default. The `AGENTS.md` that `init` creates is about 29 KB with every option switched on (checked on 2026-10-24), so it fits, but an `AGENTS.md` in a folder above your workspace counts towards the same cap.
 - Codex reads the instructions once per run, or once per session in the terminal app. Restart it to pick up changes.
 
 This is why [doctor](features/doctor.md) warns about extra `AGENTS.md` or `AGENTS.override.md` files: both tools may load them as a second set of rules.
+
+## Other agents and local models
+
+Living System's tools never call an AI model. They read and write plain files. So the model does not matter; what matters is whether your agent **reads `AGENTS.md`** from the folder it works in and **can run `python3`**. Agents that do can use a workspace as it is, with a hosted model or a local one.
+
+| Agent | Reads the rules | Write guard | What we checked |
+| --- | --- | --- | --- |
+| Claude Code | Yes, through `CLAUDE.md` | Yes | Live tests, 13 scenarios |
+| Codex | Yes | Yes, once you trust its hooks | Live tests, 13 scenarios (guard not yet live-tested) |
+| Hermes Agent | Yes | No | Source code and one live question (below) |
+| Other agents that read `AGENTS.md` (for example OpenCode or Cursor) | Per their own docs | No | Not tested by us |
+
+"Write guard: No" means nothing technically stops that agent from editing your decisions. The rules still ask it not to, and `python3 tools/review.py verify` still shows any change to an approved file afterwards.
+
+### Hermes Agent
+
+Checked on 2026-10-24 against Hermes Agent v0.21.5 (its source code on our machine and one live run):
+
+- Hermes loads `AGENTS.md` from the folder you start it in (`hermes --in ~/my-workspace`). When `AGENTS.md` exists, it skips `CLAUDE.md`.
+- **It shortens long instruction files.** The limit grows with the model's context window. With a model of about 120,000 tokens or more, the whole `AGENTS.md` fits. With a smaller window, Hermes keeps the start and the end and leaves out the middle. To load the whole file anyway, set `context_file_max_chars: 40000` in Hermes's `config.yaml`.
+- **Use a separate Hermes profile for your workspace** (`hermes profile create`). In our live test, a Hermes set-up that already held long-term memory from another project answered with that project's rules instead of the workspace's. A fresh profile keeps the two apart. We have not yet repeated the test with a fresh profile.
+- Hermes scans instruction files for hidden instructions. Living System's `AGENTS.md` passed that scan.
+
+### Local models
+
+Run a local model through an agent that reads `AGENTS.md`, such as Hermes Agent or OpenCode, connected to a local model server. Keep in mind:
+
+- The rules are long (about 7,000 tokens). Choose a model with a large context window, or the agent may see only part of them.
+- Smaller models follow long instructions and run commands less reliably. Start with the [value check](features/value-check.md) and the first scenarios in [TESTING.md](../TESTING.md) before you rely on one.
+- Nothing about local models has been tested by us yet. Reports are welcome.
 
 ## Permission prompts: what they mean
 

@@ -1,12 +1,12 @@
 # Install your own workspace
 
-This guide is read by an AI agent (Claude Code or Codex) while it sets up your workspace with you. You can also follow it by hand.
+This guide is read by an AI agent (Claude Code, Codex, Hermes or another agent that reads `AGENTS.md`) while it sets up your workspace with you. You can also follow it by hand.
 
 **You need:** Python 3.10 or newer and this repository on your computer. No accounts, no extra packages.
 
 ## Tell your agent
 
-Open this repository in Claude Code or Codex and say:
+Open this repository in Claude Code or Codex (or another agent that reads `AGENTS.md`, such as Hermes) and say:
 
 > Read INSTALL.md and set up my workspace.
 

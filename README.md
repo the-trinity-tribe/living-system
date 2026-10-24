@@ -9,15 +9,15 @@
 [![Release](https://img.shields.io/github/v/release/the-trinity-tribe/living-system?style=flat-square&color=EB5757&label=release)](https://github.com/the-trinity-tribe/living-system/releases/latest)
 [![Tests](https://img.shields.io/github/actions/workflow/status/the-trinity-tribe/living-system/tests.yml?branch=main&style=flat-square&label=tests)](https://github.com/the-trinity-tribe/living-system/actions/workflows/tests.yml)
 [![Python](https://img.shields.io/badge/python-3.10%2B-161616?style=flat-square)](docs/troubleshooting.md)
-[![Works with](https://img.shields.io/badge/works%20with-Claude%20Code%20%C2%B7%20Codex-161616?style=flat-square)](docs/ai-tools.md)
+[![Works with](https://img.shields.io/badge/works%20with-Claude%20Code%20%C2%B7%20Codex%20%C2%B7%20Hermes%20%C2%B7%20any%20AGENTS.md%20agent-161616?style=flat-square)](#works-with)
 [![License](https://img.shields.io/badge/license-MPL--2.0-161616?style=flat-square)](LICENSE)
 [![Status](https://img.shields.io/badge/status-experimental-D6C4A8?style=flat-square)](#limitations)
 
-**A local-first governance layer for working with AI agents.**<br>
+**A local-first governance layer for working with AI agents, hosted or local.**<br>
 Your decisions, knowledge and boundaries live as plain Markdown on your own computer.<br>
 Agents propose changes. Only your review turns a proposal into a rule.
 
-[Quick start](#quick-start) · [How it works](#how-it-works) · [Features](#features) · [Docs](docs/README.md) · [Help test it](#help-test-it) · [Discussions](https://github.com/the-trinity-tribe/living-system/discussions)
+[Quick start](#quick-start) · [Works with](#works-with) · [How it works](#how-it-works) · [Features](#features) · [Docs](docs/README.md) · [Help test it](#help-test-it) · [Discussions](https://github.com/the-trinity-tribe/living-system/discussions)
 
 </div>
 
@@ -33,16 +33,16 @@ Every AI session starts from zero. You explain the same rules again, agents work
 
 Living System writes your working context down once, in files every agent session reads, and gives changes to it a human checkpoint.
 
-- **Stop re-explaining.** Rules are written once and read by Claude Code and Codex at the start of every session.
+- **Stop re-explaining.** Rules are written once and read at the start of every session by Claude Code, Codex, Hermes or any agent that reads `AGENTS.md`.
 - **You stay the decision-maker.** Agents propose; your review changes a rule; a write guard blocks the most common direct edits.
 - **Room to act, earned.** More autonomy one kind of work at a time, with evidence, withdrawn in one step.
 - **Calm by design.** Catch-up after time away, parked ideas, focus mode. No surveillance, no scores.
 
-No server, no account, no tie to one AI vendor: Python's standard library and Markdown.
+No server, no account, no tie to one AI vendor or model: Python's standard library and Markdown.
 
 ## Quick start
 
-You need **Git** and **Python 3.10+**, and [Claude Code or Codex](docs/ai-tools.md) to work with an agent.
+You need **Git** and **Python 3.10+**, and an agent that works in a folder: [Claude Code, Codex, Hermes or another](#works-with).
 
 ```sh
 git clone https://github.com/the-trinity-tribe/living-system.git
@@ -72,6 +72,20 @@ Then open `~/my-workspace` in your agent and work as usual. Try saying *"Help me
 </details>
 
 Run `python3 tools/living.py` on its own for a menu of everyday commands. All commands: [command reference](docs/cli.md) · Stuck? [Troubleshooting](docs/troubleshooting.md)
+
+## Works with
+
+Living System's tools never call an AI model; they read and write plain files. Any agent that reads `AGENTS.md` and can run `python3` can use a workspace, with a hosted model or a local one.
+
+| | Reads your rules | Write guard | Tested |
+| --- | :---: | :---: | --- |
+| **Claude Code** | ✓ | ✓ | 13 live scenarios |
+| **Codex** | ✓ | ✓ once you trust its hooks | 13 live scenarios |
+| **Hermes Agent** | ✓ | | One live question; use a separate profile |
+| **OpenCode, Cursor and other `AGENTS.md` agents** | per their docs | | Not yet |
+| **Local models** | through an agent above | | Not yet; needs a large context window |
+
+Without the write guard, the rules still ask the agent to propose instead of editing, and `review.py verify` still shows any change to an approved rule. Details and tips: [AI tools](docs/ai-tools.md#other-agents-and-local-models).
 
 ## How it works
 
