@@ -31,6 +31,9 @@ python3 tools/living.py export ~/my-workspace ~/living-backup-2026-10-24.zip --a
 
 ## How do you use it?
 
+To check a backup without unpacking it: `python3 tools/living.py export-check ~/Backups/my-workspace.zip`. It confirms the zip opens, holds the workspace's settings, rules file and review tool, and lists anything missing.
+
+
 1. Export to a new `.zip` file outside the workspace.
 2. To restore: unzip it into a new, empty folder.
 3. Run `python3 tools/living.py upgrade <that folder> --apply` from your Living System folder. It records where Living System is on this computer and brings files up to date if the version changed.

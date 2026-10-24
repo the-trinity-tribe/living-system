@@ -1050,6 +1050,37 @@ def export(ws, target, apply=False):
     return files
 
 
+def export_check(zip_path):
+    """Open an export and confirm it holds a complete workspace. Read-only. Returns (problems, file count)."""
+    import zipfile
+    path = Path(zip_path).expanduser()
+    if not path.is_file():
+        raise Refusal(f"{path} is not a file")
+    try:
+        with zipfile.ZipFile(path) as z:
+            names = set(z.namelist())
+            bad = z.testzip()
+            manifest = json.loads(z.read(".living/manifest.json").decode("utf-8-sig")) \
+                if ".living/manifest.json" in names else None
+    except (zipfile.BadZipFile, OSError, ValueError, UnicodeDecodeError) as e:
+        raise Refusal(f"{path} cannot be read as an export ({type(e).__name__})") from None
+    problems = [f"damaged inside: {bad}"] if bad else []
+    unsafe = sorted(n for n in names if unsafe_rel(n.rstrip("/")))
+    problems += [f"unsafe path inside: {n}" for n in unsafe[:5]]
+    if not isinstance(manifest, dict) or not isinstance(manifest.get("files"), dict):
+        return problems + ["no readable .living/manifest.json: this is not a Living System export"], len(names)
+    for rel in ("AGENTS.md", "CONTEXT-ROUTING.md", ".living/profile.json", "tools/review.py"):
+        if rel not in names:
+            problems.append(f"missing {rel}")
+    gone = sorted(set(installed_files(manifest)) - names - set(EXPORT_SKIP_FILES))
+    if gone:
+        problems.append(f"{len(gone)} installed file(s) missing, e.g. {gone[0]}")
+    return problems, len(names)
+
+
+DOCTOR_MARK = "<!-- living-system health report: read-only -->"
+
+
 def read_no_follow(path):
     """Read a regular file without following a link that may have appeared after listing it."""
     import stat as _stat
@@ -2503,6 +2534,23 @@ def format_doctor(results):
     return "\n".join(lines + [f"{counts['ERROR']} error(s), {counts['WARN']} warning(s), {counts['INFO']} note(s)."])
 
 
+MENU = """Living System: everyday commands (run them from the Living System folder; on Windows type py instead of python3)
+
+  What needs me?            python3 tools/living.py status <workspace>
+  What changed while away?  python3 tools/living.py since <workspace> --days 14
+  Is everything healthy?    python3 tools/living.py doctor <workspace>
+  Park an idea              python3 tools/living.py park <workspace> "the idea"
+  Focus mode on or off      python3 tools/living.py focus <workspace> on
+  My onboarding path        python3 tools/living.py onboard <workspace>
+  Rules on paper            python3 tools/living.py handbook <workspace> --out <file.md>
+  Back up everything        python3 tools/living.py export <workspace> <file.zip> --apply
+  Check a backup            python3 tools/living.py export-check <file.zip>
+  Optional modules          python3 tools/living.py modules --workspace <workspace>
+
+Easier still: open the workspace in Claude Code or Codex and ask in your own words.
+All commands: python3 tools/living.py --help"""
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -2558,6 +2606,10 @@ def main(argv=None):
     pr.add_argument("--apply", action="store_true")
     d = sub.add_parser("doctor", help="read-only health check of a workspace")
     d.add_argument("workspace")
+    d.add_argument("--out", help="also save the report to this .md file outside the workspace")
+    xc = sub.add_parser("export-check", help="check that an export zip holds a complete workspace (read-only)")
+    xc.add_argument("file")
+    sub.add_parser("menu", help="the everyday commands, in plain words")
     s = sub.add_parser("status", help="what needs your attention, in plain words (read-only)")
     s.add_argument("workspace")
     sn = sub.add_parser("since", help="what changed while you were away, rules first (read-only)")
@@ -2604,6 +2656,9 @@ def main(argv=None):
     hb = sub.add_parser("handbook", help="a readable copy of your rules and workflows, for working without AI")
     hb.add_argument("workspace")
     hb.add_argument("--out", help="save it to this .md file outside the workspace (default: print it)")
+    if not (sys.argv[1:] if argv is None else argv):
+        print(MENU)
+        return 0
     a = ap.parse_args(argv)
     for name in ("workspace", "dir"):  # PowerShell passes ~ through unexpanded
         if getattr(a, name, None):
@@ -2696,9 +2751,22 @@ def main(argv=None):
                 print(f"Saved {write_handbook(a.workspace, os.path.expanduser(a.out), text)}. It is a copy, not the rules.")
             else:
                 print(text)
+        elif a.cmd == "menu":
+            print(MENU)
+        elif a.cmd == "export-check":
+            problems, n = export_check(a.file)
+            print(f"{n} entries. " + ("Complete: it can be restored (unzip into a new folder, then run upgrade)."
+                                      if not problems else "Problems:\n" + "\n".join(f"  - {p}" for p in problems)))
+            return 1 if problems else 0
         elif a.cmd == "doctor":
             results = doctor(a.workspace)
             print(format_doctor(results))
+            if a.out:
+                import datetime
+                report = (f"{DOCTOR_MARK}\n# Health report: {Path(a.workspace).resolve().name}\n\n"
+                          f"Made on {datetime.date.today()} with `living.py doctor`. Read-only: nothing was changed.\n\n"
+                          + "\n".join(f"- {line}" for line in format_doctor(results).splitlines()) + "\n")
+                print(f"Saved {write_handbook(a.workspace, os.path.expanduser(a.out), report, DOCTOR_MARK, 'health report')}.")
             return 1 if any(lvl == "ERROR" for lvl, _ in results) else 0
         else:
             stages = [s.strip() for s in a.stages.split(",") if s.strip()]

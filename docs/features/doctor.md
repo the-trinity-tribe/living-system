@@ -24,6 +24,9 @@ Nothing to install.
 
 ## How do you use it?
 
+To keep or share a copy of the result: `python3 tools/living.py doctor ~/my-workspace --out ~/Documents/health.md` (saved outside the workspace only).
+
+
 ```sh
 python3 tools/living.py doctor ~/my-workspace
 ```
