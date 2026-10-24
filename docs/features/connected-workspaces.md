@@ -62,6 +62,7 @@ python3 tools/living.py role-review ~/company roles/account-manager/inbox/2026-1
 
 Accepting moves it to `roles/account-manager/knowledge/`. Rejecting deletes the shared copy; the original stays in the sharer's workspace.
 
+- **Workflows for some roles only.** A company workflow whose `CONTEXT.md` has a line such as `Roles: sales, support` appears only on those people's onboarding paths.
 - **Stay up to date.** `status` shows how many company rules are in force; `since` (catch-up) lists company rule changes while you were away.
 
 ## Example scenarios

@@ -232,6 +232,7 @@ A company can keep one shared **company workspace** (made with `init --team`), a
 **In a personal workspace that is linked:**
 
 - For work done for the company, the company's current approved decisions are canonical (section 2, level 2) and come before personal decisions. List them with `python3 <company folder>/tools/review.py --root <company folder> current`. A personal decision never overrides a company decision; if they conflict, say so (section 5) and tell the human to raise it in the company workspace.
+- A company workflow whose `CONTEXT.md` has a line `Roles: <role>, <role>` is meant for those roles only; the onboarding path shows it only to them. Without that line it is for everyone.
 - What earlier people in the same role handed on is in `<company folder>/roles/<role>/knowledge/`. It is background knowledge (level 4), not rules.
 - Never write into the company folder. Knowledge reaches it only through `python3 <product folder>/tools/living.py share . <file>`, shown first as a plan and run with `--apply` only after the human read it and said yes. Use the `share-knowledge` skill.
 - When something in `knowledge/`, `workflows/` or `lessons/active.md` would help the next person in this role, you may suggest sharing it, once. Never share from `me/`, `handover/` or `incoming/`, and never anything with names, contact details or other personal information of anyone.

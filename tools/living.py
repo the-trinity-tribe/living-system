@@ -2166,9 +2166,12 @@ def onboarding_items(ws):
             for k in sorted(R.current_decisions(root), key=lambda k: (decs[k].get("date", ""), k)):
                 items.append((section, f"{prefix}:{k}", f"{title_of(root / k, k)}: read `{k}`{where}"))
 
-    def add_workflows(root, section, prefix, where):
+    def add_workflows(root, section, prefix, where, role=None):
         for ctx in sorted((root / "workflows").glob("*/CONTEXT.md")) if (root / "workflows").is_dir() else []:
             rel = ctx.relative_to(root).as_posix()
+            roles = re.search(r"^Roles:\s*(.+)$", ctx.read_text(encoding="utf-8", errors="replace"), re.M | re.I)
+            if role is not None and roles and role not in re.split(r"[\s,]+", roles.group(1).strip().lower()):
+                continue  # this company workflow names its roles, and this person's role is not one of them
             items.append((section, f"{prefix}:{rel}", f"{title_of(ctx, ctx.parent.name)}: read `{rel}`{where}"))
 
     org = org_folder(ws)
@@ -2188,7 +2191,7 @@ def onboarding_items(ws):
             for p in sorted((org / "roles" / role / "knowledge").glob("*.md")):
                 rel = p.relative_to(org).as_posix()
                 items.append((ONBOARD_SECTIONS[2], f"company:{rel}", f"{title_of(p, p.stem)}: read `{rel}`{there}"))
-        add_workflows(org, ONBOARD_SECTIONS[3], "company", there)
+        add_workflows(org, ONBOARD_SECTIONS[3], "company", there, str(role or ""))
     add_rules(ws, ONBOARD_SECTIONS[4], "here", "")
     add_workflows(ws, ONBOARD_SECTIONS[5], "here", "")
     if (ws / "lessons/active.md").is_file():

@@ -9,6 +9,7 @@ Plain words first. Exact commands are under the heading that needs them. Every f
 - [AI tools](ai-tools.md): which AI tools work with Living System, what to install, what the permission prompts mean, and how to stay safe.
 - [INSTALL.md](../INSTALL.md): the guided setup your agent follows when you say "Read INSTALL.md and set up my workspace."
 - [README](../README.md): what Living System is and the quick start.
+- [Local-first and resource use](local-first.md): what runs offline on your computer, what needs an AI agent, and what is not measured.
 
 ## Features
 

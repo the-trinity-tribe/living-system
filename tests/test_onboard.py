@@ -82,6 +82,15 @@ class TestOnboard(unittest.TestCase):
         self.assertIn("all 1 item(s) done", r.stdout)
         self.assertNotIn("Onboarding:", L.status(self.me))
 
+    def test_company_workflows_can_name_their_roles(self):
+        L.link(self.me, self.org, "sales")
+        write(self.org / "workflows/payroll/CONTEXT.md", "# Payroll\n\nRoles: finance, hr\n")
+        write(self.org / "workflows/pitch/CONTEXT.md", "# Pitch\n\nRoles: Sales\n")
+        ids = self.ids()
+        self.assertNotIn("company:workflows/payroll/CONTEXT.md", ids)
+        self.assertIn("company:workflows/pitch/CONTEXT.md", ids)
+        self.assertIn("company:workflows/weekly-update/CONTEXT.md", ids)  # no Roles line: for everyone
+
     def test_rules_and_skill(self):
         self.assertIn("**Onboarding.**", (REPO / "core/template/AGENTS.md").read_text(encoding="utf-8"))
         self.assertTrue((self.me / ".agents/skills/onboarding/SKILL.md").is_file())
