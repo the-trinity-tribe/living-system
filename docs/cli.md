@@ -1,6 +1,6 @@
 # Command reference
 
-Status: EXPERIMENTAL. Version: next (not yet released).
+Status: EXPERIMENTAL. Version: 0.2.0 preview 2.
 
 Every command, in plain words. Run them from the Living System folder; on Windows type `py` instead of `python3`. Several commands show a plan first and change nothing until you add `--apply`; their description says so. Full options: `python3 tools/living.py <command> --help`.
 

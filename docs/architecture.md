@@ -1,6 +1,6 @@
 # How Living System is built
 
-Status: EXPERIMENTAL. Version: next (not yet released).
+Status: EXPERIMENTAL. Version: 0.2.0 preview 2.
 
 A short overview for anyone who wants to understand or contribute. No code knowledge needed for the first two sections.
 

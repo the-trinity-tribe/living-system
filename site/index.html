@@ -21,6 +21,8 @@
   --live-bg:#DDEEE3;
   --replay:#3A4FA8;
   --replay-bg:#E4E8F7;
+  --exp:#7A3E8C;
+  --exp-bg:#F1E4F5;
   --road:#8A5A00;
   --road-bg:#F6EBD2;
   --mark:#FFE9A0;
@@ -44,6 +46,10 @@
     --live-bg:#1B3226;
     --replay:#AFBBFF;
     --replay-bg:#222A52;
+  --exp:#E2B3F0;
+  --exp-bg:#3A2443;
+    --exp:#E2B3F0;
+    --exp-bg:#3A2443;
     --road:#EDBE5C;
     --road-bg:#3A2D10;
     --mark:#5A4A12;
@@ -132,11 +138,13 @@ main{min-width:0}
 .chip[data-s="LIVE"]::before{width:.55em;height:.55em;border-radius:50%;background:currentColor}
 .chip[data-s="REPLAY"]{color:var(--replay);background:var(--replay-bg)}
 .chip[data-s="REPLAY"]::before{border-style:solid;border-width:.32em 0 .32em .55em;border-color:transparent transparent transparent currentColor}
+.chip[data-s="EXPERIMENTAL"]{color:var(--exp);background:var(--exp-bg);border-style:dotted}
+.chip[data-s="EXPERIMENTAL"]::before{width:.55em;height:.55em;border-radius:50% 0;background:currentColor}
 .chip[data-s="ROADMAP"]{color:var(--road);background:var(--road-bg);border-style:dashed}
 .chip[data-s="ROADMAP"]::before{width:.5em;height:.5em;border:1.5px solid currentColor;transform:rotate(45deg)}
 .chiprow{display:flex;flex-wrap:wrap;gap:.6rem 1rem;align-items:center;margin:0 0 1.25rem}
 .legend{list-style:none;margin:1.75rem 0 0;padding:0;display:grid;gap:.6rem}
-.legend li{display:grid;grid-template-columns:6.2rem minmax(0,1fr);gap:.75rem;align-items:start;font-size:.95rem}
+.legend li{display:grid;grid-template-columns:8.6rem minmax(0,1fr);gap:.75rem;align-items:start;font-size:.95rem}
 
 /* hero */
 .hero{padding-block:2.5rem 3rem}
@@ -321,7 +329,7 @@ footer.site{margin-top:4rem;padding-block:2rem 4rem;border-top:1px solid var(--l
     <header class="hero" id="top">
       <h1>Living System</h1>
       <p class="lede">One set of plain files that you and your AI agents share. Agents can suggest changes to what you decided. They never quietly replace it.</p>
-      <p class="origin">Invented and tested by Adrianna Mamczarz inside The Trinity Tribe. Free and open source (MPL-2.0).</p>
+      <p class="origin">Invented and tested by Adrianna Mamczarz inside The Trinity Tribe. Free and open source (MPL-2.0). Version 0.2.0 preview 2, open for testing and feedback.</p>
       <div class="cta" data-md="skip">
         <a class="btn primary" href="#ch3">Watch a replay</a>
         <a class="btn" href="#ch11">Try it yourself</a>
@@ -385,7 +393,7 @@ footer.site{margin-top:4rem;padding-block:2rem 4rem;border-top:1px solid var(--l
       <details class="how">
         <summary>How it works: what "within permissions" means</summary>
         <div>
-          <p>You choose which folder the agent opens and what it may read or change. The agent tool asks for your approval in the ways its own settings allow. Those settings differ between tools, so check them before you put real material in a folder (see chapter 10).</p>
+          <p>You choose which folder the agent opens and what it may read or change. The agent tool asks for your approval in the ways its own settings allow. Those settings differ between tools, so check them before you put real material in a folder (see chapter 13).</p>
         </div>
       </details>
           <p class="doclinks"><span>Read more:</span> <a href="https://github.com/the-trinity-tribe/living-system/blob/main/docs/ai-tools.md">Which AI tool you need, and what the permissions mean</a></p>
@@ -477,8 +485,8 @@ footer.site{margin-top:4rem;padding-block:2rem 4rem;border-top:1px solid var(--l
       </div>
       <div class="planned built" id="module-picker">
         <h3>Add only what you need <span data-status="modulePicker"></span></h3>
-        <p>Five optional modules to start: a weekly update, meeting notes that turn remarks into proposals, lessons the agent may suggest but only you approve, a knowledge inbox that keeps sources and reminds you to re-check old facts, and a second check where a fresh agent reviews important work before you decide. Every command shows its plan first and writes nothing until you say yes. Removing a module keeps the files you edited and never touches your decisions.</p>
-        <p class="small">Suggestions are an instruction to the agent: it mentions a fitting module when the same need keeps coming up. Nothing watches or counts your work.</p>
+        <p>Eleven optional modules: a weekly update; meeting notes that turn remarks into proposals; lessons the agent may suggest but only you approve; a knowledge inbox with sources and re-check reminders; a second check by a fresh agent; a careful run for bigger work, with a run card you can pause and resume safely; a work audit before adding AI; a research review from dated sources; client intake; content preparation; and a small experiment that measures one change honestly. Every command shows its plan first and writes nothing until you say yes. Removing a module keeps the files you edited and never touches your decisions.</p>
+        <p class="small">Suggestions are an instruction to the agent: it mentions a fitting module when the same need keeps coming up, and only after the third time for repeated work. Nothing watches your work; the count holds short names and dates you can see and delete.</p>
       </div>
           <p class="doclinks"><span>Read more:</span> <a href="https://github.com/the-trinity-tribe/living-system/blob/main/docs/features/workspace-setup.md">Workspace setup: profiles and languages</a> · <a href="https://github.com/the-trinity-tribe/living-system/blob/main/docs/features/modules.md">Optional modules</a></p>
     </section>
@@ -595,6 +603,74 @@ footer.site{margin-top:4rem;padding-block:2rem 4rem;border-top:1px solid var(--l
           <p class="doclinks"><span>Read more:</span> <a href="https://github.com/the-trinity-tribe/living-system/blob/main/docs/ai-tools.md">Claude Code, Codex and AGENTS.md</a></p>
     </section>
 
+
+    <!-- agency -->
+    <section class="chapter" id="ch-agency" aria-labelledby="h-agency">
+      <h2 id="h-agency">Your agent's limits, on one honest page</h2>
+      <div class="prose">
+        <p>Trust in an AI agent should be specific, earned and easy to take back. One command shows who may do what in your workspace, and says for every line whether a tool actually blocks it or the agent is only told to follow it.</p>
+      </div>
+      <div class="chiprow"><span data-status="agencyTool"></span></div>
+      <div class="cmd"><pre><code>python3 tools/living.py agency ~/my-workspace</code></pre><button class="btn small" type="button" data-copy-text="python3 tools/living.py agency ~/my-workspace" data-md="skip">Copy command</button></div>
+      <h3>Room to act, one kind of work at a time <span data-status="delegation"></span></h3>
+      <ol class="plain">
+        <li><strong>Observe:</strong> it may read and report.</li>
+        <li><strong>Recommend:</strong> it suggests; you do it.</li>
+        <li><strong>Draft:</strong> it prepares; you check and use it. This is the level for everything you have not delegated.</li>
+        <li><strong>Act with approval:</strong> it does it after your yes, each time.</li>
+        <li><strong>Bounded:</strong> it may act alone, inside a stated scope, until a review date at most 90 days away.</li>
+      </ol>
+      <div class="callout note"><p><strong>Earned, never assumed:</strong> a delegation is a proposal you approve, with the evidence written in it, and you withdraw it by retiring it. Publishing, sending, spending, deleting, signing and changing rules never go above "act with approval". Delegations are instructions, not technical permissions; the write guard stays on whatever you delegate.</p></div>
+      <h3>Your own terms <span data-status="agreement"></span></h3>
+      <div class="prose">
+        <p>Every workspace has a short work agreement you write yourself: how you like answers, when not to interrupt you, which skills you want to keep, what must never be handed over, when you want to be challenged, and what time saved by the agent is for. The agent reads it each session. It never adds to it or guesses things about you.</p>
+      </div>
+          <p class="doclinks"><span>Read more:</span> <a href="https://github.com/the-trinity-tribe/living-system/blob/main/docs/features/agency.md">Agency and delegation</a> · <a href="https://github.com/the-trinity-tribe/living-system/blob/main/docs/features/work-agreement.md">Personal work agreement</a> · <a href="https://github.com/the-trinity-tribe/living-system/blob/main/docs/ethics.md">Ethics and guardrails</a></p>
+    </section>
+
+    <!-- teams -->
+    <section class="chapter" id="ch-teams" aria-labelledby="h-teams">
+      <h2 id="h-teams">Knowledge that outlives a role</h2>
+      <div class="prose">
+        <p>When someone leaves a role, most of what they learned leaves with them. A company can keep one shared workspace, while each person keeps a private one linked to it.</p>
+      </div>
+      <div class="chiprow"><span data-status="teams"></span></div>
+      <ol class="plain">
+        <li><strong>Hand on:</strong> a person shares one note, lesson or workflow. Contact details, account numbers, secrets and hidden instructions are refused, and they see exactly what will be shared first.</li>
+        <li><strong>Someone else accepts it:</strong> in a team workspace, nobody approves their own change or accepts their own share.</li>
+        <li><strong>The next person starts informed:</strong> their onboarding path shows the company's rules first, then what earlier people in the role handed on, a few items at a time. <span data-status="onboarding"></span></li>
+      </ol>
+      <h3>Learning, not just doing <span data-status="learning"></span></h3>
+      <div class="prose">
+        <p>The agent explains its choices and says when it is unsure. In coach mode it offers to let you try first and checks after. It can quiz you on your own rules, look at a big decision from several viewpoints, and print a handbook so the work can go on without any AI.</p>
+      </div>
+          <p class="doclinks"><span>Read more:</span> <a href="https://github.com/the-trinity-tribe/living-system/blob/main/docs/features/connected-workspaces.md">Connected workspaces</a> · <a href="https://github.com/the-trinity-tribe/living-system/blob/main/docs/features/onboarding.md">Onboarding path</a> · <a href="https://github.com/the-trinity-tribe/living-system/blob/main/docs/features/learning-mode.md">Learning mode</a></p>
+    </section>
+
+    <!-- calm -->
+    <section class="chapter" id="ch-calm" aria-labelledby="h-calm">
+      <h2 id="h-calm">Calm by design</h2>
+      <div class="prose">
+        <p>A tool that saves time should not cost attention. These small helpers keep you on one task and let you pick things up later, on your terms.</p>
+      </div>
+      <div class="chiprow"><span data-status="calmTools"></span></div>
+      <div class="tablewrap">
+        <table class="stack">
+          <thead><tr><th scope="col">You want to…</th><th scope="col">Say or run</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Know what needs you</th><td data-label="Say or run"><code>living.py status</code>, or "What needs my attention?"</td></tr>
+            <tr><th scope="row">Catch up after a holiday</th><td data-label="Say or run"><code>living.py since --days 14</code>: changed rules first</td></tr>
+            <tr><th scope="row">Keep an idea without switching task</th><td data-label="Say or run">"Park this", with what needs deciding and a date to look again</td></tr>
+            <tr><th scope="row">Work without suggestions</th><td data-label="Say or run"><code>living.py focus on</code></td></tr>
+            <tr><th scope="row">See what relies on a rule</th><td data-label="Say or run"><code>living.py atlas</code></td></tr>
+            <tr><th scope="row">Tidy up, one item at a time</th><td data-label="Say or run">"Let's tend for ten minutes" <span data-status="tend"></span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout note"><p><strong>No surveillance, no scores:</strong> nothing watches your screen or your time, nothing runs in the background, and there is no productivity score. Value is reported in four separate kinds (human experience, business outcomes, reliability, resources), and anything not measured is called that.</p></div>
+          <p class="doclinks"><span>Read more:</span> <a href="https://github.com/the-trinity-tribe/living-system/blob/main/docs/features/parking-and-tending.md">Parking, tending and focus</a> · <a href="https://github.com/the-trinity-tribe/living-system/blob/main/docs/features/catch-up.md">Catch-up</a> · <a href="https://github.com/the-trinity-tribe/living-system/blob/main/docs/features/atlas.md">Atlas</a></p>
+    </section>
+
     <!-- 10 -->
     <section class="chapter" id="ch10" aria-labelledby="h10-10">
       <h2 id="h10-10">What it is not</h2>
@@ -603,7 +679,8 @@ footer.site{margin-top:4rem;padding-block:2rem 4rem;border-top:1px solid var(--l
         <li><strong>No access control.</strong> Anyone who can open the folder can read and change the files.</li>
         <li><strong>No identity check.</strong> A name in <code>approved_by</code> or <code>--by</code> is a label someone typed, not proof of who they are.</li>
         <li><strong>No compliance guarantees.</strong> It is not a security boundary and makes no data-protection claims.</li>
-        <li><strong>Agent rules are instructions, not enforcement.</strong> An agent is asked to follow them. Nothing forces it to.</li>
+        <li><strong>Most agent rules are instructions.</strong> A write guard blocks the most important edits (your rules, approvals, secrets in files) in Claude Code, and in Codex once you trust its hooks. Everything else is an instruction; <code>living.py agency</code> shows which is which.</li>
+        <li><strong>No monitoring.</strong> It does not watch your screen, apps or time, and it never scores people.</li>
         <li><strong>Not a hosted product.</strong> It is plain files and a small Python tool on your computer.</li>
       </ul>
       <div class="callout"><p>The example organisation is a demonstration, not a recommended setup for real client or personal data. Review any material before you put it in an AI agent's context.</p></div>
@@ -627,7 +704,10 @@ footer.site{margin-top:4rem;padding-block:2rem 4rem;border-top:1px solid var(--l
       <h3>4. See what needs your attention</h3>
       <p class="prose">Any time, this lists proposals waiting for your review, drafts you have not approved and where the last session stopped. It changes nothing. When a newer Living System comes out, <code>upgrade</code> updates only the files you never changed.</p>
       <div class="cmd"><pre><code>python3 -B tools/living.py status ~/my-workspace</code></pre><button class="btn small" type="button" data-copy-text="python3 -B tools/living.py status ~/my-workspace" data-md="skip">Copy command</button></div>
-      <p><a class="btn primary" href="https://github.com/the-trinity-tribe/living-system">Living System on GitHub</a></p>
+      <p class="prose">Run <code>python3 tools/living.py</code> on its own for a short menu of everyday commands.</p>
+      <h3>5. Tell us how it went</h3>
+      <p class="prose">This is a preview. The testing guide has a 30-minute path, and the feedback form takes plain words.</p>
+      <p><a class="btn primary" href="https://github.com/the-trinity-tribe/living-system">Living System on GitHub</a> <a class="btn" href="https://github.com/the-trinity-tribe/living-system/blob/main/TESTING.md">Testing guide</a></p>
           <p class="doclinks"><span>Read more:</span> <a href="https://github.com/the-trinity-tribe/living-system/blob/main/INSTALL.md">Guided setup</a> · <a href="https://github.com/the-trinity-tribe/living-system/blob/main/docs/features/status.md">status</a> · <a href="https://github.com/the-trinity-tribe/living-system/blob/main/docs/features/upgrade.md">upgrade</a> · <a href="https://github.com/the-trinity-tribe/living-system/blob/main/docs/README.md">All docs</a></p>
     </section>
 
@@ -651,9 +731,10 @@ footer.site{margin-top:4rem;padding-block:2rem 4rem;border-top:1px solid var(--l
           <thead><tr><th scope="col">Skill</th><th scope="col">Evidence</th></tr></thead>
           <tbody>
             <tr><th scope="row">Systems design</th><td data-label="Evidence">The order of trust and the full proposal-to-decision cycle: <a href="#ch3">chapter 3</a>, <a href="#ch4">chapter 4</a>, <a href="https://github.com/the-trinity-tribe/living-system/blob/main/core/template/AGENTS.md">AGENTS.md</a>.</td></tr>
-            <tr><th scope="row">Governance and approval boundaries</th><td data-label="Evidence">A note cannot change a decision; a human must approve, and the old rule stays as history: <a href="#ch4">chapter 4</a>, <a href="#ch10">chapter 10</a>.</td></tr>
+            <tr><th scope="row">Governance and approval boundaries</th><td data-label="Evidence">A note cannot change a decision; a human must approve, and the old rule stays as history: <a href="#ch4">chapter 4</a>, <a href="#ch10">chapter 13</a>.</td></tr>
             <tr><th scope="row">Knowledge architecture</th><td data-label="Evidence">Routing an agent to the smallest set of files: <a href="#ch3">chapter 3</a>, <a href="https://github.com/the-trinity-tribe/living-system/blob/main/core/template/CONTEXT-ROUTING.md">CONTEXT-ROUTING.md</a>.</td></tr>
             <tr><th scope="row">AI-assisted implementation</th><td data-label="Evidence">The README states how AI was used and where humans decided: <a href="https://github.com/the-trinity-tribe/living-system/blob/main/README.md">README.md</a>.</td></tr>
+            <tr><th scope="row">Human sustainability and ethics</th><td data-label="Evidence">Delegation that is earned and reversible, a work agreement the person writes, no monitoring or scores, four kinds of value kept apart: <a href="#ch-agency">chapter 10</a>, <a href="#ch-calm">chapter 12</a>, <a href="https://github.com/the-trinity-tribe/living-system/blob/main/docs/ethics.md">ethics</a>.</td></tr>
             <tr><th scope="row">Accessible UX</th><td data-label="Evidence">This page: keyboard-operable walk-throughs (<a href="#ch3">chapter 3</a>), status chips that use a word and a shape, not only colour, light and dark themes, reduced-motion support.</td></tr>
           </tbody>
         </table>
@@ -662,7 +743,7 @@ footer.site{margin-top:4rem;padding-block:2rem 4rem;border-top:1px solid var(--l
     </section>
 
     <footer class="site">
-      <p class="small prose">Moss &amp; Circuit, Riverside Community Garden and every person named in the example are fictional. The placement office in chapter 5 is made up for this page. Living System is an experimental v0.1 reference implementation, not a security product.</p>
+      <p class="small prose">Moss &amp; Circuit, Riverside Community Garden and every person named in the example are fictional. The placement office in chapter 5 is made up for this page. Living System is an experimental 0.2.0 preview, not a security product.</p>
       <div class="cta" data-md="skip">
         <button class="btn" type="button" data-copy-md>Copy as Markdown</button>
         <button class="btn" type="button" id="dl-md">Download .md</button>
@@ -677,6 +758,7 @@ footer.site{margin-top:4rem;padding-block:2rem 4rem;border-top:1px solid var(--l
    LIVE    = runs today
    REPLAY  = scripted walk-through (the file text is copied from the repository,
              except chapter 5, which uses made-up text)
+   EXPERIMENTAL = available today, but the agent follows it as an instruction and it is not yet tested in live sessions
    ROADMAP = planned, not available yet */
 const STATUS = {
   profiles:    "LIVE",
@@ -687,11 +769,20 @@ const STATUS = {
   jobScenario: "REPLAY",
   crossAgent:  "REPLAY",
   modulePicker:"LIVE",
-  icmGenerator:"LIVE"
+  icmGenerator:"LIVE",
+  agencyTool:  "LIVE",
+  delegation:  "EXPERIMENTAL",
+  agreement:   "EXPERIMENTAL",
+  teams:       "LIVE",
+  onboarding:  "EXPERIMENTAL",
+  learning:    "EXPERIMENTAL",
+  calmTools:   "LIVE",
+  tend:        "EXPERIMENTAL"
 };
 const CHIP_INFO = {
   LIVE:    {tip:"Runs today",                       text:"You can run this today."},
   REPLAY:  {tip:"Scripted walk-through",            text:"A scripted walk-through. It is not a live agent run."},
+  EXPERIMENTAL: {tip:"Available, not yet live-tested", text:"Available today, but the agent follows it as an instruction, and it has not yet been tested in live sessions."},
   ROADMAP: {tip:"Planned, not available yet",       text:"Planned. It does not exist yet."}
 };
 

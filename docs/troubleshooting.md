@@ -1,6 +1,6 @@
 # Troubleshooting
 
-Status: EXPERIMENTAL. Version: next (not yet released).
+Status: EXPERIMENTAL. Version: 0.2.0 preview 2.
 
 Common problems and what to do, in plain words. If yours is not here, [open an issue](https://github.com/the-trinity-tribe/living-system/issues/new/choose) and paste the exact message.
 

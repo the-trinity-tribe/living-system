@@ -1,6 +1,6 @@
 # Ethics and guardrails
 
-Status: EXPERIMENTAL. Version: next (not yet released).
+Status: EXPERIMENTAL. Version: 0.2.0 preview 2.
 
 Living System is built so that people keep control of their work and their skills. This page lists the guardrails, how each one is upheld, and, honestly, whether a **tool enforces** it or it is a **rule** the agent is told to follow.
 

@@ -2,20 +2,31 @@
 
 All notable changes. Dates are when a version was prepared. Versions before 1.0 are experimental: details may change between them.
 
-## Unreleased
+## 0.2.0 preview 2 (2026-10-24)
+
+Agency and delegation, a personal work agreement, knowledge composting, small experiments, an atlas and more, after a second capability review. Release notes: [docs/releases/0.2.0-preview.2.md](docs/releases/0.2.0-preview.2.md).
 
 ### Added
 
 - **Agency and delegation:** `living.py agency` shows who may do what in a workspace, marking what a tool enforces and what is an instruction. `living.py delegate` proposes a delegation level (observe, recommend, draft, act-with-approval, bounded) for one kind of work; it takes effect only when a human approves it and is withdrawn by retiring it. Bounded autonomy needs a scope and a review date within 90 days, and publishing, sending, spending, deleting, signing and changing rules never go above act-with-approval. AGENTS.md section 15.
 - **Personal work agreement:** `me/agreement.md` (English, German, Polish) for how you want to work with AI: answers, who does what, interruptions, skills to keep, limits, sharing, explanations, when to be challenged, and what saved time is for. The agent reads it each session and never adds to it on its own; a protected-time rule keeps it from filling saved time with more work. `upgrade` adds the file to older workspaces only if none exists; nothing in `me/` is ever changed.
-- **Fixed after the seventh code review (20 defects):** composting reads under the lock and keeps file permissions; proposals, delegations and compost reasons refuse secrets; an amended delegation is read at its lowest level, a new level replaces the old delegation, and review dates are validated; `agency` only reports the guard as enforced when a hook really runs it on writes, and no longer claims review is the only way a decision can appear; upgrade re-checks links before writing; atlas skips linked folders and reads relative Markdown links; shared knowledge keeps its confidence.
-- **Docs:** a [command reference](docs/cli.md) (a test keeps it complete), [troubleshooting](docs/troubleshooting.md) and an [architecture overview](docs/architecture.md); the testing checklist covers the new features.
-- **Atlas, perspectives and more:** `living.py atlas` maps rules in force, what relies on each, their history, and references to rules no longer in force (with a Mermaid diagram). A `perspectives` skill looks at an important decision from several viewpoints by role, with evidence apart from interpretation and one human decision. `share --withdraw` removes your shared file while it still waits for review. Careful-run's verify and hand-back now say how far the work got (planned to reported).
-- **Small experiments and four kinds of value:** an optional `small-experiment` module (starting point, one versioned change, business, human, resource and reliability measures kept apart, keep/revise/revert, no causal claims). The evidence summary now reports the four kinds separately and says plainly what was not measured. New [ethics page](docs/ethics.md) listing each guardrail and whether a tool enforces it.
 - **Decision escrow:** `park` takes an optional `--decide` (what needs deciding) and `--again` (a date to look again); `status` lists items whose date has come. Nothing parked is acted on.
 - **Knowledge metabolism:** optional `confidence: low | medium | high` on knowledge files (doctor notes low ones); `living.py compost` moves outdated knowledge to `knowledge/archive/` with the date and reason, out of upkeep, sharing and daily use but kept as history. The `tend` skill now also offers composting, merging duplicates, and turning lessons that keep coming up into proposals.
+- **Small experiments and four kinds of value:** an optional `small-experiment` module (starting point, one versioned change, business, human, resource and reliability measures kept apart, keep/revise/revert, no causal claims). The evidence summary now reports the four kinds separately and says plainly what was not measured. New [ethics page](docs/ethics.md) listing each guardrail and whether a tool enforces it.
+- **Atlas, perspectives and more:** `living.py atlas` maps rules in force, what relies on each, their history, and references to rules no longer in force (with a Mermaid diagram). A `perspectives` skill looks at an important decision from several viewpoints by role, with evidence apart from interpretation and one human decision. `share --withdraw` removes your shared file while it still waits for review. Careful-run's verify and hand-back now say how far the work got (planned to reported).
+- **Docs:** a [command reference](docs/cli.md) (a test keeps it complete), [troubleshooting](docs/troubleshooting.md) and an [architecture overview](docs/architecture.md); the testing checklist covers the new features.
+- **Pitch page:** three new chapters (your agent's limits, knowledge that outlives a role, calm by design), the module list brought up to date, and a fourth status chip, EXPERIMENTAL, for features the agent follows as instructions that are not yet tested in live sessions.
 
-## 0.2.0 preview (2026-10-24)
+### Changed
+
+- `upgrade` may now add a new personal starter file (such as `me/agreement.md`) when you have none; it still never changes anything already in `me/`.
+- The evidence summary is grouped into four kinds of value (human experience and agency, business outcomes, reliability, resources).
+
+### Fixed
+
+- Seven read-only code reviews have now found 144 defects; the 20 from the seventh are fixed, each with a test: composting reads under the lock and keeps file permissions; proposals, delegations and compost reasons refuse secrets; an amended delegation is read at its lowest level, a new level replaces the old delegation, and review dates are validated; `agency` only reports the guard as enforced when a hook really runs it on writes, and no longer claims review is the only way a decision can appear; upgrade re-checks links before writing; atlas skips linked folders and reads relative Markdown links; shared knowledge keeps its confidence.
+
+## 0.2.0 preview 1 (2026-10-24)
 
 From a governance demo to a workspace you can install and grow. Released as a preview for testing and feedback; the final 0.2.0 follows after a round of hands-on testing. Release notes: [docs/releases/0.2.0-preview.1.md](docs/releases/0.2.0-preview.1.md).
 

@@ -63,7 +63,7 @@ Plain words first. Exact commands are under the heading that needs them. Every f
 
 - [Testing guide](../TESTING.md): a 30-minute path for first-time testers, and how to give feedback.
 - [Contributing](../CONTRIBUTING.md) and the [code of conduct](../CODE_OF_CONDUCT.md).
-- [Release notes for 0.2.0 preview 1](releases/0.2.0-preview.1.md).
+- Release notes: [0.2.0 preview 2](releases/0.2.0-preview.2.md), [0.2.0 preview 1](releases/0.2.0-preview.1.md).
 
 - [Evaluation: a small local decision model](evaluations/laya/README.md): Laya tested against keyword rules on 72 labelled requests; not adopted, with the numbers.
 - [Roadmap and capability review](roadmap.md): what exists, what comes next, and what will not be built, with reasons.

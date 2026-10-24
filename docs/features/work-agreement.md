@@ -1,6 +1,6 @@
 # Feature: personal work agreement
 
-Status: EXPERIMENTAL. Version: next (not yet released).
+Status: EXPERIMENTAL. Version: 0.2.0 preview 2.
 
 ## What does this feature do?
 

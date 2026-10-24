@@ -1,6 +1,6 @@
 # Living System
 
-**Experimental · local-first Human–AI work environment · version 0.2.0 preview, open for testing and feedback**
+**Experimental · local-first Human–AI work environment · version 0.2.0 preview 2, open for testing and feedback**
 
 Living System gives your AI agent a **written memory that you control**. Your rules, knowledge and working context live in plain files on your computer. Claude Code or Codex read them at the start of every session. The agent can *propose* changes; only you approve them.
 
@@ -127,7 +127,7 @@ The demo shows one rule's whole life: contradictory evidence, a proposal, a huma
 
 - **No login, no identity check.** Names in approvals (`--by`, `approved_by`) are labels, not proof of who someone is.
 - **Agent rules are instructions.** The write guard enforces the most important ones in Claude Code, and in Codex once you trust its hooks. Everything else, and anything changed outside the agent, is not enforced. Scans recognise common patterns, not every trick.
-- **Agent behaviour is less tested than the tools.** Over 350 automated tests cover the tools on Linux, Windows and macOS. Skills and coaching are instructions to the agent; live sessions are recorded in [demo/WALKTHROUGH.md](demo/WALKTHROUGH.md), and this preview asks testers to try them.
+- **Agent behaviour is less tested than the tools.** Over 400 automated tests cover the tools on Linux, Windows and macOS. Skills and coaching are instructions to the agent; live sessions are recorded in [demo/WALKTHROUGH.md](demo/WALKTHROUGH.md), and this preview asks testers to try them.
 - **Languages.** Starter files in English, German and Polish (a native-speaker review would help). Agent rule files and tool messages are English.
 - **Not measured:** time or money saved, and energy use. See [local-first](docs/local-first.md).
 - What it will not do, and which guardrails a tool enforces: [ethics](docs/ethics.md).
