@@ -94,8 +94,8 @@ Living System's tools never call an AI model; they read and write plain files. A
 | | Reads your rules | Write guard | Tested |
 | --- | :---: | :---: | --- |
 | **Claude Code** | ✓ | ✓ | 13 live scenarios |
-| **Codex** | ✓ | ✓ once you trust its hooks | 13 live scenarios |
-| **Hermes Agent** | ✓ | | One live question; use a separate profile |
+| **Codex** | ✓ | ✓ once you trust its hooks | 13 live scenarios, plus the guard |
+| **Hermes Agent** | ✓ | | Two live checks in a clean profile; use a separate profile |
 | **OpenCode, Cursor and other `AGENTS.md` agents** | per their docs | | Not yet |
 | **Local models** | through an agent above | | Not yet; needs a large context window |
 

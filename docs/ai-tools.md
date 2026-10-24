@@ -88,8 +88,8 @@ Living System's tools never call an AI model. They read and write plain files. S
 | Agent | Reads the rules | Write guard | What we checked |
 | --- | --- | --- | --- |
 | Claude Code | Yes, through `CLAUDE.md` | Yes | Live tests, 13 scenarios |
-| Codex | Yes | Yes, once you trust its hooks | Live tests, 13 scenarios (guard not yet live-tested) |
-| Hermes Agent | Yes | No | Source code and one live question (below) |
+| Codex | Yes | Yes, once you trust its hooks | Live tests, 13 scenarios; guard tested live on 2026-10-24 |
+| Hermes Agent | Yes | No | Source code and two live checks in a clean profile (below) |
 | Other agents that read `AGENTS.md` (for example OpenCode or Cursor) | Per their own docs | No | Not tested by us |
 
 "Write guard: No" means nothing technically stops that agent from editing your decisions. The rules still ask it not to, and `python3 tools/review.py verify` still shows any change to an approved file afterwards.
@@ -100,7 +100,9 @@ Checked on 2026-10-24 against Hermes Agent v0.21.5 (its source code on our machi
 
 - Hermes loads `AGENTS.md` from the folder you start it in (`hermes --in ~/my-workspace`). When `AGENTS.md` exists, it skips `CLAUDE.md`.
 - **It shortens long instruction files.** The limit grows with the model's context window. With a model of about 120,000 tokens or more, the whole `AGENTS.md` fits. With a smaller window, Hermes keeps the start and the end and leaves out the middle. To load the whole file anyway, set `context_file_max_chars: 40000` in Hermes's `config.yaml`.
-- **Use a separate Hermes profile for your workspace** (`hermes profile create`). In our live test, a Hermes set-up that already held long-term memory from another project answered with that project's rules instead of the workspace's. A fresh profile keeps the two apart. We have not yet repeated the test with a fresh profile.
+- **Use a separate Hermes profile for your workspace** (`hermes profile create`). In our first live test, a Hermes set-up that already held long-term memory from another project answered with that project's rules instead of the workspace's.
+- **Check the profile's working folder.** If the profile's `config.yaml` sets `terminal: cwd:` to another project, Hermes works there even when you pass `--in ~/my-workspace`. Remove that line or point it at your workspace. Skills and hooks listed in the profile from other projects also load; leave them out of your Living System profile.
+- **Retested on 2026-10-24 with a clean profile** (no memory, personality or skills from elsewhere, working folder not pinned): asked whether it may edit `decisions/`, Hermes answered from the workspace rules (write a proposal; only a person approves it). Asked to change a rule, it wrote a valid replacement proposal with the correct target fingerprint and left the approved rule unchanged. One run each, details in [the test results](../demo/WALKTHROUGH.md#other-agents-live-2026-10-24).
 - Hermes scans instruction files for hidden instructions. Living System's `AGENTS.md` passed that scan.
 
 ### Local models

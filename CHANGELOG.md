@@ -4,6 +4,7 @@ All notable changes. Dates are when a version was prepared. Versions before 1.0 
 
 ## Unreleased
 
+- Live tests: the Codex write guard blocked a direct edit of an approved rule; Hermes Agent, in a clean profile, answered from the workspace rules and wrote a valid proposal instead of editing. Found and documented: a Hermes profile that pins its working folder to another project overrides `--in`.
 - Credits expanded: CREDITS.md now names everyone whose work inspired Living System (ICM by Jake Van Clief and David McDermott, David Shapiro, Jacque Fresco, Anthropic's Building effective agents by Erik Schluntz and Barry Zhang, Mem0, Microsoft Research's SkillOpt, awesome-harness-engineering, and more), what each inspired, and that none of them built or endorsed it. Short versions in the README and the pitch page.
 - New headline for the whole system: "Your context, your rules, any AI agent". The README banner and benefits now lead with owning your context, switching agents without starting over, a lean context instead of growing memory, and modules that grow with you; the human review is the proof of trust.
 - Start in one sentence: paste one sentence into Claude Code, Codex, Hermes or another agent in an empty folder and it downloads Living System and starts the guided setup (tested live in Claude Code and Codex). Added to the README, INSTALL, TESTING, the release notes and the pitch page, and the README now leads with benefits.
