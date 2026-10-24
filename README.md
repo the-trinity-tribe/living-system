@@ -15,6 +15,10 @@ Living System gives Claude Code and Codex a shared, written memory of how you wo
 - **Calm by design.** Catch up after a holiday, park ideas without switching task, switch on focus mode. No surveillance, no scores.
 - **Skills that stay yours.** The agent explains its choices, can coach you, and prints a handbook for working without AI.
 
+<img src="brand/images/demo.gif" alt="Demo: set up a workspace, the agent proposes a rule, you approve it, the guard blocks a direct edit and a saved password, and verify shows nothing changed" width="100%">
+
+<sub>Real output from version 0.2.0: a workspace, a proposal, your approval, two blocked shortcuts, and proof nothing changed afterwards.</sub>
+
 Whether it helps *you* is something you can measure: every workspace has a 10-minute [value check](docs/features/value-check.md) you run yourself.
 
 <img src="brand/images/propose-decide.png" alt="Agents propose, you decide: new information, a proposal, your review, history kept" width="100%">

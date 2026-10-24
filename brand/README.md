@@ -42,6 +42,7 @@ Headings do not end in a full stop. Every section heading carries a short red ru
 | [`images/teams.png`](images/teams.png) | Personal and company workspaces, sharing and onboarding |
 | [`images/calm.png`](images/calm.png) | Status, catch-up, parking, focus, tend and atlas |
 | [`images/mark-lockup.png`](images/mark-lockup.png) | Mark and name together |
+| [`images/demo.gif`](images/demo.gif) | A 25-second loop of real output: setup, a proposal, approval, two blocked shortcuts, proof nothing changed |
 
 Every image describes features that exist in the current release; nothing in them is a mock-up of something planned. They were rendered from HTML at twice their size for sharp display.
 
