@@ -45,6 +45,11 @@ Headings do not end in a full stop. Every section heading carries a short red ru
 
 Every image describes features that exist in the current release; nothing in them is a mock-up of something planned. They were rendered from HTML at twice their size for sharp display.
 
+## Where it is used
+
+- The README introduction and feature images.
+- The pitch page, [`site/index.html`](../site/index.html): dark by default; people whose device asks for light get a warm cream version with the same red and type.
+
 ## Credit
 
 Design language: The Trinity Tribe's Solaris design system. The fonts are Ubuntu (Ubuntu Font Licence) and Figtree (SIL Open Font Licence); they are used in the images but not included in this repository. The mark and images are part of Living System and fall under the repository licence (MPL-2.0); the name and look belong to The Trinity Tribe, so forks should use their own.
