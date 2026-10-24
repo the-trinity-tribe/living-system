@@ -1,17 +1,32 @@
+<p align="center"><img src="brand/images/hero.png" alt="Living System. Your rules in plain files. Agents propose. People decide." width="100%"></p>
+
 # Living System
 
-**Experimental · local-first Human–AI work environment · version 0.2.0 preview 2, open for testing and feedback**
+**Your rules in plain files. Agents propose. People decide.**
 
-Living System gives your AI agent a **written memory that you control**. Your rules, knowledge and working context live in plain files on your computer. Claude Code or Codex read them at the start of every session. The agent can *propose* changes; only you approve them.
+Living System gives Claude Code and Codex a shared, written memory of how you work: your decisions, your knowledge, your boundaries. An agent can suggest a change to what you decided; it can never quietly rewrite it. Everything lives in plain Markdown on your own computer: no server, no account, no tie to one AI vendor.
 
-- **Your rules, written down.** No more explaining the same thing to every new chat.
-- **You stay the decision-maker.** Agents propose; you review. A guard stops agents from editing your rules or approving things for you.
-- **A trail you can read.** Every rule says where it came from and what it replaced, and a review record shows if anything was changed afterwards.
-- **Context that survives.** Handover notes, a catch-up after time away, and onboarding for new people in a role.
-- **Skills that stay yours.** The agent explains its choices, can coach you, and can print your rules for working without any AI.
-- **Yours, on your computer.** Plain Markdown and JSON plus small Python tools (standard library only). No server, no account, no tie to one AI vendor.
+<sub>Experimental · version 0.2.0 preview 2 · open for testing and feedback · MPL-2.0</sub>
+
+- **Stop re-explaining.** Your rules are written once and read by every agent session.
+- **You stay the decision-maker.** Agents propose; only your review changes a rule, and a write guard blocks direct edits.
+- **Room to act, earned.** Give the agent more autonomy one kind of work at a time, with evidence, and take it back in one step.
+- **Knowledge that outlives a role.** Hand on what you learned without personal data; the next person gets a gentle onboarding path.
+- **Calm by design.** Catch up after a holiday, park ideas without switching task, switch on focus mode. No surveillance, no scores.
+- **Skills that stay yours.** The agent explains its choices, can coach you, and prints a handbook for working without AI.
 
 Whether it helps *you* is something you can measure: every workspace has a 10-minute [value check](docs/features/value-check.md) you run yourself.
+
+<table>
+<tr>
+<td width="50%"><a href="docs/features/decisions-and-proposals.md"><img src="brand/images/propose-decide.png" alt="Agents propose, you decide: new information, a proposal, your review, history kept"></a></td>
+<td width="50%"><a href="docs/features/agency.md"><img src="brand/images/delegation.png" alt="Room to act, earned one step at a time: observe, recommend, draft, act with approval, bounded"></a></td>
+</tr>
+<tr>
+<td width="50%"><a href="docs/features/connected-workspaces.md"><img src="brand/images/teams.png" alt="Knowledge that outlives a role: private workspaces, a company workspace, an onboarding path"></a></td>
+<td width="50%"><a href="docs/features/parking-and-tending.md"><img src="brand/images/calm.png" alt="Calm by design: status, catch-up, park, focus, tend, atlas"></a></td>
+</tr>
+</table>
 
 Created and architected by **Adrianna Mamczarz**, through **The Trinity Tribe**. Features and structure were invented and tested in her own practice; AI assisted with implementation, while design decisions, review and acceptance stayed human-led.
 

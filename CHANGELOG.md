@@ -2,6 +2,11 @@
 
 All notable changes. Dates are when a version was prepared. Versions before 1.0 are experimental: details may change between them.
 
+## Unreleased
+
+- **Brand and images:** a Living System mark and look based on The Trinity Tribe's design system ([brand/](brand/README.md)), a hero image and four feature images in the README.
+- **Live scenario test:** 13 everyday scenarios run in Claude Code and Codex (`tests/live/`); two agent rules tightened after Codex skipped a question its owner's work agreement asks for (results in `demo/WALKTHROUGH.md`).
+
 ## 0.2.0 preview 2 (2026-10-24)
 
 Agency and delegation, a personal work agreement, knowledge composting, small experiments, an atlas and more, after a second capability review. Release notes: [docs/releases/0.2.0-preview.2.md](docs/releases/0.2.0-preview.2.md).

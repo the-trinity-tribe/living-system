@@ -13,6 +13,7 @@ Plain words first. Exact commands are under the heading that needs them. Every f
 - [How it is built](architecture.md): the workspace, who decides what, the four tools and the building blocks.
 - [Command reference](cli.md): every command in plain words.
 - [Troubleshooting](troubleshooting.md): common messages and what to do.
+- [Brand](../brand/README.md): the mark, colours, type and images, a sibling of The Trinity Tribe's design system.
 - [Local-first and resource use](local-first.md): what runs offline on your computer, what needs an AI agent, and what is not measured.
 
 ## Features

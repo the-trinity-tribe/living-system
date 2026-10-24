@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="140" height="140" viewBox="0 0 140 140" role="img" aria-label="Living System mark">
+  <defs>
+    <mask id="ls-veins">
+      <rect width="140" height="140" fill="#fff"/>
+      <g stroke="#000" stroke-width="6" stroke-linecap="butt" fill="none">
+        <line x1="70" y1="125" x2="70" y2="66"/>
+        <line x1="70" y1="112" x2="41" y2="95.25"/>
+        <line x1="70" y1="112" x2="99" y2="95.25"/>
+        <line x1="70" y1="92" x2="52" y2="81.6"/>
+        <line x1="70" y1="92" x2="88" y2="81.6"/>
+      </g>
+      <circle cx="70" cy="54" r="13" fill="#000"/>
+    </mask>
+  </defs>
+  <polygon points="70,14 130,117.92 10,117.92" fill="#EB5757" mask="url(#ls-veins)"/>
+  <circle cx="70" cy="54" r="7" fill="#FFEDC9"/>
+</svg>
