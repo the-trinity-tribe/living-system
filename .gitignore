@@ -17,3 +17,4 @@ venv/
 *.swo
 .DS_Store
 Thumbs.db
+live-runs/

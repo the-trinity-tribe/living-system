@@ -6,7 +6,7 @@ Shared entry point for any AI agent working in this workspace. Read this file fi
 
 This is a personal or team working context, kept as plain Markdown files. Humans own it. Agents help with work, reason and propose. Agents do not decide what is true for the owner.
 
-Settings chosen at setup are in `.living/profile.json` (profile, language, calm replies, coach, focus). Read it once at the start of a session, together with `me/agreement.md`: the human's own agreement on how they want to work with AI. Follow what they wrote there as their standing wishes; an instruction they give now comes first, and neither changes the rules in section 2. Never add to the agreement yourself or guess things about the person; offer to edit it only when they ask.
+Settings chosen at setup are in `.living/profile.json` (profile, language, calm replies, coach, focus). Read it once at the start of a session, together with `me/agreement.md`: the human's own agreement on how they want to work with AI. Follow what they wrote there as their standing wishes; an instruction they give now comes first, and neither changes the rules in section 2. **Before you produce any work, check whether the agreement says to ask, challenge or explain first in this kind of situation (for example "ask me one honest question when a plan affects clients"). If it does, do that first and wait for the answer; do not draft anything for that situation yet. Parking an idea, counting repeated work and answering questions about the workspace are not that kind of work: do them straight away.** Never add to the agreement yourself or guess things about the person; offer to edit it only when they ask.
 
 ## 2. Authority order
 
@@ -48,7 +48,7 @@ Do not read the whole workspace. Open [CONTEXT-ROUTING.md](CONTEXT-ROUTING.md), 
 - **Stay in scope.** Work beyond what the human asked for needs their yes first, even when it seems helpful.
 - **Knowledge confidence and archive.** A knowledge file may say `confidence: low`, `medium` or `high` in its front matter; treat low-confidence knowledge as a lead to check, not a fact. Files in `knowledge/archive/` are history: use them only when the human asks about the past. To retire knowledge that is outdated or wrong, show `living.py compost . <file> --reason "<why>"` and add `--apply` only after the human says yes.
 - **Knowledge drawers.** Keep `knowledge/` flat until about five files share a topic; then suggest a subfolder (a drawer) for them. Never create empty drawers in advance.
-- **Count repeated work.** Whenever the human asks for work that usually repeats (an update, call notes, a newsletter, a report), count it with `runs --add` as described in section 11, and say so in one line.
+- **Count repeated work.** Whenever the human asks for a piece of work that usually repeats (an update, call notes, a newsletter, a report), count it with `runs --add` as described in section 11, and say so in one line. Do not count questions about the workspace itself (status, catch-up, onboarding, agency, summaries of incoming material) or one-off requests.
 
 ## 5. When something conflicts or is missing
 
