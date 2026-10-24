@@ -13,11 +13,11 @@
 [![License](https://img.shields.io/badge/license-MPL--2.0-161616?style=flat-square)](LICENSE)
 [![Status](https://img.shields.io/badge/status-experimental-D6C4A8?style=flat-square)](#limitations)
 
-**A local-first governance layer for working with AI agents, hosted or local.**<br>
-Your decisions, knowledge and boundaries live as plain Markdown on your own computer.<br>
-Agents propose changes. Only your review turns a proposal into a rule.
+**Your AI agents remember your rules, and you decide what changes.**<br>
+Write your rules and working knowledge down once. Your agent reads them every session,<br>
+suggests changes instead of making them, and waits for your yes. Free, and it all stays on your computer.
 
-[Quick start](#quick-start) · [Works with](#works-with) · [How it works](#how-it-works) · [Features](#features) · [Docs](docs/README.md) · [Help test it](#help-test-it) · [Discussions](https://github.com/the-trinity-tribe/living-system/discussions)
+[Start in one sentence](#start-in-one-sentence) · [Quick start](#quick-start) · [Works with](#works-with) · [How it works](#how-it-works) · [Features](#features) · [Docs](docs/README.md) · [Help test it](#help-test-it) · [Discussions](https://github.com/the-trinity-tribe/living-system/discussions)
 
 </div>
 
@@ -27,29 +27,43 @@ Agents propose changes. Only your review turns a proposal into a rule.
 
 <p align="center"><sub>Real output from version 0.2.0: a workspace, a proposal, your approval, two blocked shortcuts, and proof that nothing changed afterwards.</sub></p>
 
-## Why Living System
+## Start in one sentence
 
-Every AI session starts from zero. You explain the same rules again, agents work from whatever was in the last prompt, and after a few weeks nobody can say which version of a rule is current or who agreed to it.
+No terminal skills needed. Open Claude Code, Codex, Hermes or another AI agent in an empty folder and paste:
 
-Living System writes your working context down once, in files every agent session reads, and gives changes to it a human checkpoint.
+```text
+Set up Living System for me: download https://github.com/the-trinity-tribe/living-system and follow its INSTALL.md.
+```
 
-- **Stop re-explaining.** Rules are written once and read at the start of every session by Claude Code, Codex, Hermes or any agent that reads `AGENTS.md`.
-- **You stay the decision-maker.** Agents propose; your review changes a rule; a write guard blocks the most common direct edits.
-- **Room to act, earned.** More autonomy one kind of work at a time, with evidence, withdrawn in one step.
-- **Calm by design.** Catch-up after time away, parked ideas, focus mode. No surveillance, no scores.
+1. Your agent downloads Living System and reads its setup guide.
+2. It asks you five short questions, one at a time. "Skip" is always fine.
+3. It shows exactly what it will create, and waits for your yes.
+4. You open your new workspace and work as usual. Try: *"Help me make my first decision."*
 
-No server, no account, no tie to one AI vendor or model: Python's standard library and Markdown.
+We tried this sentence in fresh Claude Code and Codex sessions ([results](demo/WALKTHROUGH.md#one-sentence-start-from-an-empty-folder)). Prefer to type the commands yourself? See [Quick start](#quick-start).
+
+## What changes for you
+
+Every AI session usually starts from zero: you explain the same rules again, and after a few weeks nobody can say which version of a rule is current or who agreed to it.
+
+- **Say it once, every session knows.** Your rules, preferences and working knowledge live in plain files your agent reads at the start of every session.
+- **Nothing changes without your yes.** Your agent writes a proposal instead of editing a rule. You approve, reject or defer it, and a record shows if an approved rule was changed later.
+- **More freedom for your agent, one step at a time.** Let it do more in one kind of work once it has earned it, and take that back in one step. Sending, publishing, spending and deleting always wait for you.
+- **Knowledge that stays when people move on.** A shared company workspace next to private personal ones, with a gentle reading path for the next person.
+- **Calm, not another dashboard.** Ask what needs you, catch up after time away, park an idea without losing focus. No tracking, no productivity scores.
+
+No server, no account, no tie to one AI vendor or model: just Python's standard library and Markdown files.
 
 ## Quick start
 
-You need **Git** and **Python 3.10+**, and an agent that works in a folder: [Claude Code, Codex, Hermes or another](#works-with).
+Prefer the terminal? You need **Git** and **Python 3.10+**, and an agent that works in a folder: [Claude Code, Codex, Hermes or another](#works-with).
 
 ```sh
 git clone https://github.com/the-trinity-tribe/living-system.git
 cd living-system
 ```
 
-**Easiest:** open this folder in Claude Code or Codex and say *"Read INSTALL.md and set up my workspace."* The agent asks a few short questions, shows what it will create, and waits for your yes.
+**Guided:** open this folder in your agent and say *"Read INSTALL.md and set up my workspace."* The agent asks a few short questions, shows what it will create, and waits for your yes.
 
 **By hand:**
 

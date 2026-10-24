@@ -143,6 +143,18 @@ One run per agent on 2026-10-23, each in a fresh clone of the product repository
 
 The only fix that came out of this run: `INSTALL.md` said "maximum 5" questions while also asking about calm replies; the heading now says "five, plus one about how to reply".
 
+### One-sentence start from an empty folder
+
+One run per agent on 2026-10-24, each started in an empty folder with nothing downloaded, given only: *"Set up Living System for me: download https://github.com/the-trinity-tribe/living-system and follow its INSTALL.md."* Claude Code 2.1.309 (`claude -p`, allowed: `git clone`, `python3 --version`, reading files); Codex with its default model (`codex exec`, workspace-write sandbox with network).
+
+| Check | Claude Code | Codex |
+| --- | --- | --- |
+| Downloaded the repository by itself | Passed | Passed |
+| Read `INSTALL.md` and checked Python | Passed | Passed |
+| Asked the first setup question (language) and created nothing yet | Passed | Passed |
+
+The rest of the guided install is the run above. A first Codex attempt started at the same moment as the Claude Code run produced no output; run on its own, it passed.
+
 ## Results: guided first decision (`AGENTS.md` section 6e)
 
 One run per agent on 2026-10-23, each in a fresh workspace whose draft `SYSTEM.md` held the setup answer "Nothing goes to a client or gets published without my OK". The human said, one message at a time: "Help me make my first decision from my setup answers. My Living System folder is ..."; "Yes, that wording is fine."; "Approve proposals/<the file>. My name is Adrianna Mamczarz."

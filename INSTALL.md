@@ -6,7 +6,11 @@ This guide is read by an AI agent (Claude Code, Codex, Hermes or another agent t
 
 ## Tell your agent
 
-Open this repository in Claude Code or Codex (or another agent that reads `AGENTS.md`, such as Hermes) and say:
+**Easiest, from an empty folder:** open Claude Code, Codex, Hermes or another agent that reads `AGENTS.md` in any empty folder and paste:
+
+> Set up Living System for me: download https://github.com/the-trinity-tribe/living-system and follow its INSTALL.md.
+
+**If you already downloaded this repository:** open it in your agent and say:
 
 > Read INSTALL.md and set up my workspace.
 

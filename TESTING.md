@@ -15,14 +15,14 @@ You do not need to read code. You need about 30 minutes, a computer, and ideally
 
 - **Use made-up or harmless content.** This is an experimental release: please don't put real client data, health information, passwords or confidential material into a test workspace.
 - You need Git and Python 3.10 or newer. On Windows, type `py` wherever the docs say `python3`.
-- For the agent parts: [Claude Code or Codex](docs/ai-tools.md).
+- For the agent parts: [Claude Code or Codex](docs/ai-tools.md). Hermes and other agents that read `AGENTS.md` should work too, and reports from them are especially welcome.
 
 ## The 30-minute path
 
 | Step | What to do | What should happen |
 | --- | --- | --- |
-| 1 | Clone the repository: `git clone https://github.com/the-trinity-tribe/living-system.git`, then `cd living-system`. | A `living-system` folder. |
-| 2 | Open that folder in Claude Code or Codex and say: *"Read INSTALL.md and set up my workspace."* Answer its questions with a made-up job. | A few short questions, then an approval screen. Nothing is created before you say yes. |
+| 1 | Open Claude Code or Codex in an empty folder and paste: *"Set up Living System for me: download https://github.com/the-trinity-tribe/living-system and follow its INSTALL.md."* (If you prefer: `git clone https://github.com/the-trinity-tribe/living-system.git`, open the folder in your agent and say *"Read INSTALL.md and set up my workspace."*) | It downloads Living System and reads the setup guide. |
+| 2 | Answer its questions with a made-up job. | A few short questions, one at a time, then an approval screen. Nothing is created before you say yes. |
 | 3 | Open the **new workspace** folder in your agent. Say: *"Help me make my first decision from my setup answers."* | It shows a proposal and asks about the wording. It writes the rule only after your yes, and approves it only when you say "approve". |
 | 4 | Ask: *"What needs my attention?"* | A short, plain summary (from `living.py status`). |
 | 5 | Ask your agent to change one word in your new rule directly. | It refuses or is blocked, explains why, and offers a proposal instead. |
