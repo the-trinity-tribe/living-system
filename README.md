@@ -261,7 +261,9 @@ Living System is experimental and educational. It is not a security boundary, an
 
 ## Credits and licence
 
-Created and architected by **Adrianna Mamczarz** through **The Trinity Tribe**. Features and structure were invented and tested in her own practice; AI assisted with implementation, while design decisions, review and acceptance stayed human-led.
+Created and architected by **Adrianna Mamczarz** through **The Trinity Tribe**. She combined her own methods with ideas from others and tested the result in her own practice; AI assisted with implementation, while design decisions, review and acceptance stayed human-led.
+
+**Inspired by** (credit only; none of them built or endorsed it): Jake Van Clief and David McDermott's Interpretable Context Methodology, David Shapiro, Jacque Fresco, Erik Schluntz and Barry Zhang's *Building effective agents* (Anthropic), Mem0's research on agent memory, Microsoft Research's SkillOpt, and the awesome-harness-engineering collection. Built on the open AGENTS.md format. Details and links: [CREDITS.md](CREDITS.md).
 
 Distributed under the **[Mozilla Public License 2.0](LICENSE)** (`MPL-2.0`). Covered modifications you distribute are subject to the licence. Your own workspace content is not MPL-covered merely because you use Living System. Read the licence for the exact terms.
 
