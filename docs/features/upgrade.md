@@ -62,7 +62,7 @@ In `CONTEXT-ROUTING.md`, the "Installed modules" section is kept as it is while 
 ## Where does the human keep control?
 
 - Nothing is written without `--apply`.
-- Never touched: `decisions/`, `proposals/`, `projects/`, `me/` and `.living/profile.json`.
+- Never touched: `decisions/`, `proposals/`, `projects/` and `.living/profile.json`. In `me/`, a new starter file (such as `me/agreement.md`) is added only if you have none; nothing already there is changed.
 - Your edited files always win; the new version is only a copy for you to compare.
 
 ## What can go wrong, and how do you undo it?

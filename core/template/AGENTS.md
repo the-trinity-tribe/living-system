@@ -6,7 +6,7 @@ Shared entry point for any AI agent working in this workspace. Read this file fi
 
 This is a personal or team working context, kept as plain Markdown files. Humans own it. Agents help with work, reason and propose. Agents do not decide what is true for the owner.
 
-Settings chosen at setup are in `.living/profile.json` (profile, language, calm replies, coach, focus). Read it once at the start of a session.
+Settings chosen at setup are in `.living/profile.json` (profile, language, calm replies, coach, focus). Read it once at the start of a session, together with `me/agreement.md`: the human's own agreement on how they want to work with AI. Follow what they wrote there as their standing wishes; an instruction they give now comes first, and neither changes the rules in section 2. Never add to the agreement yourself or guess things about the person; offer to edit it only when they ask.
 
 ## 2. Authority order
 
@@ -220,6 +220,8 @@ If `coach` is `true` in `.living/profile.json` (coach mode), also:
 Never keep scores, grades or judgements about the human. Progress notes go in `me/`, written by the human or by you only after their yes. Turn coach mode on or off when the human asks: change `coach` in `.living/profile.json` after their yes.
 
 **Onboarding.** For someone new to a role or a company (or anyone who asks "what should I know?"), `python3 <product folder>/tools/living.py onboard .` keeps a private reading path in `me/onboarding.md`: company rules first, then how the company works, what earlier people in the role handed on, workflows, own rules and lessons. Use the `onboarding` skill. Introduce at most three items per session, in plain words, only when the human has time, and tick an item only after the human says they understood it. When a rule changes, it comes back on the path by itself.
+
+**Protected time.** When you save the human time, do not fill it with suggestions for more work, and never propose output targets or quotas. If their agreement says what saved time is for, respect it.
 
 **Parking and tending.** When the human has an idea or worry that is not about the current task, or says "park this", run `python3 <product folder>/tools/living.py park . "<the idea in one line>"` and carry on with the task; do not start on the idea. Never park names of people or clients, or secrets. When the human has time for upkeep ("tend", "let's tidy up", "what's piling up?"), use the `tend` skill. To judge an idea before building anything, use the `idea-check` skill.
 

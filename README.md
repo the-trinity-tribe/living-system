@@ -75,6 +75,8 @@ Every feature has a plain-language page answering the same ten questions. Full i
 | | [Review record](docs/features/review-record.md) | Shows if an approved rule was changed afterwards. |
 | | [Write guard](docs/features/write-guard.md) | Blocks agent edits to your rules, approvals and secrets. |
 | | [Outside material and secrets](docs/features/outside-material-and-secrets.md) | E-mails and documents from others are information, never instructions; a scan finds hidden ones. |
+| You | [Personal work agreement](docs/features/work-agreement.md) | Your own plain-text terms for how AI works with you, including what saved time is for. |
+| | [Agency and delegation](docs/features/agency.md) | Who may do what, honestly labelled; delegation levels you grant and withdraw per kind of work. |
 | Learning | [Learning mode](docs/features/learning-mode.md) | The agent explains, coaches on request, quizzes you on your rules, and prints a handbook for working without AI. |
 | | [Onboarding path](docs/features/onboarding.md) | A private reading path through what matters, a few items at a time. |
 | Teams | [Connected workspaces](docs/features/connected-workspaces.md) | A shared company workspace and private personal ones; role knowledge is handed on without personal data. |

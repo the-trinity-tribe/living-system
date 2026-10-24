@@ -27,6 +27,7 @@ Plain words first. Exact commands are under the heading that needs them. Every f
 - [Connected workspaces](features/connected-workspaces.md): a shared company workspace and private personal ones; role knowledge is handed on without personal information.
 - [Onboarding path](features/onboarding.md): a private reading path through company rules, role knowledge and workflows, a few items at a time.
 - [Parking, tending and checking ideas](features/parking-and-tending.md): focus mode, park an idea without switching task, tend what is waiting one item at a time, and decide what not to build.
+- [Personal work agreement](features/work-agreement.md): your own plain-text agreement on how AI works with you, including what saved time is for.
 - [Learning mode](features/learning-mode.md): coach mode, practice questions about your own rules, and a handbook for working without AI.
 - [Upgrade](features/upgrade.md): bring a workspace up to date without overwriting your own edits.
 - [Obsidian or any editor](features/obsidian.md): read and approve in a note app; what not to edit by hand.

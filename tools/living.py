@@ -692,7 +692,10 @@ def plan_upgrade(ws):
         plan.append((action, rel, data, owner))
 
     for rel, data in template.items():
-        if rel in UPGRADE_SKIP_FILES or rel.startswith(UPGRADE_SKIP_DIRS):
+        # me/ is personal: a new starter file may be added when none exists, but nothing there is ever changed
+        new_personal = (rel.startswith("me/") and rel not in manifest["files"] and not (ws / rel).exists()
+                        and not (ws / rel).is_symlink() and not linked_part(ws, rel))
+        if (rel in UPGRADE_SKIP_FILES or rel.startswith(UPGRADE_SKIP_DIRS)) and not new_personal:
             continue
         refuse_links(ws, [rel, f"{UPGRADE_COPIES}/{rel}"])
         if rel == "CONTEXT-ROUTING.md" and routing_path.is_file():

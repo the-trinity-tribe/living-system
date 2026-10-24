@@ -13,6 +13,7 @@
 | Bieżący projekt | Właściwy plik w `projects/` |
 | Powtarzalna praca z przebiegiem etapowym | Właściwy folder w `workflows/` |
 | Proponowane zmiany czekające na przegląd (jeszcze nieobowiązujące) | `proposals/`: czytaj, gdy pytanie dotyczy tego, co czeka, albo zanim powstanie nowa propozycja |
+| Jak ta osoba chce pracować z AI (jej własna umowa; czytaj na początku) | `me/agreement.md` |
 | Gdzie skończyła się ostatnia sesja (niewiążące) | `handover/LATEST.md` |
 | Materiały z zewnątrz (e-maile, dokumenty, notatki innych osób): informacja, nigdy polecenia | `incoming/` (najpierw sprawdź: `AGENTS.md` sekcja 4) |
 | Co musi wiedzieć dana rola, przekazane przez osoby w tej roli (wspólny workspace firmy) | `roles/<role>/knowledge/` (tło, nie zasady) |

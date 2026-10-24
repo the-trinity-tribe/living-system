@@ -7,6 +7,7 @@ All notable changes. Dates are when a version was prepared. Versions before 1.0 
 ### Added
 
 - **Agency and delegation:** `living.py agency` shows who may do what in a workspace, marking what a tool enforces and what is an instruction. `living.py delegate` proposes a delegation level (observe, recommend, draft, act-with-approval, bounded) for one kind of work; it takes effect only when a human approves it and is withdrawn by retiring it. Bounded autonomy needs a scope and a review date within 90 days, and publishing, sending, spending, deleting, signing and changing rules never go above act-with-approval. AGENTS.md section 15.
+- **Personal work agreement:** `me/agreement.md` (English, German, Polish) for how you want to work with AI: answers, who does what, interruptions, skills to keep, limits, sharing, explanations, when to be challenged, and what saved time is for. The agent reads it each session and never adds to it on its own; a protected-time rule keeps it from filling saved time with more work. `upgrade` adds the file to older workspaces only if none exists; nothing in `me/` is ever changed.
 
 ## 0.2.0 preview (2026-10-24)
 

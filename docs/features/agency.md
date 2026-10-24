@@ -1,6 +1,6 @@
 # Feature: agency and delegation
 
-Status: EXPERIMENTAL. Version: 0.3.0-preview.
+Status: EXPERIMENTAL. Version: next (not yet released).
 
 ## What does this feature do?
 
