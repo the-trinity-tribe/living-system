@@ -36,7 +36,7 @@ Headings do not end in a full stop. Every section heading carries a short red ru
 
 | File | Shows |
 | --- | --- |
-| [`images/hero.png`](images/hero.png) | Name, the headline "Your context, your rules, any AI agent" and a workspace at a glance. 1280 by 640 (2560 by 1280 file), used as the GitHub social preview |
+| [`images/hero.png`](images/hero.png) | Mark, name and the headline "Your context, your rules, any AI agent", large enough to read in a link preview. 1280 by 640 (2560 by 1280 file), used as the GitHub social preview |
 | [`images/readme/`](images/readme/) | The README banner and three diagrams (how a rule changes, delegation levels, connected workspaces), each in a dark and a light variant on a transparent ground |
 | [`images/mark-lockup.png`](images/mark-lockup.png) | Mark and name together |
 | [`images/demo.gif`](images/demo.gif) | A 25-second loop of real output: setup, a proposal, approval, two blocked shortcuts, proof nothing changed |
