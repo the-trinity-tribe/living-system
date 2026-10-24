@@ -37,18 +37,17 @@ Headings do not end in a full stop. Every section heading carries a short red ru
 | File | Shows |
 | --- | --- |
 | [`images/hero.png`](images/hero.png) | Name, promise and a workspace at a glance. 1280 by 640, also suitable as a social preview |
-| [`images/propose-decide.png`](images/propose-decide.png) | How a rule changes: new information, a proposal, your review, history kept |
-| [`images/delegation.png`](images/delegation.png) | The five delegation levels and what always needs your yes |
-| [`images/teams.png`](images/teams.png) | Personal and company workspaces, sharing and onboarding |
-| [`images/calm.png`](images/calm.png) | Status, catch-up, parking, focus, tend and atlas |
+| [`images/readme/`](images/readme/) | The README banner and three diagrams (how a rule changes, delegation levels, connected workspaces), each in a dark and a light variant on a transparent ground |
 | [`images/mark-lockup.png`](images/mark-lockup.png) | Mark and name together |
 | [`images/demo.gif`](images/demo.gif) | A 25-second loop of real output: setup, a proposal, approval, two blocked shortcuts, proof nothing changed |
 
 Every image describes features that exist in the current release; nothing in them is a mock-up of something planned. They were rendered from HTML at twice their size for sharp display.
 
+Images support the text; they do not replace it. Diagrams carry a few words each, and anything a reader needs to act on stays in the README as real text.
+
 ## Where it is used
 
-- The README introduction and feature images.
+- The README banner, demo and diagrams (GitHub picks the dark or light variant to match the reader's theme).
 - The pitch page, [`site/index.html`](../site/index.html): dark by default; people whose device asks for light get a warm cream version with the same red and type.
 
 ## Credit

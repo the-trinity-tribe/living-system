@@ -2,6 +2,10 @@
 
 All notable changes. Dates are when a version was prepared. Versions before 1.0 are experimental: details may change between them.
 
+## Unreleased
+
+- README redesigned: a compact header with badges and links, the demo first, then quick start, one "how it works" diagram and features as text and tables. The slide-style feature images are replaced by three small diagrams with dark and light variants.
+
 ## 0.2.0 (2026-10-24)
 
 The first full 0.2.0 release: everything in preview 1 and preview 2 below, plus the changes in this section. Release notes: [docs/releases/0.2.0.md](docs/releases/0.2.0.md).

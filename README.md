@@ -1,93 +1,141 @@
-<p align="center"><img src="brand/images/hero.png" alt="Living System. Your rules in plain files. Agents propose. People decide." width="100%"></p>
+<div align="center">
 
-# Living System
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="brand/images/readme/banner-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="brand/images/readme/banner-light.png">
+  <img src="brand/images/readme/banner-light.png" alt="Living System: your rules in plain files. Agents propose. People decide." width="100%">
+</picture>
 
-**Your rules in plain files. Agents propose. People decide.**
+[![Release](https://img.shields.io/github/v/release/the-trinity-tribe/living-system?style=flat-square&color=EB5757&label=release)](https://github.com/the-trinity-tribe/living-system/releases/latest)
+[![Tests](https://img.shields.io/github/actions/workflow/status/the-trinity-tribe/living-system/tests.yml?branch=main&style=flat-square&label=tests)](https://github.com/the-trinity-tribe/living-system/actions/workflows/tests.yml)
+[![Python](https://img.shields.io/badge/python-3.10%2B-161616?style=flat-square)](docs/troubleshooting.md)
+[![Works with](https://img.shields.io/badge/works%20with-Claude%20Code%20%C2%B7%20Codex-161616?style=flat-square)](docs/ai-tools.md)
+[![License](https://img.shields.io/badge/license-MPL--2.0-161616?style=flat-square)](LICENSE)
+[![Status](https://img.shields.io/badge/status-experimental-D6C4A8?style=flat-square)](#limitations)
 
-Living System gives Claude Code and Codex a shared, written memory of how you work: your decisions, your knowledge, your boundaries. Agents are told to propose changes to what you decided instead of making them, only your review turns a proposal into a rule, and a write guard blocks the most common direct edits. Everything lives in plain Markdown on your own computer: no server, no account, no tie to one AI vendor.
+**A local-first governance layer for working with AI agents.**<br>
+Your decisions, knowledge and boundaries live as plain Markdown on your own computer.<br>
+Agents propose changes. Only your review turns a proposal into a rule.
 
-<sub>Experimental · version 0.2.0 · open for testing and feedback · MPL-2.0</sub>
+[Quick start](#quick-start) · [How it works](#how-it-works) · [Features](#features) · [Docs](docs/README.md) · [Help test it](#help-test-it) · [Discussions](https://github.com/the-trinity-tribe/living-system/discussions)
 
-- **Stop re-explaining.** Your rules are written once and read by every agent session.
-- **You stay the decision-maker.** Agents propose; your review changes a rule; a write guard blocks common direct edits, and a review record shows anything changed afterwards.
-- **Room to act, earned.** Give the agent more autonomy one kind of work at a time, with evidence, and take it back in one step.
-- **Knowledge that outlives a role.** Hand on what you learned (contact details and secrets are refused; you check for names); the next person gets a gentle onboarding path.
-- **Calm by design.** Catch up after a holiday, park ideas without switching task, switch on focus mode. No surveillance, no scores.
-- **Skills that stay yours.** The agent explains its choices, can coach you, and prints a handbook for working without AI.
+</div>
+
+<br>
 
 <img src="brand/images/demo.gif" alt="Demo: set up a workspace, the agent proposes a rule, you approve it, the guard blocks a direct edit and a saved password, and verify shows nothing changed" width="100%">
 
-<sub>Real output from version 0.2.0: a workspace, a proposal, your approval, two blocked shortcuts, and proof nothing changed afterwards.</sub>
+<p align="center"><sub>Real output from version 0.2.0: a workspace, a proposal, your approval, two blocked shortcuts, and proof that nothing changed afterwards.</sub></p>
 
-Whether it helps *you* is something you can measure: every workspace has a 10-minute [value check](docs/features/value-check.md) you run yourself.
+## Why Living System
 
-<img src="brand/images/propose-decide.png" alt="Agents propose, you decide: new information, a proposal, your review, history kept" width="100%">
+Every AI session starts from zero. You explain the same rules again, agents work from whatever was in the last prompt, and after a few weeks nobody can say which version of a rule is current or who agreed to it.
 
-<sub>Read more: <a href="docs/features/decisions-and-proposals.md">Decisions and proposals</a> · click the image to open it full size</sub>
+Living System writes your working context down once, in files every agent session reads, and gives changes to it a human checkpoint.
 
-<img src="brand/images/delegation.png" alt="Room to act, earned one step at a time: observe, recommend, draft, act with approval, bounded" width="100%">
+- **Stop re-explaining.** Rules are written once and read by Claude Code and Codex at the start of every session.
+- **You stay the decision-maker.** Agents propose; your review changes a rule; a write guard blocks the most common direct edits.
+- **Room to act, earned.** More autonomy one kind of work at a time, with evidence, withdrawn in one step.
+- **Calm by design.** Catch-up after time away, parked ideas, focus mode. No surveillance, no scores.
 
-<sub>Read more: <a href="docs/features/agency.md">Agency and delegation</a> · click the image to open it full size</sub>
-
-<img src="brand/images/teams.png" alt="Knowledge that outlives a role: private workspaces, a company workspace, an onboarding path" width="100%">
-
-<sub>Read more: <a href="docs/features/connected-workspaces.md">Connected workspaces</a> · click the image to open it full size</sub>
-
-<img src="brand/images/calm.png" alt="Calm by design: status, catch-up, park, focus, tend, atlas" width="100%">
-
-<sub>Read more: <a href="docs/features/parking-and-tending.md">Parking, tending and focus</a> · click the image to open it full size</sub>
-
-Created and architected by **Adrianna Mamczarz**, through **The Trinity Tribe**. Features and structure were invented and tested in her own practice; AI assisted with implementation, while design decisions, review and acceptance stayed human-led.
-
-> **Status:** experimental and educational. Not a security boundary, an identity system or a production access-control product. The demo organisation (Moss & Circuit, Riverside Community Garden, Maya Chen, Leo, Sam) is fictional.
-
-## Help test it
-
-Version 0.2.0 is experimental and open for testing, feedback and contributions.
-
-- **Try it:** [TESTING.md](TESTING.md) has a 30-minute path for first-time testers and what feedback helps most.
-- **Tell us:** [open an issue](https://github.com/the-trinity-tribe/living-system/issues/new/choose) and choose *Feedback*, *Bug* or *Idea*. Plain words are perfect; you do not need to be technical.
-- **Contribute:** [CONTRIBUTING.md](CONTRIBUTING.md). Security problems: [SECURITY.md](SECURITY.md) (please report privately).
-
-## Three things to keep apart
-
-| | What it is | Where |
-| --- | --- | --- |
-| **The product** | Templates, tools, modules and docs. Public. | This repository. |
-| **Your workspace** | Your own private folder, made by `init`. | A separate folder **outside** this repository. |
-| **The demo** | A fictional sandbox to explore. | [demo/moss-and-circuit/](demo/moss-and-circuit/) |
-
-Your workspace lives in its own folder on purpose: personal data should never sit inside a clone of a public repository.
+No server, no account, no tie to one AI vendor: Python's standard library and Markdown.
 
 ## Quick start
 
-**You need:** Git and Python 3.10 or newer. Nothing else to install, no accounts. To work with an agent you also need [Claude Code or Codex](docs/ai-tools.md).
+You need **Git** and **Python 3.10+**, and [Claude Code or Codex](docs/ai-tools.md) to work with an agent.
 
 ```sh
 git clone https://github.com/the-trinity-tribe/living-system.git
 cd living-system
 ```
 
-**On Windows**, type `py` wherever this page says `python3`. If `py` is not found, install Python from python.org and tick "Add python.exe to PATH".
+**Easiest:** open this folder in Claude Code or Codex and say *"Read INSTALL.md and set up my workspace."* The agent asks a few short questions, shows what it will create, and waits for your yes.
 
-**Set up your workspace with an agent (easiest):** open this folder in Claude Code or Codex and say *"Read INSTALL.md and set up my workspace."* It asks a few short questions, shows exactly what it will create, and waits for your yes. See [INSTALL.md](INSTALL.md).
-
-**Or by hand:**
+**By hand:**
 
 ```sh
 python3 tools/living.py init ~/my-workspace --profile professional --language en
 python3 tools/living.py status ~/my-workspace
 ```
 
-Profiles: `student`, `professional`, `employee`, `manager`. Languages with starter files: `en`, `de`, `pl`. Options: `--calm-replies` (short, plain answers), `--coach` (help keeping your own skills), `--team` (a shared company workspace). `init` refuses a folder that already has files, and leaves nothing behind if it fails. To undo, delete the folder.
+Then open `~/my-workspace` in your agent and work as usual. Try saying *"Help me make my first decision from my setup answers."*
 
-Then open **your workspace** in Claude Code or Codex and work as usual. Your starter `SYSTEM.md` and `PRINCIPLES.md` are drafts until you change them to `status: approved` yourself. Tip: say *"Help me make my first decision from my setup answers."*
+<details>
+<summary>Windows, profiles and options</summary>
 
-Run `python3 tools/living.py` on its own for a short menu of everyday commands. All commands: [command reference](docs/cli.md). Stuck? [Troubleshooting](docs/troubleshooting.md). How it fits together: [architecture](docs/architecture.md).
+- **Windows:** type `py` wherever this page says `python3`. If `py` is not found, install Python from python.org and tick "Add python.exe to PATH".
+- **Profiles:** `student`, `professional`, `employee`, `manager`. **Languages** with starter files: `en`, `de`, `pl`.
+- **Options:** `--calm-replies` (short, plain answers), `--coach` (help keeping your own skills), `--team` (a shared company workspace).
+- `init` refuses a folder that already has files and leaves nothing behind if it fails. To undo, delete the folder.
+- Your workspace is created **outside** this repository on purpose, so personal data never sits inside a clone of a public project. Details: [INSTALL.md](INSTALL.md).
 
-## What you can do
+</details>
+
+Run `python3 tools/living.py` on its own for a menu of everyday commands. All commands: [command reference](docs/cli.md) · Stuck? [Troubleshooting](docs/troubleshooting.md)
+
+## How it works
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="brand/images/readme/how-it-works-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="brand/images/readme/how-it-works-light.png">
+  <img src="brand/images/readme/how-it-works-light.png" alt="How a rule changes: new information, the agent proposes, you review, the rule changes and the old one is kept" width="100%">
+</picture>
+
+A workspace is an ordinary folder. Agents read `AGENTS.md` first and follow the rules in `decisions/`. When something suggests a rule should change, they keep following the current rule and write a proposal. `review.py` turns a proposal into a decision only after a person approves it, refuses stale or invalid changes, and records every review so later edits show up.
+
+```text
+my-workspace/
+├── AGENTS.md        how agents must work here, read every session
+├── decisions/       your rules, each approved by a person
+├── proposals/       suggested changes waiting for your review
+├── knowledge/       what you know, with sources
+├── incoming/        outside material: information, never instructions
+├── me/              your goals and work agreement (private)
+├── handover/        where the last session stopped
+└── tools/           review.py and living.py, so the folder works on its own
+```
+
+More: [architecture](docs/architecture.md) · [decisions and proposals](docs/features/decisions-and-proposals.md) · [write guard](docs/features/write-guard.md)
+
+## Features
+
+### Agency you can see
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="brand/images/readme/delegation-ladder-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="brand/images/readme/delegation-ladder-light.png">
+  <img src="brand/images/readme/delegation-ladder-light.png" alt="Delegation levels: observe, recommend, draft (the default), act with approval, bounded. Publishing, sending, spending, deleting, signing and changing rules never go above act with approval" width="100%">
+</picture>
+
+`living.py agency` lists who may do what and marks each line as **enforced** by a tool or **instruction** only. [Agency and delegation](docs/features/agency.md)
+
+### Knowledge that outlives a role
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="brand/images/readme/workspaces-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="brand/images/readme/workspaces-light.png">
+  <img src="brand/images/readme/workspaces-light.png" alt="Private workspaces share role knowledge with a company workspace, where it is checked and accepted, and the next person gets an onboarding path" width="100%">
+</picture>
+
+Folders on your own computers: Living System syncs, uploads and sends nothing. [Connected workspaces](docs/features/connected-workspaces.md)
+
+### Calm by design
+
+| You want | Command | What happens |
+| --- | --- | --- |
+| What needs me? | `status` | One short list in plain words. |
+| Back from a holiday | `since --days 14` | What changed, changed rules first. |
+| An idea mid-task | `park` | Kept with what to decide and when. |
+| Deep work | `focus on` | No suggestions until you say so. |
+| Ten quiet minutes | `tend` skill | Tidy up, one item at a time. |
+| What relies on a rule? | `atlas` | A map of rules and the files that use them. |
+
+### All features
 
 Every feature has a plain-language page answering the same ten questions. Full index: [docs/](docs/README.md).
+
+<details>
+<summary>Show all 19 feature areas</summary>
 
 | For | Feature | In one line |
 | --- | --- | --- |
@@ -111,9 +159,14 @@ Every feature has a plain-language page answering the same ten questions. Full i
 | | [Obsidian or any editor](docs/features/obsidian.md) | Read and approve in a note app. |
 | Showing value | [Value check](docs/features/value-check.md) and [making the case](docs/champions.md) | Measure it yourself; argue for it honestly with a counts-only evidence summary. |
 
-## Optional modules
+</details>
 
-Nothing is installed unless you ask, and every command shows a plan before `--apply`.
+### Optional modules
+
+Nothing is installed unless you ask, and every command shows a plan before `--apply`. `add` never overwrites a file; `remove` deletes only files you have not edited.
+
+<details>
+<summary>Show the 11 modules</summary>
 
 | Module | What it gives you |
 | --- | --- |
@@ -137,17 +190,38 @@ python3 tools/living.py add ~/my-workspace weekly-update --apply  # install it
 
 `add` never overwrites a file. `remove` deletes only files you have not edited, and never touches your decisions, proposals or projects.
 
+```sh
+python3 tools/living.py modules --workspace ~/my-workspace
+python3 tools/living.py add ~/my-workspace weekly-update          # see the plan
+python3 tools/living.py add ~/my-workspace weekly-update --apply  # install it
+```
+
+</details>
+
+Whether it helps *you* is something you can measure: every workspace has a 10-minute [value check](docs/features/value-check.md) you run yourself.
+
 ## Explore the demo
+
+A fictional organisation, Moss & Circuit, shows one rule's whole life: contradictory evidence, a proposal, a human review, a new decision, and the old one kept as history.
 
 ```sh
 python3 -B tools/review.py --root demo/moss-and-circuit current
 python3 -B tools/review.py --root demo/moss-and-circuit history
-python3 -B -m unittest discover tests
 ```
 
-The demo shows one rule's whole life: contradictory evidence, a proposal, a human review, a new decision, and the old one kept as history. Start at [demo/moss-and-circuit/AGENTS.md](demo/moss-and-circuit/AGENTS.md); for a 10-minute live demo on temporary copies, see [demo/WALKTHROUGH.md](demo/WALKTHROUGH.md). **Do not run `review` against the shipped demo**; it changes files.
+Start at [demo/moss-and-circuit/AGENTS.md](demo/moss-and-circuit/AGENTS.md), or follow the 10-minute live demo on temporary copies in [demo/WALKTHROUGH.md](demo/WALKTHROUGH.md). Do not run `review` against the shipped demo; it changes files. Everyone in the demo is invented.
 
-## Current scope and limitations
+## Help test it
+
+Version 0.2.0 is experimental and open for testing, feedback and contributions.
+
+- **Try it:** [TESTING.md](TESTING.md) has a 30-minute path and says which feedback helps most.
+- **Tell us:** [open an issue](https://github.com/the-trinity-tribe/living-system/issues/new/choose) and choose *Feedback*, *Bug* or *Idea*, or start a [discussion](https://github.com/the-trinity-tribe/living-system/discussions). Plain words are perfect.
+- **Contribute:** [CONTRIBUTING.md](CONTRIBUTING.md). Security problems: [SECURITY.md](SECURITY.md), reported privately.
+
+## Limitations
+
+Living System is experimental and educational. It is not a security boundary, an identity system or an access-control product.
 
 - **No login, no identity check.** Names in approvals (`--by`, `approved_by`) are labels, not proof of who someone is.
 - **Agent rules are instructions.** The write guard enforces the most important ones in Claude Code, and in Codex once you trust its hooks. Everything else, and anything changed outside the agent, is not enforced. Scans recognise common patterns, not every trick.
@@ -157,8 +231,22 @@ The demo shows one rule's whole life: contradictory evidence, a proposal, a huma
 - What it will not do, and which guardrails a tool enforces: [ethics](docs/ethics.md).
 - What is planned, deferred or rejected, with reasons: [roadmap](docs/roadmap.md).
 
-## Licensing, community and credit
+## Credits and licence
+
+Created and architected by **Adrianna Mamczarz** through **The Trinity Tribe**. Features and structure were invented and tested in her own practice; AI assisted with implementation, while design decisions, review and acceptance stayed human-led.
 
 Distributed under the **[Mozilla Public License 2.0](LICENSE)** (`MPL-2.0`). Covered modifications you distribute are subject to the licence. Your own workspace content is not MPL-covered merely because you use Living System. Read the licence for the exact terms.
 
 Copyright © 2026 Adrianna Mamczarz. The Trinity Tribe is the project home. Influences and the ICM method are credited in [CREDITS.md](CREDITS.md). If you build on this work, please credit the creator and contributors; cite it with [CITATION.cff](CITATION.cff). Forks and independent implementations are welcome, but should not imply official approval or affiliation with The Trinity Tribe.
+
+<br>
+
+<div align="center">
+
+<img src="brand/mark.svg" alt="" width="44">
+
+**Your rules in plain files. Agents propose. People decide.**
+
+<sub>Open source · MPL-2.0 · by <a href="https://thetrinitytribe.com/">The Trinity Tribe</a></sub>
+
+</div>
