@@ -13,9 +13,10 @@
   living.py handbook <ws> [--out FILE]
   living.py scan <ws> [paths...]
   living.py link <ws> --org <company ws> --role <role> | --remove
-  living.py share <ws> <file> [--as LABEL] [--apply]
+  living.py share <ws> <file> [--as LABEL] [--apply] | share <ws> roles/<role>/inbox/<file> --withdraw
   living.py onboard <ws> [--done ID] [--next N]
   living.py agency <ws>
+  living.py atlas <ws> [--out FILE]
   living.py compost <ws> knowledge/<file>.md --reason "..." [--apply]
   living.py delegate <ws> "<work>" <level> --evidence ... [--scope ...] [--review DATE] [--apply]
   living.py park <ws> ["idea"] [--decide ...] [--again DATE] [--done N]
@@ -2119,6 +2120,30 @@ def share(ws, rel, shared_as=None, apply=False, today=None):
     return target_rel, out
 
 
+def withdraw_share(ws, rel):
+    """Remove a file this workspace's role shared, while it still waits for review in the company workspace."""
+    ws = Path(ws).resolve()
+    read_manifest(ws)
+    org = org_folder(ws)
+    role = read_profile(ws).get("role")
+    if org is None or not role:
+        raise Refusal("this workspace is not linked to a company workspace with a role")
+    rel = Path(str(rel).replace("\\", "/")).as_posix()
+    if unsafe_rel(rel) or not re.fullmatch(rf"roles/{re.escape(str(role))}/inbox/[^/]+\.md", rel):
+        raise Refusal(f"{rel}: you can only withdraw a file waiting in roles/{role}/inbox/ of the company workspace")
+    with workspace_lock(org):
+        refuse_links(org, ["roles", f"roles/{role}", f"roles/{role}/inbox", rel])
+        path = org / rel
+        if not path.is_file():
+            raise Refusal(f"{rel} is not waiting there (it may have been accepted or rejected already)")
+        meta = review_tool().split_frontmatter(path.read_text(encoding="utf-8"), rel)[0]
+        if meta.get("status") != "proposed":
+            raise Refusal(f"{rel} is no longer waiting for review")
+        path.unlink()
+    return (f"Withdrawn: {rel} was removed from the company inbox. Your own copy is unchanged. Once accepted, shared "
+            f"knowledge belongs to the company and is removed through its own process.")
+
+
 def role_inbox(ws):
     """[(path, role, title, shared_as)] of shared knowledge waiting in a company workspace."""
     R = review_tool()
@@ -2624,7 +2649,88 @@ def handbook(ws, today=None):
     return "\n".join(out)
 
 
-EVIDENCE_MARK = "<!-- living-system evidence summary: counts only, no content -->"
+ATLAS_MARK = "<!-- living-system atlas: a generated view, not the rules -->"
+ATLAS_EDGES = 40  # the diagram stays readable; the lists below it are complete
+
+
+def atlas(ws, today=None):
+    """A read-only map of how rules, projects, workflows and knowledge connect. The files stay the source."""
+    import datetime
+    ws = Path(ws)
+    read_manifest(ws)
+    R = review_tool()
+    today = today or datetime.date.today()
+    try:
+        decs = R.decisions(ws) if (ws / "decisions").is_dir() else {}
+        current = set(R.current_decisions(ws)) if decs else set()
+        titles = {k: t for k, t, *_ in R.history(ws)} if decs else {}
+    except Refusal as e:
+        raise Refusal(f"a decision file cannot be read ({e}); run review.py check first") from None
+    replaced_by = {m["supersedes"]: k for k, m in decs.items() if m.get("status") == "approved" and "supersedes" in m}
+    refs = {}
+    for top in ("projects", "workflows", "knowledge", "roles"):
+        for p in sorted((ws / top).rglob("*.md")) if (ws / top).is_dir() else []:
+            rel = p.relative_to(ws).as_posix()
+            if p.is_symlink() or not p.is_file() or archived(rel):
+                continue
+            for ref in set(re.findall(r"(?<![\w./\\-])(decisions/[\w.-]+\.md)", p.read_text(encoding="utf-8", errors="replace"))):
+                refs.setdefault(ref, []).append(rel)
+    out = [ATLAS_MARK, f"# Atlas: {ws.resolve().name}", "",
+           f"Made on {today} with `living.py atlas`. A map built from the files, which stay the source. It changes nothing.", ""]
+    edges = []
+    node = lambda s: "n" + hashlib.sha256(s.encode("utf-8")).hexdigest()[:8]
+    label = lambda s: s.replace('"', "'")[:48]
+    for k in sorted(current):
+        for rel in sorted(refs.get(k, [])):
+            edges.append(f'  {node(rel)}["{label(rel)}"] --> {node(k)}["{label(titles.get(k, k))}"]')
+    for old, new in sorted(replaced_by.items()):
+        edges.append(f'  {node(old)}["{label(titles.get(old, old))} (history)"] -.-> {node(new)}["{label(titles.get(new, new))}"]')
+    if edges:
+        out += ["```mermaid", "graph LR", *edges[:ATLAS_EDGES], "```", ""]
+        if len(edges) > ATLAS_EDGES:
+            out += [f"The diagram shows {ATLAS_EDGES} of {len(edges)} links; all are listed below.", ""]
+    out += [f"## Rules in force ({len(current)})", ""]
+    for k in sorted(current):
+        users = sorted(refs.get(k, []))
+        out.append(f"- **{titles.get(k, k)}** (`{k}`)" + (f": used by {', '.join(f'`{u}`' for u in users)}" if users
+                                                          else ": not referenced by any project, workflow or knowledge file"))
+    if not current:
+        out.append("None yet.")
+    chains = [(old, new) for old, new in sorted(replaced_by.items())]
+    history = [f"- `{old}` was {'retired' if decs.get(new, {}).get('kind') == R.RETIREMENT else 'replaced or amended'} "
+               f"by `{new}`" for old, new in chains]
+    out += ["", f"## History ({len(chains)})", ""] + (history or ["None."])
+    stale = sorted((ref, users) for ref, users in refs.items() if ref not in current)
+    out += ["", "## References to rules that are not in force", ""]
+    out += [f"- `{ref}` ({'history' if ref in decs else 'missing'}) is still named in "
+            f"{', '.join(f'`{u}`' for u in sorted(users))}" for ref, users in stale] or ["None."]
+    flows = sorted((ws / "workflows").glob("*/CONTEXT.md")) if (ws / "workflows").is_dir() else []
+    out += ["", f"## Workflows ({len(flows)})", ""]
+    for ctx in flows:
+        stages = [s.name for s in sorted(ctx.parent.iterdir()) if s.is_dir() and re.match(r"\d\d-", s.name)]
+        out.append(f"- `{ctx.parent.relative_to(ws).as_posix()}/`: {len(stages)} stage(s)")
+    knowledge = [p for p in (ws / "knowledge").rglob("*.md") if p.is_file() and p.name not in KNOWLEDGE_SKIP] \
+        if (ws / "knowledge").is_dir() else []
+    kept = [p for p in knowledge if not archived(p.relative_to(ws).as_posix())]
+    drawers = sorted({p.parent.relative_to(ws).as_posix() for p in kept})
+    out += ["", "## Knowledge", "", f"- {len(kept)} file(s) in use, {len(knowledge) - len(kept)} in the archive",
+            f"- folders: {', '.join(f'`{d}/`' for d in drawers) or 'none'}"]
+    active = ws / "lessons/active.md"
+    if active.is_file():
+        n = len(re.findall(r"^(?:[-*]|\d+\.) \S", active.read_text(encoding="utf-8", errors="replace").split("## Active lessons", 1)[-1], re.M))
+        out.append(f"- {n} active lesson(s)")
+    try:
+        org = org_folder(ws)
+    except Refusal:
+        org = None
+    if org is not None:
+        role = read_profile(ws).get("role", "?")
+        n = len(list((org / "roles" / str(role) / "knowledge").glob("*.md")))
+        out += ["", "## Company", "", f"- linked to `{org.name}` as {role}; {n} role knowledge file(s) handed on"]
+    return "\n".join(out) + "\n"
+
+
+EVIDENCE_MARK ="<!-- living-system evidence summary: counts only, no content -->"
 
 
 def evidence(ws, today=None):
@@ -2965,6 +3071,7 @@ def main(argv=None):
     sh.add_argument("file", help="a .md file in knowledge/, workflows/ or lessons/active.md")
     sh.add_argument("--as", dest="shared_as", help="how it is labelled there (default: your role)")
     sh.add_argument("--apply", action="store_true")
+    sh.add_argument("--withdraw", action="store_true", help="instead: remove FILE (roles/<role>/inbox/...) while it still waits")
     rr = sub.add_parser("role-review", help="in a company workspace: accept or reject shared role knowledge")
     rr.add_argument("workspace")
     rr.add_argument("file", help="roles/<role>/inbox/<file>.md")
@@ -2983,6 +3090,9 @@ def main(argv=None):
     pk.add_argument("--done", type=int, metavar="N", help="tick off parked idea number N")
     pk.add_argument("--decide", default="", help="what needs deciding about it, in one line")
     pk.add_argument("--again", metavar="DATE", help="when to look at it again (YYYY-MM-DD); nothing happens by itself")
+    at = sub.add_parser("atlas", help="a map of how rules, projects, workflows and knowledge connect (read-only)")
+    at.add_argument("workspace")
+    at.add_argument("--out", help="save it to this .md file outside the workspace (default: print it)")
     co = sub.add_parser("compost", help="move a knowledge file to knowledge/archive/ with a reason (plan unless --apply)")
     co.add_argument("workspace")
     co.add_argument("file", help="knowledge/<file>.md")
@@ -3071,6 +3181,8 @@ def main(argv=None):
             return 1 if any(lvl == "ERROR" for lvl, *_ in results) else 0
         elif a.cmd == "link":
             print(link(a.workspace, a.org and os.path.expanduser(a.org), a.role, a.remove))
+        elif a.cmd == "share" and a.withdraw:
+            print(withdraw_share(a.workspace, a.file))
         elif a.cmd == "share":
             rel, text = share(a.workspace, a.file, a.shared_as, a.apply)
             print(f"Would write {rel} in the company workspace:\n\n{text}" if not a.apply else
@@ -3089,6 +3201,10 @@ def main(argv=None):
             print(focus(a.workspace, a.state))
         elif a.cmd == "park":
             print(format_park(*park(a.workspace, a.idea, a.done, decide=a.decide, again=a.again)))
+        elif a.cmd == "atlas":
+            text = atlas(a.workspace)
+            print(f"Saved {write_handbook(a.workspace, os.path.expanduser(a.out), text, ATLAS_MARK, 'atlas')}."
+                  if a.out else text)
         elif a.cmd == "compost":
             dest, text = compost(a.workspace, a.file, a.reason, a.apply)
             print(f"Moved to {dest}. It is out of daily use and kept as history." if a.apply else

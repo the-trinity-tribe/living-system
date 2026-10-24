@@ -18,6 +18,7 @@ Plain words first. Exact commands are under the heading that needs them. Every f
 - [Decisions and proposals](features/decisions-and-proposals.md): your rules are files, an agent can only propose changes, and only your review changes a rule.
 - [Value check](features/value-check.md): a small before-and-after test you run yourself to see whether the system helps.
 - [Handover note](features/handover-note.md): one file where the agent records where a session stopped, so the next session can continue.
+- [Atlas](features/atlas.md): a map of which rules are in force and what relies on them, with a diagram.
 - [Doctor](features/doctor.md): a read-only check that lists problems in your workspace in plain words.
 - [Workflow generator](features/workflow-generator.md): create the folders for a staged workflow with a stop for you after each step.
 - [Modules](features/modules.md): add and remove optional ready-made workflows, always with a plan first.

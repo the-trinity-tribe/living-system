@@ -60,7 +60,7 @@ Only files in `knowledge/`, `workflows/` or `lessons/active.md` can be shared. A
 python3 tools/living.py role-review ~/company roles/account-manager/inbox/2026-10-24-pricing.md --outcome accept --by "Kim Lead"
 ```
 
-Accepting moves it to `roles/account-manager/knowledge/`. Rejecting deletes the shared copy; the original stays in the sharer's workspace.
+Accepting moves it to `roles/account-manager/knowledge/`. Rejecting deletes the shared copy; the original stays in the sharer's workspace. Changed your mind before anyone reviewed it? `python3 tools/living.py share ~/my-workspace roles/<role>/inbox/<file>.md --withdraw` removes it from the company inbox.
 
 - **Workflows for some roles only.** A company workflow whose `CONTEXT.md` has a line such as `Roles: sales, support` appears only on those people's onboarding paths.
 - **Stay up to date.** `status` shows how many company rules are in force; `since` (catch-up) lists company rule changes while you were away.

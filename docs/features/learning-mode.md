@@ -8,6 +8,7 @@ It helps you keep your own skills while an AI does more of the work. Three parts
 
 - **Always on:** the agent says why it chose an approach, shows you the steps when you ask "how did you do that?", and says plainly when it is unsure.
 - **Coach mode (you switch it on):** the agent offers to let you try a task first and checks it after, adds "how to do this yourself" steps, and now and then asks one honest question that tests a plan.
+- **Perspectives:** for an important decision, say "look at this from different angles": the agent sets out three or four genuinely different viewpoints (named by role, never as real people), keeps evidence apart from interpretation, and leaves the decision to you.
 - **Practice and handbook:** the `practice` skill asks you short situation questions about your own rules. `living.py handbook` writes a readable copy of your rules and workflows, so you can work without AI.
 
 ## Why would someone need it?

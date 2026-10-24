@@ -43,6 +43,8 @@ To resume, it runs the same command without `--record` and tells you what change
 - Moving a website to a new host: frame and plan list every file and how to roll back; the check runs in Codex; verify runs the site's own tests; hand back lists what is left.
 - A two-day research report: pause on day one with a checkpoint; on day two the agent sees two source notes changed and re-reads them before continuing.
 
+Verify and hand back always say how far the work got: planned, started, finished, output made, checked, delivered, reported to you. "Finished" is not "delivered".
+
 ## What changes inside the system when it runs?
 
 Files are written only inside `workflows/careful-run/`: the run card and stage outputs. `checkpoint --record` rewrites the card's Checkpoint section. Nothing else changes.
