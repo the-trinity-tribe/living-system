@@ -4,7 +4,7 @@
 
 | Source | File | Scope | Why |
 | --- | --- | --- | --- |
-| Map | newest file in `../01-map/output/` | All | What to look at |
+| Map | the `<audit-name>` file in `../01-map/output/` | All | What to look at |
 | Questions | `../references/questions.md` | Friction | What to ask |
 
 ## Process
@@ -15,7 +15,7 @@
 
 ## Outputs
 
-`output/<date>-friction.md`
+`output/<date>-<audit-name>-friction.md`
 
 ## Checkpoint
 

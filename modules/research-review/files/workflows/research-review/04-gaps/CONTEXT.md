@@ -4,7 +4,7 @@
 
 | Source | File | Scope | Why |
 | --- | --- | --- | --- |
-| Claims | newest file in `../03-claims/output/` | All | What is known |
+| Claims | the `<question-name>` file in `../03-claims/output/` | All | What is known |
 
 ## Process
 
@@ -13,7 +13,7 @@
 
 ## Outputs
 
-`output/<date>-gaps.md`
+`output/<date>-<question-name>-gaps.md`
 
 ## Checkpoint
 

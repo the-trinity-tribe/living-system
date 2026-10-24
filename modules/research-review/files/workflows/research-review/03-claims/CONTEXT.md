@@ -4,7 +4,7 @@
 
 | Source | File | Scope | Why |
 | --- | --- | --- | --- |
-| Sources | newest file in `../02-sources/output/` | All | The evidence |
+| Sources | the `<question-name>` file in `../02-sources/output/` | All | The evidence |
 
 ## Process
 
@@ -14,7 +14,7 @@
 
 ## Outputs
 
-`output/<date>-claims.md`
+`output/<date>-<question-name>-claims.md`
 
 ## Checkpoint
 

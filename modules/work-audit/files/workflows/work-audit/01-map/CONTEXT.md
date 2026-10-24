@@ -15,7 +15,7 @@
 
 ## Outputs
 
-`output/<date>-map.md`
+`output/<date>-<audit-name>-map.md`
 
 ## Checkpoint
 

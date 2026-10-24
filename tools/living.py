@@ -344,11 +344,15 @@ def read_manifest(ws):
         data = json.loads(path.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, UnicodeDecodeError) as e:
         raise Refusal(f".living/manifest.json is damaged ({e}); restore it from a backup or git") from None
-    mods = data.get("modules", {}) if isinstance(data, dict) else None
-    if not isinstance(data, dict) or not isinstance(data.get("files"), dict) or not isinstance(mods, dict) \
-            or not all(isinstance(m, dict) and isinstance(m.get("files"), dict) for m in mods.values()):
+    if not manifest_ok(data):
         raise Refusal(".living/manifest.json has an unexpected structure; restore it from a backup or git")
     return data
+
+
+def manifest_ok(data):
+    mods = data.get("modules", {}) if isinstance(data, dict) else None
+    return isinstance(data, dict) and isinstance(data.get("files"), dict) and isinstance(mods, dict) \
+        and all(isinstance(m, dict) and isinstance(m.get("files"), dict) for m in mods.values())
 
 
 def write_json(path, data):
@@ -996,6 +1000,9 @@ and, if the Living System version changed, python3 tools/living.py upgrade <that
 
 Left out on purpose: .living/local.json (a path on the old computer), .living/.lock, .living/upgrade/,
 .git/ and Python caches.
+
+EXPORT-FILES.txt lists every file with its fingerprint; check the zip with
+    python3 tools/living.py export-check <this file>
 """
 
 
@@ -1035,8 +1042,12 @@ def export(ws, target, apply=False):
         try:
             with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as z:
                 z.writestr("EXPORT-README.txt", EXPORT_NOTE)
+                inventory = []
                 for rel in files:
-                    z.writestr(rel, read_no_follow(ws / rel))
+                    data = read_no_follow(ws / rel)
+                    z.writestr(rel, data)
+                    inventory.append(f"{hashlib.sha256(data).hexdigest()}  {rel}")
+                z.writestr(EXPORT_INVENTORY, "\n".join(inventory) + "\n")
             try:
                 os.link(tmp, target)  # fails if the name appeared meanwhile: never overwrite
             except FileExistsError:
@@ -1052,32 +1063,57 @@ def export(ws, target, apply=False):
 
 def export_check(zip_path):
     """Open an export and confirm it holds a complete workspace. Read-only. Returns (problems, file count)."""
-    import zipfile
+    import stat as _stat, zipfile
     path = Path(zip_path).expanduser()
     if not path.is_file():
         raise Refusal(f"{path} is not a file")
     try:
         with zipfile.ZipFile(path) as z:
-            names = set(z.namelist())
+            infos = {i.filename: i for i in z.infolist()}
             bad = z.testzip()
-            manifest = json.loads(z.read(".living/manifest.json").decode("utf-8-sig")) \
-                if ".living/manifest.json" in names else None
-    except (zipfile.BadZipFile, OSError, ValueError, UnicodeDecodeError) as e:
+            read = lambda n: z.read(n) if n in infos else None
+            manifest_raw, profile_raw, inventory_raw = read(".living/manifest.json"), read(".living/profile.json"), \
+                read(EXPORT_INVENTORY)
+            contents = {n: z.read(n) for n in infos if not n.endswith("/")} if inventory_raw else {}
+    except (zipfile.BadZipFile, OSError) as e:
         raise Refusal(f"{path} cannot be read as an export ({type(e).__name__})") from None
+    names = set(infos)
     problems = [f"damaged inside: {bad}"] if bad else []
-    unsafe = sorted(n for n in names if unsafe_rel(n.rstrip("/")))
-    problems += [f"unsafe path inside: {n}" for n in unsafe[:5]]
-    if not isinstance(manifest, dict) or not isinstance(manifest.get("files"), dict):
-        return problems + ["no readable .living/manifest.json: this is not a Living System export"], len(names)
-    for rel in ("AGENTS.md", "CONTEXT-ROUTING.md", ".living/profile.json", "tools/review.py"):
+    problems += [f"unsafe path inside: {n}" for n in sorted(n for n in names if unsafe_rel(n.rstrip("/")))[:5]]
+    links = sorted(n for n, i in infos.items() if _stat.S_IFMT(i.external_attr >> 16) not in (0, _stat.S_IFREG, _stat.S_IFDIR))
+    problems += [f"not a plain file inside: {n}" for n in links[:5]]
+    try:
+        manifest = json.loads(manifest_raw.decode("utf-8-sig")) if manifest_raw else None
+    except (ValueError, UnicodeDecodeError):
+        manifest = None
+    if not manifest_ok(manifest):
+        return problems + ["no valid .living/manifest.json: this is not a complete Living System export"], len(names)
+    try:
+        profile = json.loads(profile_raw.decode("utf-8-sig")) if profile_raw else None
+    except (ValueError, UnicodeDecodeError):
+        profile = None
+    if not isinstance(profile, dict) or profile.get("profile") not in PROFILES or not profile.get("language"):
+        problems.append(".living/profile.json is missing or damaged; upgrade could not restore it")
+    for rel in ("AGENTS.md", "CONTEXT-ROUTING.md", "tools/review.py"):
         if rel not in names:
             problems.append(f"missing {rel}")
     gone = sorted(set(installed_files(manifest)) - names - set(EXPORT_SKIP_FILES))
     if gone:
         problems.append(f"{len(gone)} installed file(s) missing, e.g. {gone[0]}")
+    if inventory_raw is None:
+        problems.append(f"no {EXPORT_INVENTORY}: made by an older version, so your own files cannot be checked; "
+                        f"make a new export to be sure")
+    else:
+        for line in inventory_raw.decode("utf-8", errors="replace").splitlines():
+            sha, _, rel = line.partition("  ")
+            if rel not in contents:
+                problems.append(f"missing {rel}")
+            elif hashlib.sha256(contents[rel]).hexdigest() != sha:
+                problems.append(f"changed inside the zip: {rel}")
     return problems, len(names)
 
 
+EXPORT_INVENTORY = "EXPORT-FILES.txt"  # every exported file with its fingerprint, so export-check can see what is missing
 DOCTOR_MARK = "<!-- living-system health report: read-only -->"
 
 
@@ -1539,10 +1575,10 @@ def status(ws):
         lines.append(f"Last session's next step: {step}")
         import datetime
         note = ws / "handover/LATEST.md"
-        written = datetime.date.fromtimestamp(note.stat().st_mtime)
-        later = [rel for day, rel in changed_files(ws, written + datetime.timedelta(days=1),
-                                                  installed_files(read_manifest(ws)))
-                 if not rel.startswith(("handover/", "me/"))]
+        when = note.stat().st_mtime
+        written = datetime.date.fromtimestamp(when)
+        later = [rel for day, rel in changed_files(ws, written, installed_files(read_manifest(ws)))
+                 if not rel.startswith(("handover/", "me/")) and (ws / rel).stat().st_mtime > when + 60]
         if later:
             lines.append(f"    (that note is from {written}; {len(later)} file(s) changed after it, e.g. {later[0]}, so "
                          f"check it is still where things stand)")
@@ -2009,19 +2045,47 @@ CHECKPOINT_HEAD = "## Checkpoint"
 
 
 def card_files(text):
-    """Paths listed (in backticks) under 'Files in scope:' in a run card."""
-    m = re.search(r"Files in scope:\s*\n((?:[ \t]*[-*] .*\n?)*)", text)
-    paths = re.findall(r"`([^`]+)`", m.group(1)) if m else []
+    """Paths listed (in backticks) under 'Files in scope:' in a run card; blank lines inside the list are fine."""
+    lines = text.split("\n")
+    start = next((i for i, l in enumerate(lines) if l.strip(" \t-*").lower().startswith("files in scope:")), None)
+    paths = []
+    for line in lines[start + 1:] if start is not None else []:
+        if not line.strip():
+            continue
+        if not re.match(r"\s*[-*] ", line):
+            break  # the list ends at the first line that is neither blank nor a list item
+        paths += re.findall(r"`([^`]+)`", line)
     return [p for p in dict.fromkeys(paths) if not p.startswith("<")]
+
+
+def split_checkpoint(text):
+    """(text before the Checkpoint section, the section, text after it)."""
+    m = re.search(r"^" + re.escape(CHECKPOINT_HEAD) + r"[ \t]*$", text, re.M)
+    if not m:
+        return text, "", ""
+    nxt = re.search(r"^## ", text[m.end():], re.M)
+    end = m.end() + nxt.start() if nxt else len(text)
+    return text[:m.start()], text[m.start():end], text[end:]
+
+
+def file_fingerprint(path):
+    """Text files ignore Windows line endings; anything else is compared byte for byte."""
+    data = path.read_bytes()
+    try:
+        if b"\0" in data:
+            raise UnicodeDecodeError("utf-8", b"", 0, 1, "binary")
+        data.decode("utf-8")
+    except UnicodeDecodeError:
+        return "b" + hashlib.sha256(data).hexdigest()[:15]
+    return review_tool().text_sha(data)[:16]
 
 
 def checkpoint(ws, card, record=False, today=None):
     """Record (record=True) or compare fingerprints of the run card's files in scope.
-    Returns (problems, message); problems lists changed, missing or unrecorded files."""
+    Returns (problems, message); problems lists changed, missing, unrecorded or dropped files."""
     import datetime
     ws = Path(ws)
     read_manifest(ws)
-    R = review_tool()
     card = Path(str(card).replace("\\", "/")).as_posix()
     if unsafe_rel(card) or not card.startswith("workflows/") or not card.endswith(".md"):
         raise Refusal(f"{card}: give the run card's path inside the workspace, e.g. workflows/careful-run/runs/<card>.md")
@@ -2029,23 +2093,33 @@ def checkpoint(ws, card, record=False, today=None):
     path = ws / card
     if not path.is_file():
         raise Refusal(f"{card} does not exist")
-    text = path.read_text(encoding="utf-8")
-    files = card_files(text)
-    for rel in files:
-        if unsafe_rel(rel):
-            raise Refusal(f"{card} lists {rel!r} under Files in scope; use plain paths inside the workspace")
-    fingerprint = lambda rel: (R.text_sha((ws / rel).read_bytes())[:16] if (ws / rel).is_file() and not linked_part(ws, rel)
-                               else "missing")
+
+    def scope(text):
+        files = card_files(text)
+        for rel in files:
+            if unsafe_rel(rel):
+                raise Refusal(f"{card} lists {rel!r} under Files in scope; use plain paths inside the workspace")
+            if rel == card:
+                raise Refusal(f"{card} lists itself under Files in scope; the card changes at every stop, so leave it out")
+            if linked_part(ws, rel):
+                raise Refusal(f"{rel} is a link; list the real file instead")
+        return files
+    fingerprint = lambda rel: file_fingerprint(ws / rel) if (ws / rel).is_file() else "missing"
     if record:
         today = (today or datetime.date.today()).isoformat()
-        body = text.split("\n" + CHECKPOINT_HEAD + "\n", 1)[0].rstrip("\n")
-        section = "".join(f"- `{rel}` {fingerprint(rel)}\n" for rel in files)
-        new = f"{body}\n\n{CHECKPOINT_HEAD}\n\nRecorded {today} by `living.py checkpoint`. Do not edit by hand.\n\n{section}"
         with workspace_lock(ws):
+            text = path.read_text(encoding="utf-8")
+            files = scope(text)
+            before, _, after = split_checkpoint(text)
+            section = (f"{CHECKPOINT_HEAD}\n\nRecorded {today} by `living.py checkpoint`. Do not edit by hand.\n\n"
+                       + "".join(f"- `{rel}` {fingerprint(rel)}\n" for rel in files))
+            new = before.rstrip("\n") + "\n\n" + section + ("\n" + after.lstrip("\n") if after.strip() else "")
             fd, tmp = tempfile.mkstemp(prefix=".card.", suffix=".tmp", dir=path.parent)
             try:
                 with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as f:
                     f.write(new)
+                if path.read_text(encoding="utf-8") != text:
+                    raise Refusal(f"{card} changed while the checkpoint was being written; nothing was replaced")
                 os.replace(tmp, path)
             except BaseException:
                 Path(tmp).unlink(missing_ok=True)
@@ -2053,9 +2127,12 @@ def checkpoint(ws, card, record=False, today=None):
         missing = [rel for rel in files if fingerprint(rel) == "missing"]
         return [], (f"Checkpoint recorded for {len(files)} file(s)" + (f"; not there yet: {', '.join(missing)}" if missing
                     else "") + "." if files else "No files listed under 'Files in scope:'; nothing to fingerprint.")
-    if "\n" + CHECKPOINT_HEAD + "\n" not in text:
+    text = path.read_text(encoding="utf-8")
+    files = scope(text)
+    section = split_checkpoint(text)[1]
+    if not section:
         raise Refusal(f"{card} has no checkpoint yet; record one with --record when you pause")
-    recorded = dict(re.findall(r"^- `([^`]+)` (\w+)$", text.split("\n" + CHECKPOINT_HEAD + "\n", 1)[1], re.M))
+    recorded = dict(re.findall(r"^- `([^`]+)` (\w+)$", section, re.M))
     problems = []
     for rel in files:
         now = fingerprint(rel)
@@ -2065,6 +2142,7 @@ def checkpoint(ws, card, record=False, today=None):
             problems.append(f"{rel}: " + ("missing now" if now == "missing" else
                                           "created since the checkpoint" if recorded[rel] == "missing" else
                                           "changed since the checkpoint"))
+    problems += [f"{rel}: in the checkpoint, but no longer listed in scope" for rel in recorded if rel not in files]
     return problems, ("Nothing changed since the checkpoint; safe to continue." if not problems else
                       "Changed since the checkpoint: re-read these before continuing.")
 
@@ -2169,7 +2247,7 @@ def onboarding_items(ws):
     def add_workflows(root, section, prefix, where, role=None):
         for ctx in sorted((root / "workflows").glob("*/CONTEXT.md")) if (root / "workflows").is_dir() else []:
             rel = ctx.relative_to(root).as_posix()
-            roles = re.search(r"^Roles:\s*(.+)$", ctx.read_text(encoding="utf-8", errors="replace"), re.M | re.I)
+            roles = re.search(r"^Roles:\s*(.+)$", ctx.read_text(encoding="utf-8-sig", errors="replace"), re.M | re.I)
             if role is not None and roles and role not in re.split(r"[\s,]+", roles.group(1).strip().lower()):
                 continue  # this company workflow names its roles, and this person's role is not one of them
             items.append((section, f"{prefix}:{rel}", f"{title_of(ctx, ctx.parent.name)}: read `{rel}`{where}"))
@@ -2454,6 +2532,12 @@ def write_handbook(ws, target, text, mark=None, what="handbook"):
         raise Refusal(f"the {what} file name must end in .md or .txt")
     if ws in (target, *target.parents):
         raise Refusal(f"save the {what} outside the workspace, so no agent mistakes the copy for the rules")
+    try:
+        org = org_folder(ws)
+    except Refusal:
+        org = None
+    if org is not None and org.resolve() in (target, *target.parents):
+        raise Refusal(f"save the {what} outside the linked company workspace too; it is private to you")
     if not target.parent.is_dir():
         raise Refusal(f"folder {target.parent} does not exist")
     if target.is_symlink() or (target.exists() and not target.is_file()):
@@ -2481,18 +2565,21 @@ def knowledge_upkeep(ws, R):
     """Doctor notes on references to replaced or missing decisions, duplicate knowledge, drawers and long instructions."""
     ws = Path(ws)
     out = []
-    decs = R.decisions(ws) if (ws / "decisions").is_dir() else {}
-    replaced_by = {m["supersedes"]: k for k, m in decs.items() if m.get("status") == "approved" and "supersedes" in m}
+    try:
+        decs = R.decisions(ws) if (ws / "decisions").is_dir() else {}
+    except Refusal:
+        decs = None  # a damaged decision file: review.py check reports it; upkeep skips the reference checks
+    replaced_by = {m["supersedes"]: k for k, m in (decs or {}).items() if m.get("status") == "approved" and "supersedes" in m}
 
     def newest(k, seen=()):
         return newest(replaced_by[k], seen + (k,)) if k in replaced_by and k not in seen else k
     places = [p for top in ("workflows", "knowledge", "roles") if (ws / top).is_dir() for p in sorted((ws / top).rglob("*.md"))]
-    for p in places:
-        if p.is_symlink():
+    for p in places if decs is not None else []:
+        if p.is_symlink() or not p.is_file():
             continue
         rel = p.relative_to(ws).as_posix()
         text = p.read_text(encoding="utf-8", errors="replace")
-        for ref in sorted(set(re.findall(r"`?(decisions/[\w.-]+\.md)`?", text))):
+        for ref in sorted(set(re.findall(r"(?<![\w./\\-])(decisions/[\w.-]+\.md)", text))):
             if ref in replaced_by:
                 now = newest(ref)
                 gone = decs.get(now, {}).get("kind") == R.RETIREMENT
@@ -2503,7 +2590,7 @@ def knowledge_upkeep(ws, R):
     titles, texts = {}, {}
     for p in sorted((ws / "knowledge").rglob("*.md")) if (ws / "knowledge").is_dir() else []:
         rel = p.relative_to(ws).as_posix()
-        if p.is_symlink() or (p.parent == ws / "knowledge" and p.name in KNOWLEDGE_SKIP):
+        if p.is_symlink() or not p.is_file() or (p.parent == ws / "knowledge" and p.name in KNOWLEDGE_SKIP):
             continue
         text = p.read_text(encoding="utf-8", errors="replace")
         m = re.search(r"^# (.+)$", text, re.M)

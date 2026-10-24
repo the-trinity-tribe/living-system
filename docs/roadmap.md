@@ -16,8 +16,8 @@ Steps 1 to 9 were built on 2026-10-24 (each with tests); step 10 waits for your 
 | 2 | Parking and tend | G, A, N | `me/parked.md` and 'park this'; `tend` skill; `idea-check` skill. | Small |
 | 3 | Focus setting and capsule | G, F | `focus` setting; handover goal and open question; stale handover note in status. | Small |
 | 4 | Knowledge upkeep | A, K, I | Drawer rule; duplicate knowledge; stale references in workflows and knowledge; instruction growth; `improve` choice. | Small to medium |
-| 5 | Careful-run module | B, E | Run card, profiles, risk rule, checkpoints, `run-check`. | Medium |
-| 6 | Health files | L, C | `doctor --out`, `export --check`, menu. | Small |
+| 5 | Careful-run module | B, E | Run card, profiles, risk rule, checkpoints, `checkpoint`. | Medium |
+| 6 | Health files | L, C | `doctor --out`, `export-check`, menu. | Small |
 | 7 | New modules | M, P | `work-audit`, `research-review`, `client-intake`, `content-prep`. | Medium (content) |
 | 8 | Role-specific workflows | H | Workflows name their roles; onboarding filters. | Small |
 | 9 | Local-first page | O | What runs offline, what needs an agent, what is not measured. | Small |

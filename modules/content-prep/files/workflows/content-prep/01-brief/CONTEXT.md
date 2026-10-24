@@ -13,7 +13,7 @@
 
 ## Outputs
 
-`output/<date>-brief.md`
+`output/<date>-<piece-name>-brief.md`
 
 ## Checkpoint
 

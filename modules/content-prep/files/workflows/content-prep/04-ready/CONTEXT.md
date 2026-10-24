@@ -13,7 +13,7 @@
 
 ## Outputs
 
-`output/<date>-ready.md`
+`output/<date>-<piece-name>-ready.md`
 
 ## Checkpoint
 

@@ -14,7 +14,7 @@
 
 ## Outputs
 
-`output/<date>-check.md`
+`output/<date>-<piece-name>-check-<round>.md`
 
 ## Checkpoint
 

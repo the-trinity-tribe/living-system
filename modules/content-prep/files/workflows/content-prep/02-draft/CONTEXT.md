@@ -4,7 +4,7 @@
 
 | Source | File | Scope | Why |
 | --- | --- | --- | --- |
-| Brief | newest file in `../01-brief/output/` | All | What to write |
+| Brief | the `<piece-name>` file in `../01-brief/output/` | All | What to write |
 | Check list | `../references/check.md` | All | What it will be checked on |
 
 ## Process
@@ -14,7 +14,7 @@
 
 ## Outputs
 
-`output/<date>-draft.md`
+`output/<date>-<piece-name>-draft.md`
 
 ## Checkpoint
 

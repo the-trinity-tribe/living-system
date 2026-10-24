@@ -4,7 +4,7 @@
 
 | Source | File | Scope | Why |
 | --- | --- | --- | --- |
-| Map and friction | the newest files of stages 1 and 2 | All | The material |
+| Map and friction | the `<audit-name>` files of stages 1 and 2 | All | The material |
 | Questions | `../references/questions.md` | Sort | The four boxes |
 
 ## Process
@@ -15,7 +15,7 @@
 
 ## Outputs
 
-`output/<date>-sort.md`
+`output/<date>-<audit-name>-sort.md`
 
 ## Checkpoint
 

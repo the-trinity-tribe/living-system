@@ -4,7 +4,7 @@
 
 | Source | File | Scope | Why |
 | --- | --- | --- | --- |
-| Context | newest file in `../02-context/output/` | All | The picture |
+| Context | the `<client-code>` file in `../02-context/output/` | All | The picture |
 | Current decisions | output of `python3 tools/review.py current` | Rule, Scope | What we do and how |
 
 ## Process

@@ -14,7 +14,7 @@
 
 ## Outputs
 
-`output/<date>-question.md`
+`output/<date>-<question-name>-question.md`
 
 ## Checkpoint
 

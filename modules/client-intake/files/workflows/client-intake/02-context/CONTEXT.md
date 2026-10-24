@@ -4,7 +4,7 @@
 
 | Source | File | Scope | Why |
 | --- | --- | --- | --- |
-| Request | newest file in `../01-request/output/` | All | The request |
+| Request | the `<client-code>` file in `../01-request/output/` | All | The request |
 | Questions | `../references/intake-questions.md` | All | What else to know |
 
 ## Process

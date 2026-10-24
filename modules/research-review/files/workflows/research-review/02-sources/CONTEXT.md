@@ -4,7 +4,7 @@
 
 | Source | File | Scope | Why |
 | --- | --- | --- | --- |
-| Question | newest file in `../01-question/output/` | All | What to look for |
+| Question | the `<question-name>` file in `../01-question/output/` | All | What to look for |
 | Rules | `../references/source-rules.md` | All | How to record sources |
 
 ## Process
@@ -15,7 +15,7 @@
 
 ## Outputs
 
-`output/<date>-sources.md`
+`output/<date>-<question-name>-sources.md`
 
 ## Checkpoint
 

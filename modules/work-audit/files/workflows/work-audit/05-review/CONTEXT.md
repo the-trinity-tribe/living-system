@@ -4,7 +4,7 @@
 
 | Source | File | Scope | Why |
 | --- | --- | --- | --- |
-| Experiment | newest file in `../04-experiment/output/` | All | What was planned |
+| Experiment | the `<audit-name>` file in `../04-experiment/output/` | All | What was planned |
 | Human | What happened | All | The result |
 
 ## Process
@@ -15,7 +15,7 @@
 
 ## Outputs
 
-`output/<date>-review.md`
+`output/<date>-<audit-name>-review.md`
 
 ## Checkpoint
 

@@ -36,7 +36,7 @@ class TestExport(unittest.TestCase):
         self.assertEqual(snapshot(self.ws), before)
         L.export(self.ws, self.base / "backup.zip", apply=True)
         names = zipfile.ZipFile(self.base / "backup.zip").namelist()
-        self.assertEqual(sorted(names), sorted(files + ["EXPORT-README.txt"]))
+        self.assertEqual(sorted(names), sorted(files + ["EXPORT-README.txt", "EXPORT-FILES.txt"]))
         for left_out in (".living/local.json", ".living/upgrade/AGENTS.md", ".git/config"):
             self.assertNotIn(left_out, names)
         for kept in ("decisions/2026-10-24-erste-regel.md", ".claude/settings.json", "tools/guard.py",

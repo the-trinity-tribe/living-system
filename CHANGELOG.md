@@ -52,7 +52,7 @@ From a governance demo to a workspace you can install and grow.
 
 ### Fixed
 
-Five read-only code reviews (Codex, high effort) found 104 defects; all were checked against the code and fixed, each with a test. A proposal file without the usual date prefix no longer produces a decision with a broken name. Examples: a differently spelled path could leave two "current" decisions; line breaks in a reviewer name could inject metadata; links could make the tools write into protected folders; interrupted writes could leave half-made files. Text is always read and written as UTF-8 with LF line endings.
+Six read-only code reviews (Codex, high effort) found 124 defects; all were checked against the code and fixed, each with a test. A proposal file without the usual date prefix no longer produces a decision with a broken name. Examples: a differently spelled path could leave two "current" decisions; line breaks in a reviewer name could inject metadata; links could make the tools write into protected folders; interrupted writes could leave half-made files. Text is always read and written as UTF-8 with LF line endings.
 
 ### Known limitations
 

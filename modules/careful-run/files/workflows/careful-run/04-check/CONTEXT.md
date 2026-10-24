@@ -15,11 +15,11 @@ Check the result against the card. Run this in a **fresh session** that did not 
 1. Read only the inputs, not the maker's conversation.
 2. For each Done-when line and profile check: pass, or what is wrong and where.
 3. Give one verdict: approved, request changes (numbered), or blocked. Note the correction round.
-4. Save it as `output/<date>-check.md`. Never edit the work.
+4. Save it as `output/<card-name>-check-<round>.md`. Never edit the work.
 
 ## Outputs
 
-`output/<date>-check.md`
+`output/<card-name>-check-<round>.md`
 
 ## Checkpoint
 

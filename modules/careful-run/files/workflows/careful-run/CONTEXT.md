@@ -15,7 +15,7 @@ Goal: bigger, riskier or multi-session work is framed, planned, made, checked by
 | 5 | `05-verify/` | Run the deterministic checks named in the plan; report pass or fail. | All pass, or back to 3 |
 | 6 | `06-hand-back/` | What was done, what is open, next step; update the handover note. | Human decides |
 
-The run card is `runs/<date>-<name>.md`, copied from `references/run-card.md`. Update its **Stage** line at every stop.
+The run card is `runs/<date>-<name>.md`, copied from `references/run-card.md`. Update its **Stage** line at every stop. Stage outputs are named after the card (`<card-name>`, the card's file name without `.md`), with the correction round where a stage can repeat, so runs never overwrite each other.
 
 ## Risk
 

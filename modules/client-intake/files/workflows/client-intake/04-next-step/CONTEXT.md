@@ -4,7 +4,7 @@
 
 | Source | File | Scope | Why |
 | --- | --- | --- | --- |
-| Fit | newest file in `../03-fit/output/` | All | What we know |
+| Fit | the `<client-code>` file in `../03-fit/output/` | All | What we know |
 
 ## Process
 

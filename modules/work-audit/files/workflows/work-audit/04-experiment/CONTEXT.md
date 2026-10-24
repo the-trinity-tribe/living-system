@@ -4,7 +4,7 @@
 
 | Source | File | Scope | Why |
 | --- | --- | --- | --- |
-| Sort | newest file in `../03-sort/output/` | All | Candidates |
+| Sort | the `<audit-name>` file in `../03-sort/output/` | All | Candidates |
 
 ## Process
 
@@ -14,7 +14,7 @@
 
 ## Outputs
 
-`output/<date>-experiment.md`
+`output/<date>-<audit-name>-experiment.md`
 
 ## Checkpoint
 

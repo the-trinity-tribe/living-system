@@ -34,12 +34,39 @@ class TestHealthFiles(unittest.TestCase):
         other = self.base / "other.zip"
         with zipfile.ZipFile(other, "w") as z:
             z.writestr("notes.txt", "x")
-        self.assertIn("not a Living System export", L.export_check(other)[0][0])
+        self.assertIn("not a complete Living System export", L.export_check(other)[0][0])
         (self.base / "text.zip").write_text("not a zip", encoding="utf-8")
         with self.assertRaises(L.Refusal):
             L.export_check(self.base / "text.zip")
         self.assertEqual(run("export-check", str(good)).returncode, 0)
         self.assertEqual(run("export-check", str(bad)).returncode, 1)
+
+    def test_export_check_sees_own_files_settings_manifest_and_links(self):  # sixth review, findings 2, 9-11
+        L.add_module(self.ws, "careful-run", apply=True)
+        (self.ws / "projects/mine.md").write_text("# Mine\n", encoding="utf-8")
+        good = self.base / "good.zip"
+        L.export(self.ws, good, apply=True)
+
+        def variant(name, change):
+            out = self.base / name
+            with zipfile.ZipFile(good) as src, zipfile.ZipFile(out, "w") as dst:
+                for item in src.infolist():
+                    data = change(item, src.read(item))
+                    if data is not None:
+                        dst.writestr(item, data)
+            return L.export_check(out)[0]
+        self.assertIn("missing projects/mine.md", variant("a.zip", lambda i, d: None if i.filename == "projects/mine.md" else d))
+        self.assertTrue(any("profile.json" in p for p in variant(
+            "b.zip", lambda i, d: b"not json" if i.filename == ".living/profile.json" else d)))
+        self.assertTrue(any("manifest" in p for p in variant(
+            "c.zip", lambda i, d: b'{"files": {}, "modules": []}' if i.filename == ".living/manifest.json" else d)))
+
+        def as_link(i, d):
+            if i.filename == "AGENTS.md":
+                i.external_attr = (0o120777 << 16)
+                return b"/elsewhere"
+            return d
+        self.assertTrue(any("not a plain file inside: AGENTS.md" in p for p in variant("d.zip", as_link)))
 
     def test_doctor_report_is_saved_outside_only(self):
         out = self.base / "health.md"

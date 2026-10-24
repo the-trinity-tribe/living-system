@@ -7,7 +7,7 @@ Do the planned steps, inside scope.
 | Source | File | Scope | Why |
 | --- | --- | --- | --- |
 | Card | `../runs/<card>` | Plan, Scope | What to do |
-| Checker list | newest file in `../04-check/output/` | If any | What to fix |
+| Checker list | the newest `<card-name>-check-<round>.md` in `../04-check/output/` | If any | What to fix |
 
 ## Process
 
