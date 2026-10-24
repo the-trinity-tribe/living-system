@@ -37,5 +37,18 @@ class TestDocs(unittest.TestCase):
         self.assertEqual(broken, [])
 
 
+class TestCommandReference(unittest.TestCase):
+    def test_every_command_is_in_the_reference(self):
+        import re as _re
+        source = (REPO / "tools/living.py").read_text(encoding="utf-8")
+        commands = set(_re.findall(r'sub\.add_parser\("([a-z-]+)"', source))
+        reference = (REPO / "docs/cli.md").read_text(encoding="utf-8")
+        self.assertGreater(len(commands), 25)
+        for c in sorted(commands):
+            with self.subTest(command=c):
+                self.assertIn(f"`living.py {c}", reference)
+
+
+
 if __name__ == "__main__":
     unittest.main()

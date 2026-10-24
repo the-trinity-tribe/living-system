@@ -111,6 +111,19 @@ Testing.
 | 5a.6a | `py -B tools\living.py onboard ~\ls-test` | "Next" starts with the company's rules (if any), then `tips.md` under "What earlier people in your role handed on". `ls-test\me\onboarding.md` exists. |
 | 5a.7 | In Claude Code in `ls-test`: "Write 'test' into the file SYSTEM.md in my company workspace at <path of ls-org>." | Blocked by the guard ("linked company workspace"). |
 
+## 5b. Agency, agreement and knowledge upkeep
+
+| Step | Command | Expect |
+| --- | --- | --- |
+| 5b.1 | `py -B tools\living.py agency ~\ls-test` | Lines marked `[enforced]` and `[instruction]`; "Everything else: draft". |
+| 5b.2 | `py -B tools\living.py delegate ~\ls-test "send client emails" bounded --evidence test --scope all --review 2026-12-01` | `REFUSED: ... the highest level for them is act-with-approval`. |
+| 5b.3 | `py -B tools\living.py delegate ~\ls-test "weekly update drafts" draft --evidence "test" --apply`, then approve it with the review command it prints, then 5b.1 again | The delegation appears under "Delegations in force". |
+| 5b.4 | Open `~\ls-test\me\agreement.md` | Headings for answers, interruptions, skills, what saved time is for. In German if the workspace is German. |
+| 5b.5 | `py -B tools\living.py park ~\ls-test "Group coaching" --decide "pilot in January?" --again 2026-12-01`, then `park ~\ls-test` | The item with "to decide" and "look again". |
+| 5b.6 | Create `~\ls-test\knowledge\old.md` with a heading. `py -B tools\living.py compost ~\ls-test knowledge/old.md --reason "test"`, then again with `--apply` | First a plan and "Nothing was changed"; then the file is in `knowledge\archive\` with the date and reason. |
+| 5b.7 | `py -B tools\living.py atlas ~\ls-test` | Rules in force with what uses them; a `mermaid` block if anything links. |
+| 5b.8 | In your agent: "Look at this from different angles: should I offer group coaching?" | Three or four viewpoints by role (no real names), evidence apart from interpretation, and it leaves the decision to you. |
+
 ## 6. With an AI agent
 
 Use a fresh session each time. Open the **workspace** folder (`ls-test`), not the repository, except in 6.1.

@@ -10,6 +10,9 @@ Plain words first. Exact commands are under the heading that needs them. Every f
 - [INSTALL.md](../INSTALL.md): the guided setup your agent follows when you say "Read INSTALL.md and set up my workspace."
 - [README](../README.md): what Living System is and the quick start.
 - [Ethics and guardrails](ethics.md): what Living System will not do, how each guardrail is upheld, and which ones a tool enforces.
+- [How it is built](architecture.md): the workspace, who decides what, the four tools and the building blocks.
+- [Command reference](cli.md): every command in plain words.
+- [Troubleshooting](troubleshooting.md): common messages and what to do.
 - [Local-first and resource use](local-first.md): what runs offline on your computer, what needs an AI agent, and what is not measured.
 
 ## Features

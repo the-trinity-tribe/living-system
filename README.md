@@ -59,7 +59,7 @@ Profiles: `student`, `professional`, `employee`, `manager`. Languages with start
 
 Then open **your workspace** in Claude Code or Codex and work as usual. Your starter `SYSTEM.md` and `PRINCIPLES.md` are drafts until you change them to `status: approved` yourself. Tip: say *"Help me make my first decision from my setup answers."*
 
-Run `python3 tools/living.py` on its own for a short menu of everyday commands.
+Run `python3 tools/living.py` on its own for a short menu of everyday commands. All commands: [command reference](docs/cli.md). Stuck? [Troubleshooting](docs/troubleshooting.md). How it fits together: [architecture](docs/architecture.md).
 
 ## What you can do
 
