@@ -1,0 +1,24 @@
+{
+  "id": "research-review",
+  "version": "0.1.0",
+  "kind": "workflow",
+  "summary": "Answer a question from sources: every claim points to a dated source, conflicts and gaps are listed, nothing is filled in by guessing.",
+  "requires": [],
+  "routing": [
+    [
+      "Answering a question from sources, with every claim checked (research and evidence review)",
+      "workflows/research-review/CONTEXT.md"
+    ]
+  ],
+  "needs_approval": [
+    "Using or sharing the summary",
+    "Treating any finding as a rule (as a proposal)"
+  ],
+  "signals": [
+    "research this",
+    "find evidence",
+    "is it true that",
+    "sources for",
+    "what does the research say"
+  ]
+}

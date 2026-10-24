@@ -1,0 +1,25 @@
+{
+  "id": "client-intake",
+  "version": "0.1.0",
+  "kind": "workflow",
+  "summary": "Turn a new client's request into a clear picture of what they need, what is unknown and a proposed next step; you decide and you reply.",
+  "requires": [],
+  "routing": [
+    [
+      "A new client request or enquiry: what they need, what is unknown, next step (client intake)",
+      "workflows/client-intake/CONTEXT.md"
+    ]
+  ],
+  "needs_approval": [
+    "Replying to the client",
+    "Any offer, price or commitment",
+    "Keeping client details beyond the intake"
+  ],
+  "signals": [
+    "new client",
+    "an enquiry came in",
+    "first call with a client",
+    "a client asked",
+    "intake"
+  ]
+}

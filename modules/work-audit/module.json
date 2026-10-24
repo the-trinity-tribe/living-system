@@ -1,0 +1,25 @@
+{
+  "id": "work-audit",
+  "version": "0.1.0",
+  "kind": "workflow",
+  "summary": "Look at how work really happens before adding AI: map it, find friction, sort what to drop, keep, support or automate, then test one small change.",
+  "requires": [],
+  "routing": [
+    [
+      "Looking at how work happens before adding AI or automation (work audit)",
+      "workflows/work-audit/CONTEXT.md"
+    ]
+  ],
+  "needs_approval": [
+    "Starting the experiment",
+    "Any rule that comes out of it (as a proposal)",
+    "Sharing the audit with others"
+  ],
+  "signals": [
+    "where do we lose time",
+    "should we use AI for this",
+    "map our processes",
+    "too much admin",
+    "what could we automate"
+  ]
+}

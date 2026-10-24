@@ -15,6 +15,10 @@ These modules ship today:
 | `staged-learning` | knowledge | Your agent suggests lessons from its mistakes. Only lessons you approve are used next time. | [README](../../modules/staged-learning/README.md) |
 | `knowledge-inbox` | knowledge | Your agent suggests knowledge worth keeping, with its source. Only what you approve is kept, and `doctor` flags files not checked for 90 days. | [README](../../modules/knowledge-inbox/README.md) |
 | `careful-run` | workflow | Bigger or riskier work in six steps (frame, plan, make, check, verify, hand back) with one run card; `living.py checkpoint` shows what changed before you resume. | [README](../../modules/careful-run/README.md) |
+| `work-audit` | workflow | Look at how work really happens before adding AI: map, friction, sort (drop, keep human, support, automate), one small experiment, review. | [README](../../modules/work-audit/README.md) |
+| `research-review` | workflow | Answer a question from sources: every claim points to a dated source; conflicts and gaps are listed. | [README](../../modules/research-review/README.md) |
+| `client-intake` | workflow | A new client request becomes what they need, what is unknown and one proposed next step; client codes instead of contact details. | [README](../../modules/client-intake/README.md) |
+| `content-prep` | workflow | A post, article or newsletter: brief, draft, fact and tone check, ready for you to publish. | [README](../../modules/content-prep/README.md) |
 | `second-check` | workflow | Important work is made, checked by a fresh session or a different agent against a checklist, then you decide. At most two correction rounds. | [README](../../modules/second-check/README.md) |
 
 ## Why would someone need it?

@@ -1,0 +1,24 @@
+{
+  "id": "content-prep",
+  "version": "0.1.0",
+  "kind": "workflow",
+  "summary": "Prepare a post, article or newsletter in checked steps: brief, draft, fact and tone check, ready for you to publish.",
+  "requires": [],
+  "routing": [
+    [
+      "Preparing a post, article or newsletter for you to publish (content preparation)",
+      "workflows/content-prep/CONTEXT.md"
+    ]
+  ],
+  "needs_approval": [
+    "Publishing or sending",
+    "Any claim that has no source"
+  ],
+  "signals": [
+    "write a post",
+    "newsletter",
+    "blog article",
+    "LinkedIn post",
+    "prepare content"
+  ]
+}
