@@ -1,6 +1,6 @@
 # Testing Living System: a guide for testers
 
-Thank you for trying Living System. This preview (0.2.0 preview 2) is open for testing, and your experience is the most useful thing you can give back, especially if you are **not** technical.
+Thank you for trying Living System. Version 0.2.0 is experimental and open for testing, and your experience is the most useful thing you can give back, especially if you are **not** technical.
 
 You do not need to read code. You need about 30 minutes, a computer, and ideally Claude Code or Codex.
 

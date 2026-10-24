@@ -2,7 +2,10 @@
 
 All notable changes. Dates are when a version was prepared. Versions before 1.0 are experimental: details may change between them.
 
-## Unreleased
+## 0.2.0 (2026-10-24)
+
+The first full 0.2.0 release: everything in preview 1 and preview 2 below, plus the changes in this section. Release notes: [docs/releases/0.2.0.md](docs/releases/0.2.0.md).
+
 
 - **Brand and images:** a Living System mark and look based on The Trinity Tribe's design system ([brand/](brand/README.md)), a hero image and four feature images in the README. The pitch page (`site/index.html`) now uses it too: Solaris colours (dark by default, a warm cream version when the device asks for light), Ubuntu and Figtree, the mark, red divider rules and square buttons, with every chapter, status chip and interaction unchanged.
 - **Live scenario test:** 13 everyday scenarios run in Claude Code and Codex (`tests/live/`); two agent rules tightened after Codex skipped a question its owner's work agreement asks for (results in `demo/WALKTHROUGH.md`).

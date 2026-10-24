@@ -7,6 +7,6 @@ authors:
 repository-code: "https://github.com/the-trinity-tribe/living-system"
 license: MPL-2.0
 type: software
-version: "0.2.0-preview.2"
+version: "0.2.0"
 date-released: "2026-10-24"
 abstract: "An experimental, local-first Markdown and Python work environment in which people and AI agents share context, and only humans approve changes to the rules."

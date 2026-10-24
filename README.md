@@ -6,7 +6,7 @@
 
 Living System gives Claude Code and Codex a shared, written memory of how you work: your decisions, your knowledge, your boundaries. An agent can suggest a change to what you decided; it can never quietly rewrite it. Everything lives in plain Markdown on your own computer: no server, no account, no tie to one AI vendor.
 
-<sub>Experimental · version 0.2.0 preview 2 · open for testing and feedback · MPL-2.0</sub>
+<sub>Experimental · version 0.2.0 · open for testing and feedback · MPL-2.0</sub>
 
 - **Stop re-explaining.** Your rules are written once and read by every agent session.
 - **You stay the decision-maker.** Agents propose; only your review changes a rule, and a write guard blocks direct edits.
