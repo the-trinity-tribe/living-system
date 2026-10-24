@@ -200,7 +200,7 @@ All ten steps were done on 2026-10-24: steps 1 to 9 built with tests, step 10 an
 
 ## Second review: product maturity (2026-10-24)
 
-A second set of ideas, checked the same way after the 0.2.0 preview was published.
+A second set of ideas, checked the same way after the 0.2.0 preview was published. All six steps were built on 2026-10-24, each with tests.
 
 | # | Step | Areas | What | Size |
 | --- | --- | --- | --- | --- |
@@ -215,16 +215,16 @@ A second set of ideas, checked the same way after the 0.2.0 preview was publishe
 
 | Capability | Coverage | Decision | Why |
 | --- | --- | --- | --- |
-| Who may read, propose, execute, approve and verify, in one place | Partial | Core | Spread over AGENTS.md, the guard and the team rule. Add `living.py agency`: one read-only view of who may do what in this workspace, marking each line as enforced by a tool or an instruction only. |
-| Task-specific authority granted and withdrawn | Missing | Core | Delegations become ordinary approved decisions (made with `living.py delegate`, withdrawn by retiring them), so they get review, history and the review record for free. |
+| Who may read, propose, execute, approve and verify, in one place | Implemented | Core | Built: `living.py agency`. |
+| Task-specific authority granted and withdrawn | Implemented | Core | Built: `living.py delegate` writes the proposal; retiring withdraws it. |
 | Uncertainty, provenance, reversibility, escalation | Implemented | Keep | AGENTS.md sections 4-7, approval screen, review record, careful-run risk rule. |
 
 ### 2B. Progressive delegation (trust ladder)
 
 | Capability | Coverage | Decision | Why |
 | --- | --- | --- | --- |
-| Levels: observe, recommend, draft, act with approval, bounded autonomy | Missing | Core | Five named levels per kind of work, in delegation decisions. Default when nothing is delegated: draft and ask. |
-| Evidence-based promotion, limits, rollback | Missing | Core | A delegation proposal must name its evidence and, for bounded autonomy, a scope and a review date. Publishing, spending, deleting, messaging people and changing rules can never be delegated beyond 'act with approval'. Retire the decision to withdraw it. |
+| Levels: observe, recommend, draft, act with approval, bounded autonomy | Unverified | Core | Built (agent behaviour, not yet live-tested): AGENTS.md section 15. |
+| Evidence-based promotion, limits, rollback | Implemented | Core | Built: evidence required, bounded needs scope and a review date within 90 days, always-approval work capped, status reminds. |
 | Technically enforced autonomy limits | Missing | Reject | Delegations are instructions; the guard's blocks stay as they are and no delegation lifts them. Claiming enforcement would be false. Reconsider only with a mechanism the tools can actually check. |
 
 ### 2C. Knowledge metabolism
@@ -232,22 +232,22 @@ A second set of ideas, checked the same way after the 0.2.0 preview was publishe
 | Capability | Coverage | Decision | Why |
 | --- | --- | --- | --- |
 | Signals to knowledge with human gates | Implemented | Keep | `incoming/`, `knowledge-inbox`, `staged-learning`, proposals. |
-| Confidence and evidence quality | Missing | Enhancement | Optional `confidence: low | medium | high` in knowledge front matter; doctor notes low-confidence files that are old. |
+| Confidence and evidence quality | Implemented | Enhancement | Built: `confidence:` front matter; doctor notes low and invalid values. |
 | Aging and re-verification; dedup | Implemented | Keep | `last_verified`, doctor and status reminders, duplicate notes. |
-| Purposeful forgetting that keeps history | Missing | Enhancement | `living.py compost` moves a knowledge file to `knowledge/archive/` with the date and reason (plan first); archived files leave routing and upkeep but stay readable. |
-| Lessons graduating into rules; a gardener that only proposes | Partial | Enhancement | Lessons that would change a rule already become proposals. Extend the `tend` skill: lessons used often are offered as proposals; old or doubtful knowledge is offered for re-check or composting. |
+| Purposeful forgetting that keeps history | Implemented | Enhancement | Built: `living.py compost` into `knowledge/archive/`. |
+| Lessons graduating into rules; a gardener that only proposes | Unverified | Enhancement | Built (agent behaviour, not yet live-tested): the `tend` skill offers composting, merging and lesson-to-proposal. |
 
 ### 2D. Personal work agreement
 
 | Capability | Coverage | Decision | Why |
 | --- | --- | --- | --- |
-| A user-owned agreement: style, roles, interruptions, learning, limits, sharing, explanations, challenge, override | Partial | Core | Settings are scattered (calm replies, coach, focus, goals). Add `me/agreement.md` (English, German, Polish), read by the agent each session; private for employees; plain text the human edits; nothing inferred. |
+| A user-owned agreement: style, roles, interruptions, learning, limits, sharing, explanations, challenge, override | Unverified | Core | Built (agent behaviour, not yet live-tested): `me/agreement.md` in three languages; upgrade adds it. |
 
 ### 2E. Protected time
 
 | Capability | Coverage | Decision | Why |
 | --- | --- | --- | --- |
-| Time saved is not turned into more work | Missing | Core | A section in the agreement (what you protect saved time for) and an AGENTS.md rule: never fill saved time with suggestions for more output, never propose output targets. No measurement. |
+| Time saved is not turned into more work | Unverified | Core | Built (agent behaviour, not yet live-tested): AGENTS.md protected-time rule and the agreement section. |
 
 ### 2F. Skill resilience
 
@@ -266,20 +266,20 @@ A second set of ideas, checked the same way after the 0.2.0 preview was publishe
 
 | Capability | Coverage | Decision | Why |
 | --- | --- | --- | --- |
-| Baseline, change, measure, review, keep, revise or revert | Partial | Module | Only inside `work-audit`. Add an optional `small-experiment` module: one card per experiment with a versioned change, separate human and business measures, and wording rules that forbid causal claims the data cannot support. |
+| Baseline, change, measure, review, keep, revise or revert | Implemented | Module | Built: `small-experiment` module. |
 | Counterfactual replay, micro-randomisation | Missing | Defer | Needs recorded data and statistics that a small workspace does not have. Reconsider with a team that runs repeated, comparable work. |
 
 ### 2I. Decision and attention escrow
 
 | Capability | Coverage | Decision | Why |
 | --- | --- | --- | --- |
-| Park thoughts and decisions with context, what to decide, evidence, next step, review date | Partial | Enhancement | Extend `park` with optional 'to decide' and 'look again on' fields; status lists items whose date has come. Nothing is acted on automatically. |
+| Park thoughts and decisions with context, what to decide, evidence, next step, review date | Implemented | Enhancement | Built: `park --decide --again`; status lists due items. |
 
 ### 2J. Failure-aware automation
 
 | Capability | Coverage | Decision | Why |
 | --- | --- | --- | --- |
-| Scheduled, started, completed, created, verified, delivered, reported | Missing | Enhancement | Living System runs no jobs. Add the seven states to careful-run's verify and hand-back stages, so 'done' always says how far it got. |
+| Scheduled, started, completed, created, verified, delivered, reported | Implemented | Enhancement | Built: careful-run verify and hand-back states. |
 | Job runner, retries, missed-run recovery | Missing | Reject | Would need a background service, which Living System avoids by design. Reconsider never for the core; an optional module could document patterns if users automate with their own schedulers. |
 
 ### 2K. Choosing where work runs
@@ -301,28 +301,28 @@ A second set of ideas, checked the same way after the 0.2.0 preview was publishe
 | Capability | Coverage | Decision | Why |
 | --- | --- | --- | --- |
 | Personal vs shared, explicit sharing and acceptance, role context, provenance | Implemented | Keep | `link`, `share`, `role-review`, `roles/<role>/`, onboarding. |
-| Withdrawing a share | Missing | Enhancement | `share --withdraw` removes your shared file while it still waits for review. Once accepted it is company knowledge, removed through the company's own process. |
+| Withdrawing a share | Implemented | Enhancement | Built: `share --withdraw`. |
 | Access control between people | Missing | Reject | Not technically possible with shared folders; claiming it would be false. Folder and git permissions remain the real boundary. |
 
 ### 2N. Atlas and pattern commons
 
 | Capability | Coverage | Decision | Why |
 | --- | --- | --- | --- |
-| Read-only view of how rules, projects, workflows and knowledge connect | Missing | Enhancement | `living.py atlas`: a Markdown page (with a diagram) built from the files; Markdown stays the source; no database. |
+| Read-only view of how rules, projects, workflows and knowledge connect | Implemented | Enhancement | Built: `living.py atlas`. |
 | Pattern commons | Partial | Defer | Modules are shareable patterns already, and contributions go through pull requests. Reconsider with a helper that turns a user's workflow into a module skeleton once people ask to contribute one. |
 
 ### 2O. Several perspectives on a decision
 
 | Capability | Coverage | Decision | Why |
 | --- | --- | --- | --- |
-| Structured review from different viewpoints, evidence vs interpretation, bounded, one human decision | Missing | Enhancement | A `perspectives` skill run in one session, using roles (never real people's names or invented quotes), at most two rounds, ending with the human's choice. |
+| Structured review from different viewpoints, evidence vs interpretation, bounded, one human decision | Unverified | Enhancement | Built (agent behaviour, not yet live-tested): `perspectives` skill. |
 
 ### 2P. Ethics and evidence of value
 
 | Capability | Coverage | Decision | Why |
 | --- | --- | --- | --- |
-| No dark patterns, surveillance, quotas, hidden profiling, misleading claims | Partial | Core | Practised throughout but not written in one place. Add `docs/ethics.md`: each guardrail and how it is upheld, marking what is enforced and what is a rule. |
-| Four separate dimensions: business, human, resources, reliability | Missing | Enhancement | The evidence summary and the experiment card report the four separately and say plainly what was not measured. |
+| No dark patterns, surveillance, quotas, hidden profiling, misleading claims | Implemented | Core | Built: `docs/ethics.md`. |
+| Four separate dimensions: business, human, resources, reliability | Implemented | Enhancement | Built: evidence summary sections and the experiment card. |
 
 ## Not now, and not at all
 

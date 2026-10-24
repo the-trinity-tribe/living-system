@@ -4,7 +4,7 @@ Status: EXPERIMENTAL. Version: 0.2.0.
 
 ## What does this feature do?
 
-It helps you keep your own skills while an AI does more of the work. Three parts:
+It helps you keep your own skills while an AI does more of the work. Four parts:
 
 - **Always on:** the agent says why it chose an approach, shows you the steps when you ask "how did you do that?", and says plainly when it is unsure.
 - **Coach mode (you switch it on):** the agent offers to let you try a task first and checks it after, adds "how to do this yourself" steps, and now and then asks one honest question that tests a plan.
