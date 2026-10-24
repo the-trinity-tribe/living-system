@@ -69,6 +69,17 @@ class TestEvidence(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertIn("Read it before you share it", r.stdout)
 
+    def test_four_kinds_of_value_in_order_and_unmeasured_ones_said_plainly(self):
+        text = L.evidence(self.ws)
+        heads = [h for h in ("## 1. Human experience and agency", "## 2. Business outcomes",
+                             "## 3. Reliability and resilience", "## 4. Environmental and resource impact")]
+        positions = [text.index(h) for h in heads]
+        self.assertEqual(positions, sorted(positions))
+        self.assertIn("Living System does not measure business results", text)
+        self.assertIn("not added up into one score", text)
+        self.assertTrue((REPO / "docs/ethics.md").is_file())
+        self.assertTrue((REPO / "modules/small-experiment/module.json").is_file())
+
     def test_guide_and_skill(self):
         guide = (REPO / "docs/champions.md").read_text(encoding="utf-8")
         for audience in ("**CEO**", "**CTO**", "**Founder**"):

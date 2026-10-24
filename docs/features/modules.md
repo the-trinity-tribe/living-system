@@ -19,6 +19,7 @@ These modules ship today:
 | `research-review` | workflow | Answer a question from sources: every claim points to a dated source; conflicts and gaps are listed. | [README](../../modules/research-review/README.md) |
 | `client-intake` | workflow | A new client request becomes what they need, what is unknown and one proposed next step; client codes instead of contact details. | [README](../../modules/client-intake/README.md) |
 | `content-prep` | workflow | A post, article or newsletter: brief, draft, fact and tone check, ready for you to publish. | [README](../../modules/content-prep/README.md) |
+| `small-experiment` | workflow | Try one change for a set time: a starting point, one versioned change, business, human, resource and reliability measures kept apart, then keep, revise or revert. | [README](../../modules/small-experiment/README.md) |
 | `second-check` | workflow | Important work is made, checked by a fresh session or a different agent against a checklist, then you decide. At most two correction rounds. | [README](../../modules/second-check/README.md) |
 
 ## Why would someone need it?

@@ -12,7 +12,7 @@ Make a summary of your own workspace. It contains counts only, never content, na
 python3 tools/living.py evidence ~/my-workspace --out ~/Documents/living-system-evidence.md
 ```
 
-Read it before you share it. Then add, in your own words and clearly labelled as yours:
+Read it before you share it. It reports four kinds of value separately (human experience and agency, business outcomes, reliability, resources) and says what was not measured. Then add, in your own words and clearly labelled as yours:
 
 - **One example** of a time the agent gave the right answer because a rule was written down (from your value check log).
 - **One example** of something that was stopped or caught: a proposal instead of a quiet rule change, a refused self-approval, a guard block, a changed decision found by `verify`.

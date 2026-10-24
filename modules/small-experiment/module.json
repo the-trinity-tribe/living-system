@@ -1,0 +1,26 @@
+{
+  "id": "small-experiment",
+  "version": "0.1.0",
+  "kind": "workflow",
+  "summary": "Try one change and see honestly what happened: a starting point, one versioned change, measures kept apart by kind, and a review that keeps, revises or reverts it.",
+  "requires": [],
+  "routing": [
+    [
+      "Trying one change and checking honestly whether it helped (small experiment)",
+      "workflows/small-experiment/CONTEXT.md"
+    ]
+  ],
+  "needs_approval": [
+    "Starting the experiment",
+    "Changing what or how you measure midway",
+    "Any rule that comes out of it (as a proposal)",
+    "Sharing the results"
+  ],
+  "signals": [
+    "does this actually help",
+    "let's try it for two weeks",
+    "test a change",
+    "before and after",
+    "did it make a difference"
+  ]
+}

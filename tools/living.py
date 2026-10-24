@@ -2636,7 +2636,9 @@ def evidence(ws, today=None):
     today = today or datetime.date.today()
     out = [EVIDENCE_MARK, "# Living System: evidence summary", "",
            f"Counts from one workspace's own files on {today}. It contains no content, names, titles or client "
-           f"details. Anything not listed here was not measured.", "", "## Value check (the owner's own before/after test)", ""]
+           f"details. Anything not listed here was not measured. The four kinds of value are kept apart on purpose; "
+           f"they are not added up into one score.", "", "## 1. Human experience and agency", "",
+           "Value check (the owner's own before/after test):", ""]
     try:
         counts, unscored = value_score(ws)
     except Refusal:
@@ -2652,7 +2654,7 @@ def evidence(ws, today=None):
     log = ws / "value-check/log.md"
     entries = len(re.findall(r"^\s*[-*]?\s*\d{4}-\d{2}-\d{2}", log.read_text(encoding="utf-8", errors="replace"), re.M)) \
         if log.is_file() else 0
-    out += [f"Dated notes in the value check log: {entries}.", "", "## Rules and reviews", ""]
+    out += [f"Dated notes in the value check log: {entries}.", "", "Rules and reviews (people decide, agents propose):", ""]
     decs = R.decisions(ws) if (ws / "decisions").is_dir() else {}
     current = R.current_decisions(ws) if decs else []
     outcomes = {"promoted": 0, "rejected": 0, "deferred": 0, "proposed": 0}
@@ -2675,7 +2677,10 @@ def evidence(ws, today=None):
             f"- Proposals: {outcomes['promoted']} approved, {outcomes['rejected']} rejected, {outcomes['deferred']} "
             f"deferred, {outcomes['proposed']} waiting.",
             f"- Review record: {record}" + (f", {len(lines_)} entr{'y' if len(lines_) == 1 else 'ies'}." if lines_ else "."),
-            f"- First recorded date: {min(dates) if dates else 'none yet'}.", "", "## Repeated work and workflows", ""]
+            f"- First recorded date: {min(dates) if dates else 'none yet'}.", "", "## 2. Business outcomes", "",
+            "Living System does not measure business results such as income, clients won or time saved. If you measured "
+            "something (for example with the small-experiment module), add it here in your own words, labelled as yours.", "",
+            "What the workspace does record about repeated work:", ""]
     try:
         work = read_runs(ws)["work"]
     except Refusal:
@@ -2687,7 +2692,7 @@ def evidence(ws, today=None):
             f"decided: {chosen['automate']} automate, {chosen['improve']} improve, {chosen['manual']} keep manual, "
             f"{chosen['later']} later.",
             f"- Workflows: {flows}. Modules installed: {', '.join(sorted(manifest.get('modules', {}))) or 'none'}.", "",
-            "## Knowledge", ""]
+            "## 3. Reliability and resilience", ""]
     ages = knowledge_ages(ws, today)
     fresh = sum(1 for _, days, problem in ages if days is not None and not problem and days <= STALE_DAYS)
     out.append(f"- Knowledge files: {len(ages)}, of which checked in the last {STALE_DAYS} days: {fresh}.")
@@ -2695,8 +2700,10 @@ def evidence(ws, today=None):
     if accepted or (ws / "roles").is_dir():
         out.append(f"- Role knowledge handed on and accepted: {accepted} file(s).")
     health = doctor(ws)
-    out += ["", "## Health", "", f"- `doctor`: {sum(l == 'ERROR' for l, _ in health)} error(s), "
-            f"{sum(l == 'WARN' for l, _ in health)} warning(s).", "", "## What this does not show", "",
+    out += [f"- `doctor`: {sum(l == 'ERROR' for l, _ in health)} error(s), "
+            f"{sum(l == 'WARN' for l, _ in health)} warning(s).", "", "## 4. Environmental and resource impact", "",
+            "Not measured. Living System cannot see the energy or computing an AI agent uses (see docs/local-first.md).",
+            "", "## What this does not show", "",
             "- Time or money saved: not measured. If you want to claim it, measure it first (for example, time one "
             "task before and after for two weeks) and label the numbers as your own.",
             "- Whether the rules are good ones: only the people who approved them can say.",

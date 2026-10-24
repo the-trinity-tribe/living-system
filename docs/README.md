@@ -9,6 +9,7 @@ Plain words first. Exact commands are under the heading that needs them. Every f
 - [AI tools](ai-tools.md): which AI tools work with Living System, what to install, what the permission prompts mean, and how to stay safe.
 - [INSTALL.md](../INSTALL.md): the guided setup your agent follows when you say "Read INSTALL.md and set up my workspace."
 - [README](../README.md): what Living System is and the quick start.
+- [Ethics and guardrails](ethics.md): what Living System will not do, how each guardrail is upheld, and which ones a tool enforces.
 - [Local-first and resource use](local-first.md): what runs offline on your computer, what needs an AI agent, and what is not measured.
 
 ## Features
@@ -46,6 +47,7 @@ Plain words first. Exact commands are under the heading that needs them. Every f
 - [Research review](../modules/research-review/README.md): answer a question from dated sources, with conflicts and gaps listed.
 - [Client intake](../modules/client-intake/README.md): turn a new client's request into a clear picture and one next step.
 - [Content preparation](../modules/content-prep/README.md): prepare a post or newsletter in checked steps; you publish.
+- [Small experiment](../modules/small-experiment/README.md): try one change, measure it the same way before and after, and keep, revise or revert it.
 - [Second check](../modules/second-check/README.md): important work gets an independent check before you decide.
 - [Knowledge inbox](../modules/knowledge-inbox/README.md): keeps reusable knowledge with its source and reminds you to re-check old facts.
 

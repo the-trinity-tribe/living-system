@@ -102,6 +102,7 @@ Nothing is installed unless you ask, and every command shows a plan before `--ap
 | `research-review` | Answer a question from dated sources, with conflicts and gaps listed. |
 | `client-intake` | A new client request becomes what they need, what is unknown and one next step. |
 | `content-prep` | A post or newsletter: brief, draft, fact and tone check; you publish. |
+| `small-experiment` | Try one change, measure it the same way before and after, then keep, revise or revert it. |
 
 ```sh
 python3 tools/living.py modules --workspace ~/my-workspace
@@ -128,6 +129,7 @@ The demo shows one rule's whole life: contradictory evidence, a proposal, a huma
 - **Agent behaviour is less tested than the tools.** Over 350 automated tests cover the tools on Linux, Windows and macOS. Skills and coaching are instructions to the agent; live sessions are recorded in [demo/WALKTHROUGH.md](demo/WALKTHROUGH.md), and this preview asks testers to try them.
 - **Languages.** Starter files in English, German and Polish (a native-speaker review would help). Agent rule files and tool messages are English.
 - **Not measured:** time or money saved, and energy use. See [local-first](docs/local-first.md).
+- What it will not do, and which guardrails a tool enforces: [ethics](docs/ethics.md).
 - What is planned, deferred or rejected, with reasons: [roadmap](docs/roadmap.md).
 
 ## Licensing, community and credit

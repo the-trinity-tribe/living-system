@@ -11,6 +11,7 @@
 1. Pick one change with the human (often a 'drop' or a 'support').
 2. Write: what changes, who, for how long (for example two weeks), what you will measure and how, and when you stop.
 3. Record the starting value now, if it can be measured.
+4. For more than one measure, use the `small-experiment` module if it is installed: it keeps business, human, resource and reliability measures apart.
 
 ## Outputs
 
