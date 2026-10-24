@@ -17,16 +17,21 @@ Living System gives Claude Code and Codex a shared, written memory of how you wo
 
 Whether it helps *you* is something you can measure: every workspace has a 10-minute [value check](docs/features/value-check.md) you run yourself.
 
-<table>
-<tr>
-<td width="50%"><a href="docs/features/decisions-and-proposals.md"><img src="brand/images/propose-decide.png" alt="Agents propose, you decide: new information, a proposal, your review, history kept"></a></td>
-<td width="50%"><a href="docs/features/agency.md"><img src="brand/images/delegation.png" alt="Room to act, earned one step at a time: observe, recommend, draft, act with approval, bounded"></a></td>
-</tr>
-<tr>
-<td width="50%"><a href="docs/features/connected-workspaces.md"><img src="brand/images/teams.png" alt="Knowledge that outlives a role: private workspaces, a company workspace, an onboarding path"></a></td>
-<td width="50%"><a href="docs/features/parking-and-tending.md"><img src="brand/images/calm.png" alt="Calm by design: status, catch-up, park, focus, tend, atlas"></a></td>
-</tr>
-</table>
+<img src="brand/images/propose-decide.png" alt="Agents propose, you decide: new information, a proposal, your review, history kept" width="100%">
+
+<sub>Read more: <a href="docs/features/decisions-and-proposals.md">Decisions and proposals</a> · click the image to open it full size</sub>
+
+<img src="brand/images/delegation.png" alt="Room to act, earned one step at a time: observe, recommend, draft, act with approval, bounded" width="100%">
+
+<sub>Read more: <a href="docs/features/agency.md">Agency and delegation</a> · click the image to open it full size</sub>
+
+<img src="brand/images/teams.png" alt="Knowledge that outlives a role: private workspaces, a company workspace, an onboarding path" width="100%">
+
+<sub>Read more: <a href="docs/features/connected-workspaces.md">Connected workspaces</a> · click the image to open it full size</sub>
+
+<img src="brand/images/calm.png" alt="Calm by design: status, catch-up, park, focus, tend, atlas" width="100%">
+
+<sub>Read more: <a href="docs/features/parking-and-tending.md">Parking, tending and focus</a> · click the image to open it full size</sub>
 
 Created and architected by **Adrianna Mamczarz**, through **The Trinity Tribe**. Features and structure were invented and tested in her own practice; AI assisted with implementation, while design decisions, review and acceptance stayed human-led.
 
