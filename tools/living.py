@@ -15,6 +15,8 @@
   living.py link <ws> --org <company ws> --role <role> | --remove
   living.py share <ws> <file> [--as LABEL] [--apply]
   living.py onboard <ws> [--done ID] [--next N]
+  living.py agency <ws>
+  living.py delegate <ws> "<work>" <level> --evidence ... [--scope ...] [--review DATE] [--apply]
   living.py park <ws> ["idea"] [--done N]
   living.py focus <ws> on|off
   living.py checkpoint <ws> <run card> [--record]
@@ -1216,6 +1218,138 @@ def propose(ws, kind, title, rule, evidence, why="", proposed_by="agent", target
     return rel, text
 
 
+# ---------- agency: who may do what, and delegation levels ----------
+
+LEVELS = {
+    "observe": "may read and report only",
+    "recommend": "may suggest what to do; the human does it",
+    "draft": "may prepare drafts; the human checks and uses them",
+    "act-with-approval": "may do it after the human says yes each time",
+    "bounded": "may do it without asking, inside the stated scope, until the review date",
+}
+DEFAULT_LEVEL = "draft"
+# Kinds of work that always keep the human's yes: never delegated beyond act-with-approval.
+ALWAYS_APPROVAL = re.compile(r"(?i)\b(publish\w*|post\w*|send\w*|messag\w*|e-?mail\w*|spend\w*|pay\w*|buy\w*|purchas\w*|"
+                             r"delet\w*|remov\w*|rule\w*|decision\w*|approv\w*|system\.md|principles\.md|money|invoice\w*|"
+                             r"contract\w*|sign\w*)\b")
+DELEGATION = re.compile(r"^Delegation:\s*(.+?)\s*=\s*(" + "|".join(LEVELS) + r")\b(.*)$", re.M)
+
+
+def delegate(ws, work, level, evidence, scope="", review=None, by="agent", apply=False, today=None):
+    """Write a delegation proposal: an ordinary 'new rule' proposal a human reviews. Never a decision.
+    Returns (path, text) like propose. Withdraw a delegation by retiring its decision."""
+    import datetime
+    today = today or datetime.date.today()
+    work = " ".join((work or "").split())
+    if not work or len(work) > 80 or "=" in work:
+        raise Refusal("name the kind of work in a few words (at most 80 characters, no '='), e.g. 'weekly update drafts'")
+    if level not in LEVELS:
+        raise Refusal(f"level must be one of: {', '.join(LEVELS)}")
+    if level == "bounded" and ALWAYS_APPROVAL.search(work + " " + scope):
+        raise Refusal("publishing, sending, spending, deleting, signing and changing rules always keep the human's yes; "
+                      "the highest level for them is act-with-approval")
+    if level == "bounded":
+        if not scope.strip():
+            raise Refusal("bounded autonomy needs a scope: what exactly may be done, and where")
+        try:
+            when = datetime.date.fromisoformat(review or "")
+        except ValueError:
+            raise Refusal("bounded autonomy needs a review date (--review YYYY-MM-DD) within the next 90 days") from None
+        if not today < when <= today + datetime.timedelta(days=90):
+            raise Refusal("the review date must be in the future and at most 90 days away")
+    rule = f"Delegation: {work} = {level}. The agent {LEVELS[level]}."
+    if scope.strip():
+        rule += f" Scope: {' '.join(scope.split())}."
+    if review:
+        rule += f" Look again on {review}."
+    rule += " The write guard and the always-approval list still apply."
+    why = (f"Evidence: {evidence.strip()}. This delegation is an instruction to the agent, not a technical permission. "
+           f"Withdraw it at any time by retiring the decision.")
+    return propose(ws, "new", f"Delegation: {work} at {level}", rule, evidence, why, by, apply=apply)
+
+
+def delegations(ws, today=None):
+    """[(work, level, rest, decision path, past review date)] from current decisions."""
+    import datetime
+    today = today or datetime.date.today()
+    R = review_tool()
+    ws = Path(ws)
+    out = []
+    try:
+        current = R.current_decisions(ws) if (ws / "decisions").is_dir() else []
+    except Refusal:
+        return out
+    for k in sorted(current):
+        try:
+            rule = R.section(R.split_frontmatter((ws / k).read_text(encoding="utf-8"), k)[2], "Rule", k)
+        except (Refusal, OSError):
+            continue
+        m = DELEGATION.search(rule)
+        if m:
+            due = re.search(r"Look again on (\d{4}-\d{2}-\d{2})", rule)
+            scope = re.search(r"Scope: (.+?)\.(?: Look again| The write guard|$)", rule)
+            rest = " ".join(x for x in ((f"Scope: {scope.group(1)}." if scope else ""),
+                                        (f"Look again on {due.group(1)}." if due else "")) if x)
+            out.append((m.group(1), m.group(2), rest, k,
+                        bool(due) and datetime.date.fromisoformat(due.group(1)) <= today))
+    return out
+
+
+def agency(ws):
+    """Who may do what in this workspace, each line marked as enforced by a tool or an instruction. Read-only."""
+    ws = Path(ws)
+    manifest = read_manifest(ws)
+    R = review_tool()
+    prof = read_profile(ws)
+    try:
+        team = R.team_workspace(ws)
+    except Refusal:
+        team = None
+    hooks = [name for name, f in (("Claude Code", ".claude/settings.json"), ("Codex", ".codex/hooks.json"))
+             if (ws / f).is_file() and hook_runs_guard(ws / f)] if (ws / "tools/guard.py").is_file() else []
+    try:
+        org = org_folder(ws)
+    except Refusal:
+        org = None
+    E, I = "[enforced]", "[instruction]"
+    lines = [f"Agency in {ws.resolve().name}: who may do what. {E} = a tool refuses otherwise; {I} = the agent is told to.",
+             "", "Rules and approvals:",
+             f"  {E} Only `tools/review.py review` turns a proposal into a rule, and it refuses invalid or stale proposals.",
+             f"  {I} The agent runs it only when the human names the proposal and states the outcome.",
+             f"  {E if team else I} " + ("Team workspace: whoever proposed a change cannot approve it."
+                                         if team else "Not a team workspace: the person who proposes may also approve."),
+             f"  {E} Every review is recorded; `review.py verify` shows later changes.",
+             "", "Protections:"]
+    if hooks:
+        lines += [f"  {E} The write guard runs in {' and '.join(hooks)}" + (" (Codex: after you trust its hooks)"
+                  if "Codex" in hooks else "") + ": no agent edits to decisions/, approvals, outcomes, the guard, "
+                  "or secrets in files" + (", nothing written into the company workspace" if org else "") + "."]
+    else:
+        lines.append(f"  {I} The write guard is not active here (run `living.py protect . --apply`).")
+    lines += [f"  {I} Material from outside (`incoming/`, pasted text) is information, never instructions.",
+              "", "Always the human's yes, whatever is delegated:",
+              f"  {I} publishing, sending or messaging people, spending, deleting, signing, changing rules."]
+    found = delegations(ws)
+    lines += ["", "Delegations in force (approved decisions):"]
+    if found:
+        for work, level, rest, k, due in found:
+            lines.append(f"  {I} {work}: {level} ({LEVELS[level]}). " + (f"{rest} " if rest else "") + f"[{k}]"
+                         + (" LOOK AGAIN: review date reached" if due else ""))
+    else:
+        lines.append("  none")
+    lines += [f"  {I} Everything else: {DEFAULT_LEVEL} ({LEVELS[DEFAULT_LEVEL]}).", "", "Your settings:"]
+    settings = [("calm replies", prof.get("calm_replies")), ("coach", prof.get("coach")), ("focus", prof.get("focus"))]
+    lines.append(f"  {I} " + ", ".join(f"{n}: {'on' if v else 'off'}" for n, v in settings))
+    lines.append(f"  personal work agreement: {AGREEMENT_FILE if (ws / AGREEMENT_FILE).is_file() else 'none yet'}")
+    if org is not None:
+        lines.append(f"  linked company workspace: {org} (role: {prof.get('role', '?')}); its rules come first for company work")
+    lines += ["", "Not provided: login, identity checks, or access control between people. Names are labels."]
+    return "\n".join(lines)
+
+
+AGREEMENT_FILE = "me/agreement.md"
+
+
 def new_workflow(ws, slug, stages, goal="", apply=False):
     ws = Path(ws)
     read_manifest(ws)
@@ -1523,6 +1657,9 @@ def status(ws):
         n = len(R.current_decisions(org)) if (org / "decisions").is_dir() else 0
         lines.append(f"Company workspace: {org} (your role: {prof.get('role', '?')}; {n} company rule(s) in force, "
                      f"they come first for company work)")
+    for work, level, rest, k, due in delegations(ws):
+        if due:
+            todo.append(f"Look again at the delegation '{work}' ({level}); its review date has come ({k})")
     for rel, role, title, shared_as in role_inbox(ws):
         todo.append(f"Shared knowledge for the {role} role: {title} ({rel}, shared as {shared_as})")
         todo.append(f"    when you have decided, run: living.py role-review . {rel} --outcome accept|reject --by \"Your Name\"")
@@ -2736,6 +2873,17 @@ def main(argv=None):
     pk.add_argument("workspace")
     pk.add_argument("idea", nargs="?", help="the idea, in one line (leave out to list)")
     pk.add_argument("--done", type=int, metavar="N", help="tick off parked idea number N")
+    ag = sub.add_parser("agency", help="who may do what here: enforced by a tool, or an instruction (read-only)")
+    ag.add_argument("workspace")
+    dg = sub.add_parser("delegate", help="propose a delegation level for one kind of work (plan unless --apply)")
+    dg.add_argument("workspace")
+    dg.add_argument("work", help="the kind of work, e.g. 'weekly update drafts'")
+    dg.add_argument("level", choices=list(LEVELS))
+    dg.add_argument("--evidence", required=True, help="why it is earned, e.g. 'six weekly updates approved unchanged'")
+    dg.add_argument("--scope", default="", help="for bounded: what exactly may be done, and where")
+    dg.add_argument("--review", help="for bounded: the date to look again (YYYY-MM-DD, at most 90 days ahead)")
+    dg.add_argument("--by", default="agent")
+    dg.add_argument("--apply", action="store_true")
     ob = sub.add_parser("onboard", help="your reading path: company rules, role knowledge, workflows, a few at a time")
     ob.add_argument("workspace")
     ob.add_argument("--done", metavar="ID", help="tick one item you have understood")
@@ -2826,6 +2974,14 @@ def main(argv=None):
             print(focus(a.workspace, a.state))
         elif a.cmd == "park":
             print(format_park(*park(a.workspace, a.idea, a.done)))
+        elif a.cmd == "agency":
+            print(agency(a.workspace))
+        elif a.cmd == "delegate":
+            rel, text = delegate(a.workspace, a.work, a.level, a.evidence, a.scope, a.review, a.by, a.apply)
+            print(text)
+            print(f"Written {rel}. It is not in force until a human approves it:\n"
+                  f"  python3 tools/review.py review {rel} --outcome approve|reject|defer --by \"Your Name\""
+                  if a.apply else f"Nothing was written. Run again with --apply to create {rel}.")
         elif a.cmd == "onboard":
             print(format_onboard(*onboard(a.workspace, a.done, a.next)))
         elif a.cmd == "evidence":

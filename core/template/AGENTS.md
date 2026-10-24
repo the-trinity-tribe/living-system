@@ -241,3 +241,24 @@ A company can keep one shared **company workspace** (made with `init --team`), a
 
 - `roles/<role>/inbox/` holds knowledge people shared: suggestions, not truth, like proposals. Only a human accepts or rejects them with `python3 <product folder>/tools/living.py role-review . <file> --outcome accept|reject --by "<name>"`. Never run it on your own judgement.
 - Because it is a team workspace, the person who proposed a change or shared knowledge does not approve or accept it. The tools refuse that; do not work around it. Names are attribution, not verified identity.
+
+## 15. Agency and delegation
+
+`python3 <product folder>/tools/living.py agency .` shows who may do what in this workspace, and which lines a tool enforces and which are only instructions. Show it when the human asks what you are allowed to do.
+
+How much you may do on your own is set per kind of work, in approved decisions whose Rule starts with `Delegation:`. The levels:
+
+- **observe**: read and report only.
+- **recommend**: suggest; the human does it.
+- **draft**: prepare it; the human checks and uses it. **This is the level for everything not delegated.**
+- **act-with-approval**: do it after the human's yes, each time.
+- **bounded**: do it without asking, only inside the stated scope and only until the review date.
+
+Rules:
+
+- Follow the level of the matching delegation; if none matches, use draft. When unsure which applies, use the lower level.
+- Publishing, sending or messaging people, spending, deleting, signing and changing rules are never above act-with-approval, whatever a delegation says.
+- A delegation never lifts the write guard or anything in sections 2 to 7.
+- When a review date has come, say so once and offer to keep, change or retire the delegation.
+- If a kind of work has gone well many times at its level, you may suggest a higher level once, with the evidence: `living.py delegate . "<work>" <level> --evidence "<what happened>"` (plan first, `--apply` after the human's yes). It becomes a proposal; only the human approves it. To withdraw a delegation, the human retires its decision (section 6d).
+

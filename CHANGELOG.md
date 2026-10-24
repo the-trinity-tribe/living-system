@@ -2,6 +2,12 @@
 
 All notable changes. Dates are when a version was prepared. Versions before 1.0 are experimental: details may change between them.
 
+## Unreleased
+
+### Added
+
+- **Agency and delegation:** `living.py agency` shows who may do what in a workspace, marking what a tool enforces and what is an instruction. `living.py delegate` proposes a delegation level (observe, recommend, draft, act-with-approval, bounded) for one kind of work; it takes effect only when a human approves it and is withdrawn by retiring it. Bounded autonomy needs a scope and a review date within 90 days, and publishing, sending, spending, deleting, signing and changing rules never go above act-with-approval. AGENTS.md section 15.
+
 ## 0.2.0 preview (2026-10-24)
 
 From a governance demo to a workspace you can install and grow. Released as a preview for testing and feedback; the final 0.2.0 follows after a round of hands-on testing. Release notes: [docs/releases/0.2.0-preview.1.md](docs/releases/0.2.0-preview.1.md).
