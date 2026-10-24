@@ -31,4 +31,4 @@ Living System cannot see how much energy or computing your agent uses, so it mak
 
 ## Not included, on purpose
 
-- **Local AI models.** None are bundled or required. A small local decision model was considered; it would add a large download and a machine-learning library to a tool that needs neither today. See the [roadmap](roadmap.md), area D.
+- **Local AI models.** None are bundled or required. A small local decision model was considered; it would add a large download and a machine-learning library to a tool that needs neither today. It was [tested](evaluations/laya/README.md) and not adopted. See also the [roadmap](roadmap.md), area D.

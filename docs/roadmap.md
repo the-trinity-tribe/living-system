@@ -8,7 +8,7 @@ Decisions: **Keep** (already right), **Core** (everyone gets it), **Module** (op
 
 ## Order of work
 
-Steps 1 to 9 were built on 2026-10-24 (each with tests); step 10 waits for your permission to download a model.
+All ten steps were done on 2026-10-24: steps 1 to 9 built with tests, step 10 an evaluation that ended in 'not adopted'.
 
 | # | Step | Areas | What | Size |
 | --- | --- | --- | --- | --- |
@@ -21,7 +21,7 @@ Steps 1 to 9 were built on 2026-10-24 (each with tests); step 10 waits for your 
 | 7 | New modules | M, P | `work-audit`, `research-review`, `client-intake`, `content-prep`. | Medium (content) |
 | 8 | Role-specific workflows | H | Workflows name their roles; onboarding filters. | Small |
 | 9 | Local-first page | O | What runs offline, what needs an agent, what is not measured. | Small |
-| 10 | Decision model benchmark | D | Only with your permission to download: Laya on a labelled set of real requests vs keyword signals. | Medium, optional |
+| 10 | Decision model benchmark | D | Done 2026-10-24: Laya vs keyword signals on 72 labelled requests; not adopted (docs/evaluations/laya). | Done |
 
 ## Coverage and decisions
 
@@ -76,9 +76,9 @@ Steps 1 to 9 were built on 2026-10-24 (each with tests); step 10 waits for your 
 
 | Capability | Coverage | Decision | Why |
 | --- | --- | --- | --- |
-| Typed, probability-based decisions for classification and routing | Missing | Defer | Facts checked: Laya (Apache-2.0, 322-421M parameters, ~650-800 MB, needs PyTorch) is near chance on typed decisions without fine-tuning (0.362 base vs 0.766 fine-tuned) and ships over-confident. Jev is hosted, proprietary, in early access. Living System's own decisions are deterministic today and need no model. |
-| Local vs hosted inference; CPU suitability | Missing | Defer | Laya runs on CPU at a reported 193-464 ms per question; Jev sends data to a third party. Both would break the standard-library-only, offline core. |
-| Replaceable decision-model adapter with confidence thresholds and fallback | Missing | Defer | Only worth it with a proven use. Candidate: suggesting a module from a request. Reconsider after a benchmark on a labelled set of real requests (needs your permission to download the model) shows clear gains over keyword signals, with abstention below a threshold and the rule-based path as fallback. |
+| Typed, probability-based decisions for classification and routing | Experimental | Defer | Benchmarked 2026-10-24 (docs/evaluations/laya): Laya's English model picked the right module 72% of the time against 50% for keyword signals, but missed 'approve my pending proposal' and 'change the rule' on risk. Agents already make suggestions in context. Not adopted. |
+| Local vs hosted inference; CPU suitability | Experimental | Defer | Measured on CPU: about 2 s and 2.8 GB of memory per request with three questions, 2.4 GB to download and install. Jev not tested: hosted and proprietary, requests would leave the computer. |
+| Replaceable decision-model adapter with confidence thresholds and fallback | Missing | Defer | Reconsider only if suggestions are needed without an agent, a few hundred real labelled requests exist for fine-tuning, and the adapter can stay outside the standard-library core. It would only ever suggest, never decide risk or approve. |
 | Never bypass human approval or governance | Implemented | Keep | No component can approve; any future adapter may only suggest. |
 
 ### E. Model and task routing
@@ -205,9 +205,9 @@ Every **Defer** and **Reject** above, in one list.
 - **Reject** (A) Staging for tasks: Living System is not a task manager; people already have one. Reconsider if several users ask for task hand-offs inside the workspace.
 - **Defer** (B) Feedback on routes that worked or failed: Needs real runs first. Reconsider after ten or more recorded runs; then a short 'what worked' line per run card is enough.
 - **Defer** (C) Human-readable operational log: The review record, runs, handover and git history already cover what matters. A separate action log grows fast and repeats git. Reconsider if a team needs an audit trail beyond git.
-- **Defer** (D) Typed, probability-based decisions for classification and routing: Facts checked: Laya (Apache-2.0, 322-421M parameters, ~650-800 MB, needs PyTorch) is near chance on typed decisions without fine-tuning (0.362 base vs 0.766 fine-tuned) and ships over-confident. Jev is hosted, proprietary, in early access. Living System's own decisions are deterministic today and need no model.
-- **Defer** (D) Local vs hosted inference; CPU suitability: Laya runs on CPU at a reported 193-464 ms per question; Jev sends data to a third party. Both would break the standard-library-only, offline core.
-- **Defer** (D) Replaceable decision-model adapter with confidence thresholds and fallback: Only worth it with a proven use. Candidate: suggesting a module from a request. Reconsider after a benchmark on a labelled set of real requests (needs your permission to download the model) shows clear gains over keyword signals, with abstention below a threshold and the rule-based path as fallback.
+- **Defer** (D) Typed, probability-based decisions for classification and routing: Benchmarked 2026-10-24 (docs/evaluations/laya): Laya's English model picked the right module 72% of the time against 50% for keyword signals, but missed 'approve my pending proposal' and 'change the rule' on risk. Agents already make suggestions in context. Not adopted.
+- **Defer** (D) Local vs hosted inference; CPU suitability: Measured on CPU: about 2 s and 2.8 GB of memory per request with three questions, 2.4 GB to download and install. Jev not tested: hosted and proprietary, requests would leave the computer.
+- **Defer** (D) Replaceable decision-model adapter with confidence thresholds and fallback: Reconsider only if suggestions are needed without an agent, a few hundred real labelled requests exist for fine-tuning, and the adapter can stay outside the standard-library core. It would only ever suggest, never decide risk or approve.
 - **Defer** (E) Recording routing successes and failures: Same as B: after real runs.
 - **Reject** (E) Configurable provider catalogs; billing boundaries: Living System never calls a model or an API, so it has no providers to configure and no bill. Reconsider only if a model adapter (D) is ever added.
 - **Reject** (G) Workload check-ins, interruptibility states, reminders: Check-ins invite psychological inference, and reminders need a background process. Focus mode covers the useful part. Reconsider check-ins only as a user-written prompt in their own calendar.

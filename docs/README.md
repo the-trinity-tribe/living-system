@@ -53,6 +53,7 @@ Plain words first. Exact commands are under the heading that needs them. Every f
 
 ## For contributors
 
+- [Evaluation: a small local decision model](evaluations/laya/README.md): Laya tested against keyword rules on 72 labelled requests; not adopted, with the numbers.
 - [Roadmap and capability review](roadmap.md): what exists, what comes next, and what will not be built, with reasons.
 
 - [Manual test checklist](testing-checklist.md): a step-by-step check of a release on a real computer, Windows first.
