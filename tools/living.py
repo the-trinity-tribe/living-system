@@ -16,8 +16,9 @@
   living.py share <ws> <file> [--as LABEL] [--apply]
   living.py onboard <ws> [--done ID] [--next N]
   living.py agency <ws>
+  living.py compost <ws> knowledge/<file>.md --reason "..." [--apply]
   living.py delegate <ws> "<work>" <level> --evidence ... [--scope ...] [--review DATE] [--apply]
-  living.py park <ws> ["idea"] [--done N]
+  living.py park <ws> ["idea"] [--decide ...] [--again DATE] [--done N]
   living.py focus <ws> on|off
   living.py checkpoint <ws> <run card> [--record]
   living.py evidence <ws> [--out FILE]
@@ -1394,7 +1395,7 @@ def knowledge_ages(ws, today=None):
     today = today or datetime.date.today()
     out = []
     for p in sorted((Path(ws) / "knowledge").rglob("*.md")) if (Path(ws) / "knowledge").is_dir() else []:
-        if p.name in KNOWLEDGE_SKIP and p.parent == Path(ws) / "knowledge":
+        if p.name in KNOWLEDGE_SKIP and p.parent == Path(ws) / "knowledge" or archived(p.relative_to(ws).as_posix()):
             continue
         rel = p.relative_to(ws).as_posix()
         text = p.read_text(encoding="utf-8", errors="replace")
@@ -1663,6 +1664,9 @@ def status(ws):
     for work, level, rest, k, due in delegations(ws):
         if due:
             todo.append(f"Look again at the delegation '{work}' ({level}); its review date has come ({k})")
+    due = parked_due(ws)
+    if due:
+        todo.append(f"{len(due)} parked item(s) due for a look, e.g. #{due[0][0]}: {due[0][1]} (living.py park .)")
     for rel, role, title, shared_as in role_inbox(ws):
         todo.append(f"Shared knowledge for the {role} role: {title} ({rel}, shared as {shared_as})")
         todo.append(f"    when you have decided, run: living.py role-review . {rel} --outcome accept|reject --by \"Your Name\"")
@@ -1729,6 +1733,7 @@ def status(ws):
         n = sum(1 for m in PARKED_ITEM.finditer(parked.read_text(encoding="utf-8", errors="replace")) if m.group(1) == " ")
         if n:
             lines.append(f"Parked ideas: {n} (living.py park . lists them; the tend skill goes through them)")
+
     path = ws / ONBOARD_FILE
     if path.is_file():
         marks = [m for m, *_ in ONBOARD_ITEM.findall(path.read_text(encoding="utf-8", errors="replace"))]
@@ -2069,7 +2074,7 @@ def share(ws, rel, shared_as=None, apply=False, today=None):
         raise Refusal("no role recorded for this workspace; link again with --role <role>")
     rel = Path(str(rel).replace("\\", "/")).as_posix()
     if not (rel == "lessons/active.md" or rel.startswith(("knowledge/", "workflows/"))) or not rel.endswith(".md") \
-            or unsafe_rel(rel):
+            or unsafe_rel(rel) or archived(rel):
         raise Refusal(f"{rel}: only Markdown files from knowledge/, workflows/ or lessons/active.md can be shared; "
                       f"never me/, handover/, incoming/, decisions/ or proposals/")
     refuse_links(ws, [rel])
@@ -2310,8 +2315,19 @@ def focus(ws, state):
             if state == "on" else "Focus mode is off: suggestions are welcome again.")
 
 
-def park(ws, idea=None, done=None, today=None):
-    """Add an idea to me/parked.md, tick one off (done = its number), or list the open ones. Returns (open, message)."""
+PARKED_DECIDE, PARKED_AGAIN = " | to decide: ", " | look again: "
+
+
+def parked_fields(text):
+    """(idea, what to decide or '', look-again date or '') from one parked line's text."""
+    idea, again = (text.split(PARKED_AGAIN, 1) + [""])[:2]
+    idea, decide = (idea.split(PARKED_DECIDE, 1) + [""])[:2]
+    return idea.strip(), decide.strip(), again.strip()
+
+
+def park(ws, idea=None, done=None, today=None, decide="", again=None):
+    """Add an idea to me/parked.md (optionally with what needs deciding and a date to look again), tick one off
+    (done = its number), or list the open ones. Nothing parked is ever acted on. Returns (open, message)."""
     import datetime
     ws = Path(ws)
     read_manifest(ws)
@@ -2324,9 +2340,21 @@ def park(ws, idea=None, done=None, today=None):
             idea = " ".join(idea.split())
             if not idea or len(idea) > 300:
                 raise Refusal("an idea is one line of at most 300 characters")
-            if guard_tool().secrets_in(idea):
+            decide = " ".join((decide or "").split())
+            if len(decide) > 200 or "|" in idea + decide:
+                raise Refusal("keep 'to decide' to one line of at most 200 characters, and leave out the | sign")
+            if guard_tool().secrets_in(idea + " " + decide):
                 raise Refusal("that looks like a password, key or token; park where to find it instead")
-            text = text.rstrip("\n") + f"\n- [ ] {(today or datetime.date.today()).isoformat()} {idea}\n"
+            line = idea + (PARKED_DECIDE + decide if decide else "")
+            if again:
+                try:
+                    when = datetime.date.fromisoformat(again)
+                except ValueError:
+                    raise Refusal("give the date to look again as YYYY-MM-DD") from None
+                if when <= (today or datetime.date.today()):
+                    raise Refusal("the date to look again must be in the future")
+                line += PARKED_AGAIN + when.isoformat()
+            text = text.rstrip("\n") + f"\n- [ ] {(today or datetime.date.today()).isoformat()} {line}\n"
             message = "Parked. Carry on with what you were doing."
         if done is not None:
             items = [m for m in PARKED_ITEM.finditer(text) if m.group(1) == " "]
@@ -2348,13 +2376,28 @@ def park(ws, idea=None, done=None, today=None):
     return [(m.group(2), m.group(3)) for m in PARKED_ITEM.finditer(text) if m.group(1) == " "], message
 
 
+def parked_due(ws, today=None):
+    """Open parked items whose look-again date has come: [(number, idea)]."""
+    import datetime
+    today = (today or datetime.date.today()).isoformat()
+    path = Path(ws) / PARKED_FILE
+    if not path.is_file():
+        return []
+    items = [m.group(3) for m in PARKED_ITEM.finditer(path.read_text(encoding="utf-8", errors="replace")) if m.group(1) == " "]
+    return [(n, parked_fields(t)[0]) for n, t in enumerate(items, 1) if parked_fields(t)[2] and parked_fields(t)[2] <= today]
+
+
 def format_park(open_ideas, message):
     lines = [message] if message else []
     if not open_ideas:
         return "\n".join(lines + ["No parked ideas."])
-    return "\n".join(lines + [f"{len(open_ideas)} parked idea(s):"] +
-                     [f"  {n}. {day}  {idea}" for n, (day, idea) in enumerate(open_ideas, 1)] +
-                     ["Tick one off with: living.py park . --done <number>"])
+    rows = []
+    for n, (day, text) in enumerate(open_ideas, 1):
+        idea, decide, again = parked_fields(text)
+        rows.append(f"  {n}. {day}  {idea}" + (f"\n       to decide: {decide}" if decide else "")
+                    + (f"\n       look again: {again}" if again else ""))
+    return "\n".join(lines + [f"{len(open_ideas)} parked item(s):"] + rows +
+                      ["Tick one off with: living.py park . --done <number>"])
 
 
 # ---------- onboarding: a personal reading path, a few items at a time ----------
@@ -2697,6 +2740,55 @@ def write_handbook(ws, target, text, mark=None, what="handbook"):
     return target
 
 
+CONFIDENCE = ("low", "medium", "high")
+ARCHIVE = "knowledge/archive/"
+
+
+def archived(rel):
+    return rel.startswith(ARCHIVE)
+
+
+def compost(ws, rel, reason, apply=False, today=None):
+    """Move a knowledge file to knowledge/archive/ with the date and reason: out of daily use, kept as history.
+    Returns (destination, text). Plan only unless apply."""
+    import datetime
+    ws = Path(ws)
+    read_manifest(ws)
+    rel = Path(str(rel).replace("\\", "/")).as_posix()
+    if unsafe_rel(rel) or not rel.startswith("knowledge/") or archived(rel) or not rel.endswith(".md") \
+            or (rel.count("/") == 1 and Path(rel).name in KNOWLEDGE_SKIP):
+        raise Refusal(f"{rel}: only knowledge files can be composted (not the archive, README, inbox or template)")
+    reason = " ".join((reason or "").split())
+    if not reason or len(reason) > 200:
+        raise Refusal("say why in one line (at most 200 characters), e.g. 'replaced by the 2026 price list'")
+    dest = ARCHIVE + rel[len("knowledge/"):]
+    refuse_links(ws, [rel, dest])
+    src = ws / rel
+    if not src.is_file():
+        raise Refusal(f"{rel} does not exist")
+    if (ws / dest).exists():
+        raise Refusal(f"{dest} already exists; rename one of them first")
+    text = src.read_text(encoding="utf-8")
+    day = (today or datetime.date.today()).isoformat()
+    head = f"archived_on: {day}\narchive_reason: {reason}\n"
+    out = (text.replace("---\n", "---\n" + head, 1) if text.startswith("---\n")
+           else f"---\n{head}---\n\n{text}")
+    if apply:
+        with workspace_lock(ws):
+            (ws / dest).parent.mkdir(parents=True, exist_ok=True)
+            try:
+                with open(ws / dest, "x", encoding="utf-8", newline="\n") as f:
+                    f.write(out)
+                src.unlink()
+            except FileExistsError:
+                raise Refusal(f"{dest} appeared meanwhile; nothing was changed") from None
+            except BaseException:
+                if src.is_file():
+                    (ws / dest).unlink(missing_ok=True)  # all or nothing: the original stays where it was
+                raise
+    return dest, out
+
+
 DRAWER_AT = 15       # flat files in knowledge/ before doctor suggests topic folders
 INSTRUCTION_GROWTH = 60  # lines added to AGENTS.md beyond the installed version before doctor notes it
 
@@ -2730,9 +2822,15 @@ def knowledge_upkeep(ws, R):
     titles, texts = {}, {}
     for p in sorted((ws / "knowledge").rglob("*.md")) if (ws / "knowledge").is_dir() else []:
         rel = p.relative_to(ws).as_posix()
-        if p.is_symlink() or not p.is_file() or (p.parent == ws / "knowledge" and p.name in KNOWLEDGE_SKIP):
+        if p.is_symlink() or not p.is_file() or (p.parent == ws / "knowledge" and p.name in KNOWLEDGE_SKIP) or archived(rel):
             continue
         text = p.read_text(encoding="utf-8", errors="replace")
+        front = re.match(r"\ufeff?---\n(.*?)\n---", text, re.S)
+        conf = re.search(r"^confidence:\s*(\S+)", front.group(1), re.M) if front else None
+        if conf and conf.group(1) not in CONFIDENCE:
+            out.append(("WARN", f"{rel}: confidence {conf.group(1)!r} is not one of {', '.join(CONFIDENCE)}"))
+        elif conf and conf.group(1) == "low":
+            out.append(("INFO", f"{rel} is marked low confidence; check it against a source, then raise it, or compost it"))
         m = re.search(r"^# (.+)$", text, re.M)
         if m:
             titles.setdefault(" ".join(m.group(1).casefold().split()), []).append(rel)
@@ -2876,6 +2974,13 @@ def main(argv=None):
     pk.add_argument("workspace")
     pk.add_argument("idea", nargs="?", help="the idea, in one line (leave out to list)")
     pk.add_argument("--done", type=int, metavar="N", help="tick off parked idea number N")
+    pk.add_argument("--decide", default="", help="what needs deciding about it, in one line")
+    pk.add_argument("--again", metavar="DATE", help="when to look at it again (YYYY-MM-DD); nothing happens by itself")
+    co = sub.add_parser("compost", help="move a knowledge file to knowledge/archive/ with a reason (plan unless --apply)")
+    co.add_argument("workspace")
+    co.add_argument("file", help="knowledge/<file>.md")
+    co.add_argument("--reason", required=True)
+    co.add_argument("--apply", action="store_true")
     ag = sub.add_parser("agency", help="who may do what here: enforced by a tool, or an instruction (read-only)")
     ag.add_argument("workspace")
     dg = sub.add_parser("delegate", help="propose a delegation level for one kind of work (plan unless --apply)")
@@ -2976,7 +3081,11 @@ def main(argv=None):
         elif a.cmd == "focus":
             print(focus(a.workspace, a.state))
         elif a.cmd == "park":
-            print(format_park(*park(a.workspace, a.idea, a.done)))
+            print(format_park(*park(a.workspace, a.idea, a.done, decide=a.decide, again=a.again)))
+        elif a.cmd == "compost":
+            dest, text = compost(a.workspace, a.file, a.reason, a.apply)
+            print(f"Moved to {dest}. It is out of daily use and kept as history." if a.apply else
+                  f"Would move {a.file} to {dest}, with the date and reason added. Nothing was changed. Run again with --apply.")
         elif a.cmd == "agency":
             print(agency(a.workspace))
         elif a.cmd == "delegate":

@@ -29,7 +29,7 @@ python3 tools/living.py add ~/my-workspace knowledge-inbox --apply  # adds it
 
 ## How do you use it?
 
-Work as usual. When the agent adds a suggestion to `knowledge/inbox.md`, it tells you. Now and then, read the inbox: keep an item by turning it into `knowledge/<topic>.md` from `_template.md` with today's `last_verified` date (or ask the agent to do that for the item you name), and delete the rest. When `doctor` says a file is old, check it and update its date.
+Work as usual. When the agent adds a suggestion to `knowledge/inbox.md`, it tells you. Now and then, read the inbox: keep an item by turning it into `knowledge/<topic>.md` from `_template.md` with today's `last_verified` date (or ask the agent to do that for the item you name), and delete the rest. When `doctor` says a file is old, check it and update its date. You can mark how sure a file is with `confidence: low`, `medium` or `high` in its front matter. When a file is outdated or wrong, compost it: `python3 tools/living.py compost ~/my-workspace knowledge/<file>.md --reason "..."` moves it to `knowledge/archive/` with the date and reason, out of daily use but kept as history.
 
 ## Example scenarios
 

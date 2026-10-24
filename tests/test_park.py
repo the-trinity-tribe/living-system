@@ -28,6 +28,24 @@ class TestPark(unittest.TestCase):
         self.assertIn("- [x] 2026-10-24 A newsletter for clients", (self.ws / L.PARKED_FILE).read_text(encoding="utf-8"))
         self.assertIn("Parked ideas: 1", L.status(self.ws))
 
+    def test_decision_escrow_fields_and_due_items(self):
+        day = datetime.date(2026, 10, 24)
+        L.park(self.ws, "Offer group coaching", decide="worth a pilot in January?", again="2026-11-15", today=day)
+        ideas, _ = L.park(self.ws)
+        self.assertEqual(L.parked_fields(ideas[0][1]), ("Offer group coaching", "worth a pilot in January?", "2026-11-15"))
+        self.assertEqual(L.parked_due(self.ws, today=day), [])
+        self.assertEqual(L.parked_due(self.ws, today=datetime.date(2026, 11, 15)), [(1, "Offer group coaching")])
+        self.assertIn("to decide: worth a pilot", L.format_park(ideas, ""))
+        for kw in ({"again": "2026-10-01"}, {"again": "soon"}, {"decide": "x" * 201}, {"decide": "a | b"}):
+            with self.subTest(**kw), self.assertRaises(L.Refusal):
+                L.park(self.ws, "Another", today=day, **kw)
+
+    def test_due_items_show_in_status(self):
+        path = self.ws / L.PARKED_FILE
+        path.parent.mkdir(exist_ok=True)
+        path.write_text(L.PARKED_HEAD + "- [ ] 2026-01-01 Old idea | look again: 2026-01-10\n", encoding="utf-8")
+        self.assertIn("1 parked item(s) due for a look, e.g. #1: Old idea", L.status(self.ws))
+
     def test_refusals(self):
         for kw in ({"idea": ""}, {"idea": "x" * 301}, {"idea": "wifi password: Summer2026x"}, {"done": 1}):
             with self.subTest(**kw), self.assertRaises(L.Refusal):

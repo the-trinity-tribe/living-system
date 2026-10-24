@@ -7,8 +7,8 @@ Status: EXPERIMENTAL. Version: 0.2.0.
 Small helpers that protect your attention:
 
 - **Focus mode:** while it is on, the agent does what you ask and suggests nothing else. `python3 tools/living.py focus ~/my-workspace on` (or `off`), or just say "focus mode on".
-- **Park:** an idea that pops up mid-task is written down in one line, and the work carries on.
-- **Tend:** when you have a few minutes, the agent walks you through everything that is waiting, one item at a time.
+- **Park:** an idea that pops up mid-task is written down in one line, and the work carries on. You can add what needs deciding and a date to look again; `status` reminds you when the date comes. Nothing parked is ever acted on by itself.
+- **Tend:** when you have a few minutes, the agent walks you through everything that is waiting, one item at a time. It also acts as a gardener: it offers outdated knowledge for composting, duplicates for merging, and lessons that keep coming up as a proposal for a rule. It never approves anything.
 - **Idea check:** before building something, a short set of questions helps you decide whether it is worth it and what the smallest useful version is. It can also end in "don't build it".
 
 ## Why would someone need it?
@@ -31,6 +31,7 @@ Nothing to install. Say "park this", "let's tend", or "is this idea worth it?". 
 
 ```sh
 python3 tools/living.py park ~/my-workspace "Ask the team about a shared calendar"
+python3 tools/living.py park ~/my-workspace "Offer group coaching" --decide "worth a pilot in January?" --again 2026-11-15
 python3 tools/living.py park ~/my-workspace
 python3 tools/living.py park ~/my-workspace --done 1
 ```
