@@ -4,14 +4,14 @@
 
 **Your rules in plain files. Agents propose. People decide.**
 
-Living System gives Claude Code and Codex a shared, written memory of how you work: your decisions, your knowledge, your boundaries. An agent can suggest a change to what you decided; it can never quietly rewrite it. Everything lives in plain Markdown on your own computer: no server, no account, no tie to one AI vendor.
+Living System gives Claude Code and Codex a shared, written memory of how you work: your decisions, your knowledge, your boundaries. Agents are told to propose changes to what you decided instead of making them, only your review turns a proposal into a rule, and a write guard blocks the most common direct edits. Everything lives in plain Markdown on your own computer: no server, no account, no tie to one AI vendor.
 
 <sub>Experimental · version 0.2.0 · open for testing and feedback · MPL-2.0</sub>
 
 - **Stop re-explaining.** Your rules are written once and read by every agent session.
-- **You stay the decision-maker.** Agents propose; only your review changes a rule, and a write guard blocks direct edits.
+- **You stay the decision-maker.** Agents propose; your review changes a rule; a write guard blocks common direct edits, and a review record shows anything changed afterwards.
 - **Room to act, earned.** Give the agent more autonomy one kind of work at a time, with evidence, and take it back in one step.
-- **Knowledge that outlives a role.** Hand on what you learned without personal data; the next person gets a gentle onboarding path.
+- **Knowledge that outlives a role.** Hand on what you learned (contact details and secrets are refused; you check for names); the next person gets a gentle onboarding path.
 - **Calm by design.** Catch up after a holiday, park ideas without switching task, switch on focus mode. No surveillance, no scores.
 - **Skills that stay yours.** The agent explains its choices, can coach you, and prints a handbook for working without AI.
 
@@ -43,7 +43,7 @@ Created and architected by **Adrianna Mamczarz**, through **The Trinity Tribe**.
 
 ## Help test it
 
-This preview is open for testing, feedback and contributions.
+Version 0.2.0 is experimental and open for testing, feedback and contributions.
 
 - **Try it:** [TESTING.md](TESTING.md) has a 30-minute path for first-time testers and what feedback helps most.
 - **Tell us:** [open an issue](https://github.com/the-trinity-tribe/living-system/issues/new/choose) and choose *Feedback*, *Bug* or *Idea*. Plain words are perfect; you do not need to be technical.
@@ -103,7 +103,7 @@ Every feature has a plain-language page answering the same ten questions. Full i
 | | [Agency and delegation](docs/features/agency.md) | Who may do what, honestly labelled; delegation levels you grant and withdraw per kind of work. |
 | Learning | [Learning mode](docs/features/learning-mode.md) | The agent explains, coaches on request, quizzes you on your rules, and prints a handbook for working without AI. |
 | | [Onboarding path](docs/features/onboarding.md) | A private reading path through what matters, a few items at a time. |
-| Teams | [Connected workspaces](docs/features/connected-workspaces.md) | A shared company workspace and private personal ones; role knowledge is handed on without personal data. |
+| Teams | [Connected workspaces](docs/features/connected-workspaces.md) | A shared company workspace and private personal ones; role knowledge is handed on after a check for personal data (contact details and secrets are refused; names need your eye). |
 | Repeated work | [Third-Run counter](docs/features/third-run-counter.md) | Counts repeated work and asks at the third time whether to automate it. |
 | | [Modules](docs/features/modules.md) and [workflow generator](docs/features/workflow-generator.md) | Optional ready-made workflows, or your own staged ones. |
 | | [Atlas](docs/features/atlas.md) | A map of which rules are in force and what relies on them. |
@@ -151,7 +151,7 @@ The demo shows one rule's whole life: contradictory evidence, a proposal, a huma
 
 - **No login, no identity check.** Names in approvals (`--by`, `approved_by`) are labels, not proof of who someone is.
 - **Agent rules are instructions.** The write guard enforces the most important ones in Claude Code, and in Codex once you trust its hooks. Everything else, and anything changed outside the agent, is not enforced. Scans recognise common patterns, not every trick.
-- **Agent behaviour is less tested than the tools.** Over 400 automated tests cover the tools on Linux, Windows and macOS. Skills and coaching are instructions to the agent; live sessions are recorded in [demo/WALKTHROUGH.md](demo/WALKTHROUGH.md), and this preview asks testers to try them.
+- **Agent behaviour is less tested than the tools.** Over 400 automated tests cover the tools on Linux, Windows and macOS. Skills and coaching are instructions to the agent; live sessions are recorded in [demo/WALKTHROUGH.md](demo/WALKTHROUGH.md), and testers are asked to try them.
 - **Languages.** Starter files in English, German and Polish (a native-speaker review would help). Agent rule files and tool messages are English.
 - **Not measured:** time or money saved, and energy use. See [local-first](docs/local-first.md).
 - What it will not do, and which guardrails a tool enforces: [ethics](docs/ethics.md).

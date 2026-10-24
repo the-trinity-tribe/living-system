@@ -1682,7 +1682,7 @@ def status(ws):
         prof = {}
     current = R.current_decisions(ws) if (ws / "decisions").is_dir() else []
     lines = [f"Workspace: {ws} (profile: {prof.get('profile', '?')}, language: {prof.get('language', '?')})",
-             f"Rules in force: {len(current)} current decision(s). List them: python3 tools/review.py current"]
+             f"Rules in force: {len(current)} current decision(s). List them: python3 tools/review.py --root {ws} current"]
     todo = []
     try:
         org = org_folder(ws)
@@ -1759,23 +1759,23 @@ def status(ws):
             lines.append(f"    (that note is from {written}; {len(later)} file(s) changed after it, e.g. {later[0]}, so "
                          f"check it is still where things stand)")
     if prof.get("focus"):
-        lines.append("Focus mode: on (no suggestions; living.py focus . off to end it)")
+        lines.append(f"Focus mode: on (no suggestions; python3 tools/living.py focus {ws} off to end it)")
     parked = ws / PARKED_FILE
     if parked.is_file():
         n = sum(1 for m in PARKED_ITEM.finditer(parked.read_text(encoding="utf-8", errors="replace")) if m.group(1) == " ")
         if n:
-            lines.append(f"Parked ideas: {n} (living.py park . lists them; the tend skill goes through them)")
+            lines.append(f"Parked ideas: {n} (python3 tools/living.py park {ws} lists them; the tend skill goes through them)")
 
     path = ws / ONBOARD_FILE
     if path.is_file():
         marks = [m for m, *_ in ONBOARD_ITEM.findall(path.read_text(encoding="utf-8", errors="replace"))]
         if marks and " " in marks:
             lines.append(f"Onboarding: {marks.count(' ')} of {len(marks)} item(s) still to read "
-                         f"(living.py onboard . shows the next ones)")
+                         f"(python3 tools/living.py onboard {ws} shows the next ones)")
     health = doctor(ws)
     errors = sum(1 for lvl, _ in health if lvl == "ERROR")
     warns = sum(1 for lvl, _ in health if lvl == "WARN")
-    lines.append(f"Health: {errors} error(s), {warns} warning(s)." + (" Details: living.py doctor" if errors or warns else ""))
+    lines.append(f"Health: {errors} error(s), {warns} warning(s)." + (f" Details: python3 tools/living.py doctor {ws}" if errors or warns else ""))
     return "\n".join(lines)
 
 

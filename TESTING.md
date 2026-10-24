@@ -13,7 +13,7 @@ You do not need to read code. You need about 30 minutes, a computer, and ideally
 
 ## Before you start
 
-- **Use made-up or harmless content.** This is a preview: please don't put real client data, health information, passwords or confidential material into a test workspace.
+- **Use made-up or harmless content.** This is an experimental release: please don't put real client data, health information, passwords or confidential material into a test workspace.
 - You need Git and Python 3.10 or newer. On Windows, type `py` wherever the docs say `python3`.
 - For the agent parts: [Claude Code or Codex](docs/ai-tools.md).
 
