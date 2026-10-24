@@ -37,7 +37,7 @@ All ten steps were done on 2026-10-24: steps 1 to 9 built with tests, step 10 an
 | Freshness, source verification, expiry warnings | Implemented | Keep | `last_verified`, doctor and status re-check reminders after 90 days, sources required by `knowledge-inbox`. |
 | Supersession and retirement of decisions | Implemented | Keep | `replace` and `retire` proposals; history; review record. |
 | Deduplication and consolidation of knowledge | Implemented | Enhancement | Built: Doctor notes knowledge files with the same title or identical text. |
-| Active lessons with a size limit | Implemented | Keep | `staged-learning`: at most 15 active lessons, doctor warns. |
+| Active lessons with a size limit | Implemented | Keep | `staged-learning`: at most 20 active lessons, doctor warns. |
 | 'Tend': one calm maintenance pass, item by item | Unverified | Core | Built (agent behaviour, not yet live-tested): `tend` skill over `status` and `park`. |
 | Stale routing instructions and references | Implemented | Enhancement | Built: Doctor notes references in workflows, knowledge and role knowledge to replaced, retired or missing decisions. |
 | Decision provenance and history | Implemented | Keep | `source_proposal`, `supersedes`, `review.py history`, `decisions/review-record.jsonl`. |
@@ -198,6 +198,132 @@ All ten steps were done on 2026-10-24: steps 1 to 9 built with tests, step 10 an
 | Controlled external integrations | Missing | Defer | Needs connectors and their security review; agents' own connectors already exist. |
 | Clean install, conversational setup, demo isolation, feature docs, labels in the pitch | Implemented | Keep | Tested; the pitch waits for the final state. |
 
+## Second review: product maturity (2026-10-24)
+
+A second set of ideas, checked the same way after the 0.2.0 preview was published.
+
+| # | Step | Areas | What | Size |
+| --- | --- | --- | --- | --- |
+| 1 | Agency and delegation | A, B | `agency`, `delegate`, AGENTS.md section on delegation levels. | Medium |
+| 2 | Personal work agreement | D, E, F | `me/agreement.md` in three languages, protected time rule. | Small |
+| 3 | Escrow and gardener | I, C | `park` fields and due dates; tend offers lessons as proposals. | Small |
+| 4 | Knowledge metabolism | C | Confidence field, `compost`. | Small |
+| 5 | Experiments and ethics | H, P, G | `small-experiment` module, four dimensions in evidence, `docs/ethics.md`. | Medium |
+| 6 | Atlas, perspectives, sharing, run states | N, O, M, J | `atlas`, `perspectives` skill, `share --withdraw`, seven run states in careful-run. | Medium |
+
+### 2A. Agency protocol
+
+| Capability | Coverage | Decision | Why |
+| --- | --- | --- | --- |
+| Who may read, propose, execute, approve and verify, in one place | Partial | Core | Spread over AGENTS.md, the guard and the team rule. Add `living.py agency`: one read-only view of who may do what in this workspace, marking each line as enforced by a tool or an instruction only. |
+| Task-specific authority granted and withdrawn | Missing | Core | Delegations become ordinary approved decisions (made with `living.py delegate`, withdrawn by retiring them), so they get review, history and the review record for free. |
+| Uncertainty, provenance, reversibility, escalation | Implemented | Keep | AGENTS.md sections 4-7, approval screen, review record, careful-run risk rule. |
+
+### 2B. Progressive delegation (trust ladder)
+
+| Capability | Coverage | Decision | Why |
+| --- | --- | --- | --- |
+| Levels: observe, recommend, draft, act with approval, bounded autonomy | Missing | Core | Five named levels per kind of work, in delegation decisions. Default when nothing is delegated: draft and ask. |
+| Evidence-based promotion, limits, rollback | Missing | Core | A delegation proposal must name its evidence and, for bounded autonomy, a scope and a review date. Publishing, spending, deleting, messaging people and changing rules can never be delegated beyond 'act with approval'. Retire the decision to withdraw it. |
+| Technically enforced autonomy limits | Missing | Reject | Delegations are instructions; the guard's blocks stay as they are and no delegation lifts them. Claiming enforcement would be false. Reconsider only with a mechanism the tools can actually check. |
+
+### 2C. Knowledge metabolism
+
+| Capability | Coverage | Decision | Why |
+| --- | --- | --- | --- |
+| Signals to knowledge with human gates | Implemented | Keep | `incoming/`, `knowledge-inbox`, `staged-learning`, proposals. |
+| Confidence and evidence quality | Missing | Enhancement | Optional `confidence: low | medium | high` in knowledge front matter; doctor notes low-confidence files that are old. |
+| Aging and re-verification; dedup | Implemented | Keep | `last_verified`, doctor and status reminders, duplicate notes. |
+| Purposeful forgetting that keeps history | Missing | Enhancement | `living.py compost` moves a knowledge file to `knowledge/archive/` with the date and reason (plan first); archived files leave routing and upkeep but stay readable. |
+| Lessons graduating into rules; a gardener that only proposes | Partial | Enhancement | Lessons that would change a rule already become proposals. Extend the `tend` skill: lessons used often are offered as proposals; old or doubtful knowledge is offered for re-check or composting. |
+
+### 2D. Personal work agreement
+
+| Capability | Coverage | Decision | Why |
+| --- | --- | --- | --- |
+| A user-owned agreement: style, roles, interruptions, learning, limits, sharing, explanations, challenge, override | Partial | Core | Settings are scattered (calm replies, coach, focus, goals). Add `me/agreement.md` (English, German, Polish), read by the agent each session; private for employees; plain text the human edits; nothing inferred. |
+
+### 2E. Protected time
+
+| Capability | Coverage | Decision | Why |
+| --- | --- | --- | --- |
+| Time saved is not turned into more work | Missing | Core | A section in the agreement (what you protect saved time for) and an AGENTS.md rule: never fill saved time with suggestions for more output, never propose output targets. No measurement. |
+
+### 2F. Skill resilience
+
+| Capability | Coverage | Decision | Why |
+| --- | --- | --- | --- |
+| Skill goals, practice, human-first attempts, explainable handbacks, working without AI | Implemented | Keep | Coach mode, `practice`, `handbook`, onboarding, 'skills I want to keep' in goals. The agreement adds a place for skill goals. |
+| Spotting over-dependent workflows | Missing | Defer | Needs evidence of real use. Reconsider when run counts and run cards show work that is always automated and never checked by hand. |
+
+### 2G. Observing the experience of work
+
+| Capability | Coverage | Decision | Why |
+| --- | --- | --- | --- |
+| Context switches, focus blocks, resume time, overload, control, energy, open loops | Missing | Defer | Automatic observation would be surveillance; manual logging adds the load it measures. A person who wants to watch one of these can make it the measure of a small experiment (H). Reconsider if testers ask for a self-report log. |
+
+### 2H. Small experiments
+
+| Capability | Coverage | Decision | Why |
+| --- | --- | --- | --- |
+| Baseline, change, measure, review, keep, revise or revert | Partial | Module | Only inside `work-audit`. Add an optional `small-experiment` module: one card per experiment with a versioned change, separate human and business measures, and wording rules that forbid causal claims the data cannot support. |
+| Counterfactual replay, micro-randomisation | Missing | Defer | Needs recorded data and statistics that a small workspace does not have. Reconsider with a team that runs repeated, comparable work. |
+
+### 2I. Decision and attention escrow
+
+| Capability | Coverage | Decision | Why |
+| --- | --- | --- | --- |
+| Park thoughts and decisions with context, what to decide, evidence, next step, review date | Partial | Enhancement | Extend `park` with optional 'to decide' and 'look again on' fields; status lists items whose date has come. Nothing is acted on automatically. |
+
+### 2J. Failure-aware automation
+
+| Capability | Coverage | Decision | Why |
+| --- | --- | --- | --- |
+| Scheduled, started, completed, created, verified, delivered, reported | Missing | Enhancement | Living System runs no jobs. Add the seven states to careful-run's verify and hand-back stages, so 'done' always says how far it got. |
+| Job runner, retries, missed-run recovery | Missing | Reject | Would need a background service, which Living System avoids by design. Reconsider never for the core; an optional module could document patterns if users automate with their own schedulers. |
+
+### 2K. Choosing where work runs
+
+| Capability | Coverage | Decision | Why |
+| --- | --- | --- | --- |
+| Local vs remote, cost, privacy, resources, offline | Partial | Keep | Local-first page, run card 'who does what', the decision-model evaluation. No scheduler. |
+| Energy or carbon accounting | Missing | Reject | Cannot be measured from inside Living System; estimates would be speculative claims. |
+
+### 2L. Patterns from other frameworks
+
+| Capability | Coverage | Decision | Why |
+| --- | --- | --- | --- |
+| Work decomposition and durable state; hooks, skills, tests; design review; staged context | Implemented | Keep | Careful-run, the guard and skills, the test suite, ICM workflows. Nothing copied, so no new licence terms; ICM is credited. |
+| Design and accessibility review for users | Missing | Defer | A development tool rather than a user need; the careful-run website profile has the basic checks. Reconsider if users build interfaces with it. |
+
+### 2M. Federated knowledge
+
+| Capability | Coverage | Decision | Why |
+| --- | --- | --- | --- |
+| Personal vs shared, explicit sharing and acceptance, role context, provenance | Implemented | Keep | `link`, `share`, `role-review`, `roles/<role>/`, onboarding. |
+| Withdrawing a share | Missing | Enhancement | `share --withdraw` removes your shared file while it still waits for review. Once accepted it is company knowledge, removed through the company's own process. |
+| Access control between people | Missing | Reject | Not technically possible with shared folders; claiming it would be false. Folder and git permissions remain the real boundary. |
+
+### 2N. Atlas and pattern commons
+
+| Capability | Coverage | Decision | Why |
+| --- | --- | --- | --- |
+| Read-only view of how rules, projects, workflows and knowledge connect | Missing | Enhancement | `living.py atlas`: a Markdown page (with a diagram) built from the files; Markdown stays the source; no database. |
+| Pattern commons | Partial | Defer | Modules are shareable patterns already, and contributions go through pull requests. Reconsider with a helper that turns a user's workflow into a module skeleton once people ask to contribute one. |
+
+### 2O. Several perspectives on a decision
+
+| Capability | Coverage | Decision | Why |
+| --- | --- | --- | --- |
+| Structured review from different viewpoints, evidence vs interpretation, bounded, one human decision | Missing | Enhancement | A `perspectives` skill run in one session, using roles (never real people's names or invented quotes), at most two rounds, ending with the human's choice. |
+
+### 2P. Ethics and evidence of value
+
+| Capability | Coverage | Decision | Why |
+| --- | --- | --- | --- |
+| No dark patterns, surveillance, quotas, hidden profiling, misleading claims | Partial | Core | Practised throughout but not written in one place. Add `docs/ethics.md`: each guardrail and how it is upheld, marking what is enforced and what is a rule. |
+| Four separate dimensions: business, human, resources, reliability | Missing | Enhancement | The evidence summary and the experiment card report the four separately and say plainly what was not measured. |
+
 ## Not now, and not at all
 
 Every **Defer** and **Reject** above, in one list.
@@ -218,6 +344,15 @@ Every **Defer** and **Reject** above, in one list.
 - **Defer** (P) Marketing planning: Overlaps content preparation; reconsider after `content-prep` is used.
 - **Defer** (P) Recruitment and role onboarding: Role onboarding exists (`onboard`). Recruitment handles candidates' personal data; too risky for a template now.
 - **Defer** (P) Controlled external integrations: Needs connectors and their security review; agents' own connectors already exist.
+- **Reject** (2B) Technically enforced autonomy limits: Delegations are instructions; the guard's blocks stay as they are and no delegation lifts them. Claiming enforcement would be false. Reconsider only with a mechanism the tools can actually check.
+- **Defer** (2F) Spotting over-dependent workflows: Needs evidence of real use. Reconsider when run counts and run cards show work that is always automated and never checked by hand.
+- **Defer** (2G) Context switches, focus blocks, resume time, overload, control, energy, open loops: Automatic observation would be surveillance; manual logging adds the load it measures. A person who wants to watch one of these can make it the measure of a small experiment (H). Reconsider if testers ask for a self-report log.
+- **Defer** (2H) Counterfactual replay, micro-randomisation: Needs recorded data and statistics that a small workspace does not have. Reconsider with a team that runs repeated, comparable work.
+- **Reject** (2J) Job runner, retries, missed-run recovery: Would need a background service, which Living System avoids by design. Reconsider never for the core; an optional module could document patterns if users automate with their own schedulers.
+- **Reject** (2K) Energy or carbon accounting: Cannot be measured from inside Living System; estimates would be speculative claims.
+- **Defer** (2L) Design and accessibility review for users: A development tool rather than a user need; the careful-run website profile has the basic checks. Reconsider if users build interfaces with it.
+- **Reject** (2M) Access control between people: Not technically possible with shared folders; claiming it would be false. Folder and git permissions remain the real boundary.
+- **Defer** (2N) Pattern commons: Modules are shareable patterns already, and contributions go through pull requests. Reconsider with a helper that turns a user's workflow into a module skeleton once people ask to contribute one.
 
 ## Risks to watch
 
