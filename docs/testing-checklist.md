@@ -44,10 +44,11 @@ Use a throwaway workspace folder (`~\ls-test` below). Delete it when you are don
 
 | Step | Command | Expect |
 | --- | --- | --- |
-| 3.1 | `py -B tools\living.py modules --workspace ~\ls-test` | Five modules, each with "may help when you mention". |
+| 3.1 | `py -B tools\living.py modules --workspace ~\ls-test` | Every module (six or more), each with "may help when you mention". |
 | 3.2 | `py -B tools\living.py add ~\ls-test weekly-update` | A plan, then `Nothing was written.` The `workflows` folder still has only `.gitkeep`. |
 | 3.3 | Same command with `--apply` at the end | `Installed.` A `workflows\weekly-update` folder appears. |
 | 3.4 | `py -B tools\living.py doctor ~\ls-test` | Still `0 error(s)`. |
+| 3.4a | `py -B tools\living.py add ~\ls-test careful-run --apply`. Copy `workflows\careful-run\references\run-card.md` to `workflows\careful-run\runs\test.md`, replace `<path>` with `projects/a.md`, create `projects\a.md`. Run `py -B tools\living.py checkpoint ~\ls-test workflows/careful-run/runs/test.md --record`, edit `projects\a.md`, run it again without `--record`. | First `Checkpoint recorded for 1 file(s).`; then `projects/a.md: changed since the checkpoint`. |
 | 3.5 | Edit `~\ls-test\workflows\weekly-update\references\update-format.md` (add a line), save. Then `py -B tools\living.py remove ~\ls-test weekly-update --apply` | It lists `update-format.md` under "Keeps (you edited these...)". That file is still there; the other module files are gone. |
 
 ## 4. Decisions and proposals

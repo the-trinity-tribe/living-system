@@ -17,6 +17,7 @@
   living.py onboard <ws> [--done ID] [--next N]
   living.py park <ws> ["idea"] [--done N]
   living.py focus <ws> on|off
+  living.py checkpoint <ws> <run card> [--record]
   living.py evidence <ws> [--out FILE]
   living.py role-review <company ws> <file> --outcome accept|reject --by NAME
   living.py export <ws> <file.zip> [--apply]
@@ -1971,6 +1972,72 @@ def role_review(ws, rel, outcome, by, today=None):
             f"not a rule. accepted_by is attribution, not verified identity.")
 
 
+# ---------- careful runs: a checkpoint in the run card, checked before resuming ----------
+
+CHECKPOINT_HEAD = "## Checkpoint"
+
+
+def card_files(text):
+    """Paths listed (in backticks) under 'Files in scope:' in a run card."""
+    m = re.search(r"Files in scope:\s*\n((?:[ \t]*[-*] .*\n?)*)", text)
+    paths = re.findall(r"`([^`]+)`", m.group(1)) if m else []
+    return [p for p in dict.fromkeys(paths) if not p.startswith("<")]
+
+
+def checkpoint(ws, card, record=False, today=None):
+    """Record (record=True) or compare fingerprints of the run card's files in scope.
+    Returns (problems, message); problems lists changed, missing or unrecorded files."""
+    import datetime
+    ws = Path(ws)
+    read_manifest(ws)
+    R = review_tool()
+    card = Path(str(card).replace("\\", "/")).as_posix()
+    if unsafe_rel(card) or not card.startswith("workflows/") or not card.endswith(".md"):
+        raise Refusal(f"{card}: give the run card's path inside the workspace, e.g. workflows/careful-run/runs/<card>.md")
+    refuse_links(ws, [card])
+    path = ws / card
+    if not path.is_file():
+        raise Refusal(f"{card} does not exist")
+    text = path.read_text(encoding="utf-8")
+    files = card_files(text)
+    for rel in files:
+        if unsafe_rel(rel):
+            raise Refusal(f"{card} lists {rel!r} under Files in scope; use plain paths inside the workspace")
+    fingerprint = lambda rel: (R.text_sha((ws / rel).read_bytes())[:16] if (ws / rel).is_file() and not linked_part(ws, rel)
+                               else "missing")
+    if record:
+        today = (today or datetime.date.today()).isoformat()
+        body = text.split("\n" + CHECKPOINT_HEAD + "\n", 1)[0].rstrip("\n")
+        section = "".join(f"- `{rel}` {fingerprint(rel)}\n" for rel in files)
+        new = f"{body}\n\n{CHECKPOINT_HEAD}\n\nRecorded {today} by `living.py checkpoint`. Do not edit by hand.\n\n{section}"
+        with workspace_lock(ws):
+            fd, tmp = tempfile.mkstemp(prefix=".card.", suffix=".tmp", dir=path.parent)
+            try:
+                with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as f:
+                    f.write(new)
+                os.replace(tmp, path)
+            except BaseException:
+                Path(tmp).unlink(missing_ok=True)
+                raise
+        missing = [rel for rel in files if fingerprint(rel) == "missing"]
+        return [], (f"Checkpoint recorded for {len(files)} file(s)" + (f"; not there yet: {', '.join(missing)}" if missing
+                    else "") + "." if files else "No files listed under 'Files in scope:'; nothing to fingerprint.")
+    if "\n" + CHECKPOINT_HEAD + "\n" not in text:
+        raise Refusal(f"{card} has no checkpoint yet; record one with --record when you pause")
+    recorded = dict(re.findall(r"^- `([^`]+)` (\w+)$", text.split("\n" + CHECKPOINT_HEAD + "\n", 1)[1], re.M))
+    problems = []
+    for rel in files:
+        now = fingerprint(rel)
+        if rel not in recorded:
+            problems.append(f"{rel}: in scope now, but not in the checkpoint")
+        elif now != recorded[rel]:
+            problems.append(f"{rel}: " + ("missing now" if now == "missing" else
+                                          "created since the checkpoint" if recorded[rel] == "missing" else
+                                          "changed since the checkpoint"))
+    return problems, ("Nothing changed since the checkpoint; safe to continue." if not problems else
+                      "Changed since the checkpoint: re-read these before continuing.")
+
+
 # ---------- parked ideas: write it down, keep working ----------
 
 PARKED_FILE = "me/parked.md"
@@ -2516,6 +2583,10 @@ def main(argv=None):
     rr.add_argument("file", help="roles/<role>/inbox/<file>.md")
     rr.add_argument("--outcome", required=True, choices=("accept", "reject"))
     rr.add_argument("--by", required=True)
+    cp = sub.add_parser("checkpoint", help="careful-run: record or compare fingerprints of a run card's files")
+    cp.add_argument("workspace")
+    cp.add_argument("card", help="workflows/careful-run/runs/<card>.md")
+    cp.add_argument("--record", action="store_true", help="record the checkpoint (when pausing)")
     fo = sub.add_parser("focus", help="focus mode: the agent does what you ask and suggests nothing else")
     fo.add_argument("workspace")
     fo.add_argument("state", choices=("on", "off"))
@@ -2602,6 +2673,10 @@ def main(argv=None):
                       "Nothing was written. Run again with --apply to share it.")
         elif a.cmd == "role-review":
             print(role_review(a.workspace, a.file, a.outcome, a.by))
+        elif a.cmd == "checkpoint":
+            problems, message = checkpoint(a.workspace, a.card, a.record)
+            print("\n".join([message] + [f"  - {p}" for p in problems]))
+            return 1 if problems else 0
         elif a.cmd == "focus":
             print(focus(a.workspace, a.state))
         elif a.cmd == "park":

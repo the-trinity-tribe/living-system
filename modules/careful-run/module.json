@@ -1,0 +1,10 @@
+{
+  "id": "careful-run",
+  "version": "0.1.0",
+  "kind": "workflow",
+  "summary": "Bigger or riskier work in six checked steps: frame, plan, make, check, verify, hand back, with a run card you can pause and resume safely.",
+  "requires": [],
+  "routing": [["Bigger, riskier or multi-session work that needs a plan, an independent check and a safe pause (run card)", "workflows/careful-run/CONTEXT.md"]],
+  "needs_approval": ["The plan of a high-risk run", "Anything beyond the run card's scope", "A third correction round", "Using, sending or publishing the result"],
+  "signals": ["this has to go right", "big change", "plan this carefully", "risky change", "we'll continue tomorrow", "pick up where we left off"]
+}
