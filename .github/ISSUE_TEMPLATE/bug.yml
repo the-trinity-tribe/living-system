@@ -1,0 +1,47 @@
+name: Bug
+description: Something did not do what the docs say.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please **do not paste passwords, keys, personal data or confidential content**. For a security problem, use private reporting (see SECURITY.md) instead.
+  - type: textarea
+    id: did
+    attributes:
+      label: What did you do?
+      description: The command you ran, or what you said to the agent.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+      description: If a doc page says so, link it.
+    validations:
+      required: true
+  - type: textarea
+    id: happened
+    attributes:
+      label: What happened instead?
+      description: Copy the exact message (not a summary).
+      render: text
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: Computer and Python version
+      description: For example "Windows 11, Python 3.12" (`py --version` or `python3 --version`).
+    validations:
+      required: true
+  - type: input
+    id: agent
+    attributes:
+      label: Agent, if any
+      description: For example "Claude Code 2.x" or "Codex 0.16x", or "none".
+  - type: input
+    id: version
+    attributes:
+      label: Living System version
+      description: The release you downloaded, or the output of `git log --oneline -1`.

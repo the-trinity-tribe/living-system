@@ -1,0 +1,32 @@
+name: Idea
+description: Something you wish Living System did. A few questions help decide whether to build it.
+labels: ["idea"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        "Don't know" is a fine answer to any of these. Please check the [roadmap](https://github.com/the-trinity-tribe/living-system/blob/main/docs/roadmap.md) first: it lists what is planned, deferred or deliberately rejected, with reasons.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would it solve?
+      description: How often does it happen, and how bad is it when it does?
+    validations:
+      required: true
+  - type: textarea
+    id: today
+    attributes:
+      label: What do you do today instead?
+  - type: textarea
+    id: smallest
+    attributes:
+      label: What is the smallest version that would help?
+  - type: textarea
+    id: risks
+    attributes:
+      label: Anything it must never do?
+      description: For example privacy, things that cannot be undone, extra load for people.
+  - type: textarea
+    id: evidence
+    attributes:
+      label: How would we know it helped?

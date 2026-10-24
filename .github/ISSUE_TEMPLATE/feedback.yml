@@ -1,0 +1,39 @@
+name: Feedback
+description: Tell us how Living System worked for you. Plain words are perfect.
+labels: ["feedback"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for testing. Please **do not paste passwords, keys, personal data or confidential content**.
+  - type: dropdown
+    id: helped
+    attributes:
+      label: Did it help with your work?
+      options: ["Yes", "A little", "Not yet", "Not sure"]
+    validations:
+      required: true
+  - type: textarea
+    id: what-helped
+    attributes:
+      label: What helped?
+  - type: textarea
+    id: confusing
+    attributes:
+      label: Where did you get stuck or confused?
+      description: What did you expect instead?
+  - type: input
+    id: setup
+    attributes:
+      label: Your setup (optional)
+      description: For example "Windows 11, Claude Code" or "macOS, Codex".
+  - type: dropdown
+    id: valuecheck
+    attributes:
+      label: Did you do the value check?
+      options: ["Yes", "No", "Started but did not finish"]
+  - type: textarea
+    id: valueresult
+    attributes:
+      label: Value check result (optional)
+      description: The before/after counts from `living.py value-score`, if you are happy to share them.

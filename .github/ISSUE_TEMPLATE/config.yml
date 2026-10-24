@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Report a security problem privately
+    url: https://github.com/the-trinity-tribe/living-system/security/advisories/new
+    about: Please do not post security details in a public issue.
+  - name: Testing guide
+    url: https://github.com/the-trinity-tribe/living-system/blob/main/TESTING.md
+    about: A 30-minute path for first-time testers.
