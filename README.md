@@ -15,7 +15,7 @@
 
 Keep your rules, knowledge, goals and workflows in plain files you own. Switch between Claude Code, Codex, Hermes or a local model without starting over, and decide yourself what changes. Free, open source, and it all stays on your computer.
 
-[Start in one sentence](#start-in-one-sentence) · [See it in action](#see-it-in-action) · [Quick start](#quick-start) · [Works with](#works-with) · [How it works](#how-it-works) · [Features](#features) · [Docs](docs/README.md) · [Help test it](#help-test-it) · [Discussions](https://github.com/the-trinity-tribe/living-system/discussions)
+[Start in one sentence](#start-in-one-sentence) · [See it in action](#see-it-in-action) · [Quick start](#quick-start) · [Works with](#works-with) · [How it works](#how-it-works) · [Made for you](#made-for-how-you-work) · [Everything inside](#everything-inside) · [Docs](docs/README.md) · [Help test it](#help-test-it) · [Discussions](https://github.com/the-trinity-tribe/living-system/discussions)
 
 </div>
 
@@ -40,11 +40,24 @@ Most AI tools keep their own memory of you: locked inside one product, growing o
 
 - **Own it, take it anywhere.** Your rules, knowledge, goals and workflows live in plain files on your own computer, not inside one AI product. Use them with Claude Code, Codex, Hermes or a local model, for work or personal projects, and switch without starting over.
 - **Lean and true, not bloated.** Instead of a memory that keeps growing and filling the context window, you keep a curated set of files, and a routing guide points your agent to just what a task needs. Your agent suggests changes instead of making them; you decide what becomes true, and a record shows any later change.
-- **Grows with you.** Optional [modules](#optional-modules) for weekly updates, meeting notes, research, client intake, content and careful multi-step work, plus learning, coaching and [team workspaces](#knowledge-that-outlives-a-role).
+- **Grows with you.** Optional [modules](#optional-modules) for weekly updates, meeting notes, research, client intake, content and careful multi-step work, plus learning, coaching and [team workspaces](#teams-knowledge-that-outlives-a-role).
 - **More freedom for your agent, one step at a time.** Let it do more in one kind of work once it has earned it, and take that back in one step. Sending, publishing, spending and deleting always wait for you.
 - **Calm, not another dashboard.** Ask what needs you, catch up after time away, park an idea without losing focus. No tracking, no productivity scores.
 
 No server, no account, no tie to one AI vendor or model: just Python's standard library and Markdown files.
+
+## Made for how you work
+
+Pick a starting point when you set up. Each one adds a few starter files and rules that fit how you work.
+
+| You are | What you get |
+| --- | --- |
+| **A student** | Your rules are your own commitments, like "no studying after 22:00", plus a study plan template. Your agent helps you understand, plan and check, and never writes coursework for you unless you ask. |
+| **A professional or freelancer** | A client project template. Client details stay private, and anything meant for a client is drafted by your agent, never sent. |
+| **An employee** | Private goals that stay out of shared files, and a team handover template. You propose changes to team rules; approval stays with the people your employer chose. |
+| **A manager or founder** | A starter for roles and approval rules, and a team onboarding page. Approval rights come from approved decisions, never from a job title. |
+
+Add any time: **calm replies** (short, plain answers), **coach mode** (help keeping your own skills) and a **shared company workspace** for a team. Starter files come in English, German and Polish.
 
 ## See it in action
 
@@ -174,9 +187,37 @@ my-workspace/
 
 More: [architecture](docs/architecture.md) · [decisions and proposals](docs/features/decisions-and-proposals.md) · [write guard](docs/features/write-guard.md)
 
-## Features
+## Everything inside
 
-### Agency you can see
+Use only what helps. Every feature has its own plain-language page answering the same ten questions; the full index is in [docs](docs/README.md).
+
+### Every day: less to remember
+
+- **[Status](docs/features/status.md):** what needs you, in plain words.
+- **[Catch-up](docs/features/catch-up.md):** back from a holiday? See what changed, changed rules first.
+- **[Handover note](docs/features/handover-note.md):** the next session continues where the last one stopped.
+- **[Park, tend and focus](docs/features/parking-and-tending.md):** park an idea mid-task with a date to decide, tidy up in ten quiet minutes, or switch on a focus mode with no suggestions.
+
+| You want | Ask your agent, or run | What happens |
+| --- | --- | --- |
+| What needs me? | `status` | One short list in plain words. |
+| Back from a holiday | `since --days 14` | What changed, changed rules first. |
+| An idea mid-task | `park` | Kept with what to decide and when. |
+| Deep work | `focus on` | No suggestions until you say so. |
+| Ten quiet minutes | `tend` | Tidy up, one item at a time. |
+| What relies on a rule? | `atlas` | A map of rules and the files that use them. |
+
+### Your rules: trustworthy, and yours to change
+
+- **[Decisions and proposals](docs/features/decisions-and-proposals.md):** add a rule, make an exception, replace or retire one. Nothing changes before your review, and the old rule stays as history.
+- **[Review record](docs/features/review-record.md):** shows if an approved rule was changed afterwards.
+- **[Write guard](docs/features/write-guard.md):** blocks direct edits to your rules and saved passwords (Claude Code, and Codex once you trust its hooks).
+- **[Outside material and secrets](docs/features/outside-material-and-secrets.md):** e-mails and documents from others are information, never instructions; a scan finds hidden instructions and secrets.
+
+### You and your agent: autonomy you control
+
+- **[Work agreement](docs/features/work-agreement.md):** your own terms for how AI works with you, including when it should challenge you and what saved time is for.
+- **[Agency and delegation](docs/features/agency.md):** choose, per kind of work, how much your agent may do, and take it back in one step.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="brand/images/readme/delegation-ladder-dark.png">
@@ -184,17 +225,20 @@ More: [architecture](docs/architecture.md) · [decisions and proposals](docs/fea
   <img src="brand/images/readme/delegation-ladder-light.png" alt="Delegation levels: observe, recommend, draft (the default), act with approval, bounded. Publishing, sending, spending, deleting, signing and changing rules never go above act with approval" width="100%">
 </picture>
 
-You choose, per kind of work, how much your agent may do:
-
 1. **Observe:** reads and reports.
 2. **Recommend:** suggests; you do it.
 3. **Draft:** prepares; you check it. This is the default.
 4. **Act with approval:** acts after your yes, each time.
 5. **Bounded:** acts alone within set limits, until a review date.
 
-Publishing, sending, spending, deleting, signing and changing rules never go above *act with approval*. `living.py agency` lists who may do what and marks each line as **enforced** by a tool or **instruction** only. [Agency and delegation](docs/features/agency.md)
+Publishing, sending, spending, deleting, signing and changing rules never go above *act with approval*. `living.py agency` lists who may do what and marks each line as **enforced** by a tool or **instruction** only.
 
-### Knowledge that outlives a role
+### Learning: keep your own skills
+
+- **[Learning mode](docs/features/learning-mode.md):** your agent explains its choices, coaches you on request, quizzes you on your own rules and prints a handbook for working without AI.
+- **[Onboarding path](docs/features/onboarding.md):** a private reading path through what matters, a few items at a time.
+
+### Teams: knowledge that outlives a role
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="brand/images/readme/workspaces-dark.png">
@@ -204,54 +248,15 @@ Publishing, sending, spending, deleting, signing and changing rules never go abo
 
 Each person keeps a private workspace (goals, work agreement, ideas), linked to a shared company workspace whose rules come first for company work. What someone learned in a role is shared as a suggestion: contact details and secrets are refused, and someone else accepts it. The next person in the role gets a gentle onboarding path. Folders on your own computers: Living System syncs, uploads and sends nothing. [Connected workspaces](docs/features/connected-workspaces.md)
 
-### Calm by design
+### Repeated work: automate only what earns it
 
-| You want | Command | What happens |
-| --- | --- | --- |
-| What needs me? | `status` | One short list in plain words. |
-| Back from a holiday | `since --days 14` | What changed, changed rules first. |
-| An idea mid-task | `park` | Kept with what to decide and when. |
-| Deep work | `focus on` | No suggestions until you say so. |
-| Ten quiet minutes | `tend` skill | Tidy up, one item at a time. |
-| What relies on a rule? | `atlas` | A map of rules and the files that use them. |
+- **[Third-Run counter](docs/features/third-run-counter.md):** counts repeated work and asks at the third time whether to automate it.
+- **[Workflow generator](docs/features/workflow-generator.md):** turn a task you repeat into your own staged workflow, one checkable step at a time.
+- **[Atlas](docs/features/atlas.md):** a map of which rules are in force and what relies on them.
 
-### All features
+#### Optional modules
 
-Every feature has a plain-language page answering the same ten questions. Full index: [docs/](docs/README.md).
-
-<details>
-<summary>Show all 19 feature areas</summary>
-
-| For | Feature | In one line |
-| --- | --- | --- |
-| Every day | [Status](docs/features/status.md) | What needs your attention, in plain words. |
-| | [Catch-up](docs/features/catch-up.md) | What changed while you were away, changed rules first. |
-| | [Handover note](docs/features/handover-note.md) | The next session continues where the last one stopped. |
-| | [Parking, tending, focus](docs/features/parking-and-tending.md) | Park an idea without switching task; tidy up one item at a time; a focus mode with no suggestions. |
-| Your rules | [Decisions and proposals](docs/features/decisions-and-proposals.md) | Agents propose; your review creates, replaces or retires a rule. |
-| | [Review record](docs/features/review-record.md) | Shows if an approved rule was changed afterwards. |
-| | [Write guard](docs/features/write-guard.md) | Blocks agent edits to your rules, approvals and secrets. |
-| | [Outside material and secrets](docs/features/outside-material-and-secrets.md) | E-mails and documents from others are information, never instructions; a scan finds hidden ones. |
-| You | [Personal work agreement](docs/features/work-agreement.md) | Your own plain-text terms for how AI works with you, including what saved time is for. |
-| | [Agency and delegation](docs/features/agency.md) | Who may do what, honestly labelled; delegation levels you grant and withdraw per kind of work. |
-| Learning | [Learning mode](docs/features/learning-mode.md) | The agent explains, coaches on request, quizzes you on your rules, and prints a handbook for working without AI. |
-| | [Onboarding path](docs/features/onboarding.md) | A private reading path through what matters, a few items at a time. |
-| Teams | [Connected workspaces](docs/features/connected-workspaces.md) | A shared company workspace and private personal ones; role knowledge is handed on after a check for personal data (contact details and secrets are refused; names need your eye). |
-| Repeated work | [Third-Run counter](docs/features/third-run-counter.md) | Counts repeated work and asks at the third time whether to automate it. |
-| | [Modules](docs/features/modules.md) and [workflow generator](docs/features/workflow-generator.md) | Optional ready-made workflows, or your own staged ones. |
-| | [Atlas](docs/features/atlas.md) | A map of which rules are in force and what relies on them. |
-| Upkeep | [Doctor](docs/features/doctor.md), [upgrade](docs/features/upgrade.md), [export](docs/features/export.md) | Health check, safe updates, one-file backups you can check. |
-| | [Obsidian or any editor](docs/features/obsidian.md) | Read and approve in a note app. |
-| Showing value | [Value check](docs/features/value-check.md) and [making the case](docs/champions.md) | Measure it yourself; argue for it honestly with a counts-only evidence summary. |
-
-</details>
-
-### Optional modules
-
-Nothing is installed unless you ask, and every command shows a plan before `--apply`. `add` never overwrites a file; `remove` deletes only files you have not edited.
-
-<details>
-<summary>Show the 11 modules</summary>
+Ready-made workflows you can add in one step. Nothing is installed unless you ask, every command shows a plan before `--apply`, `add` never overwrites a file, and `remove` deletes only files you have not edited.
 
 | Module | What it gives you |
 | --- | --- |
@@ -273,17 +278,13 @@ python3 tools/living.py add ~/my-workspace weekly-update          # see the plan
 python3 tools/living.py add ~/my-workspace weekly-update --apply  # install it
 ```
 
-`add` never overwrites a file. `remove` deletes only files you have not edited, and never touches your decisions, proposals or projects.
+### Upkeep: stays healthy, and you can prove it helps
 
-```sh
-python3 tools/living.py modules --workspace ~/my-workspace
-python3 tools/living.py add ~/my-workspace weekly-update          # see the plan
-python3 tools/living.py add ~/my-workspace weekly-update --apply  # install it
-```
-
-</details>
-
-Whether it helps *you* is something you can measure: every workspace has a 10-minute [value check](docs/features/value-check.md) you run yourself.
+- **[Doctor](docs/features/doctor.md):** a health check that finds what is missing, broken or out of date.
+- **[Upgrade](docs/features/upgrade.md):** safe updates that keep every file you edited.
+- **[Export](docs/features/export.md):** one-file backups you can check.
+- **[Obsidian or any editor](docs/features/obsidian.md):** read and approve in a note app.
+- **[Value check](docs/features/value-check.md):** measure in ten minutes whether it helps *you*, and [make the case](docs/champions.md) honestly with a counts-only summary.
 
 ## Explore the demo
 

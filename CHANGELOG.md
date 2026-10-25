@@ -4,6 +4,7 @@ All notable changes. Dates are when a version was prepared. Versions before 1.0 
 
 ## Unreleased
 
+- README shows everything Living System offers: a new "Made for how you work" section (student, professional, employee, manager) and a fully visible "Everything inside" in seven benefit-led groups, each feature linked to its plain-language page; the 11 modules are no longer hidden behind a click. Fuller GitHub description.
 - README readable on phones: the headline is real text instead of small type inside a banner image, and the demo animation is replaced by a written "See it in action" walkthrough of real output (the animation is still linked). The delegation and team diagrams now have the same information as text next to them.
 - Live tests: the Codex write guard blocked a direct edit of an approved rule; Hermes Agent, in a clean profile, answered from the workspace rules and wrote a valid proposal instead of editing. Found and documented: a Hermes profile that pins its working folder to another project overrides `--in`.
 - Credits expanded: CREDITS.md now names everyone whose work inspired Living System (ICM by Jake Van Clief and David McDermott, David Shapiro, Jacque Fresco, Anthropic's Building effective agents by Erik Schluntz and Barry Zhang, Mem0, Microsoft Research's SkillOpt, awesome-harness-engineering, and more), what each inspired, and that none of them built or endorsed it. Short versions in the README and the pitch page.
