@@ -37,7 +37,7 @@ Headings do not end in a full stop. Every section heading carries a short red ru
 | File | Shows |
 | --- | --- |
 | [`images/hero.png`](images/hero.png) | Mark, name and the headline "Your context, your rules, any AI agent", large enough to read in a link preview. 1280 by 640 (2560 by 1280 file), used as the GitHub social preview |
-| [`images/readme/`](images/readme/) | The README banner and three diagrams (how a rule changes, delegation levels, connected workspaces), each in a dark and a light variant on a transparent ground |
+| [`images/readme/`](images/readme/) | Three diagrams for the README (how a rule changes, delegation levels, connected workspaces), each in a dark and a light variant on a transparent ground. Each one sits next to text that says the same thing, so no reader depends on the picture |
 | [`images/mark-lockup.png`](images/mark-lockup.png) | Mark and name together |
 | [`images/demo.gif`](images/demo.gif) | A 25-second loop of real output: setup, a proposal, approval, two blocked shortcuts, proof nothing changed |
 
@@ -47,7 +47,7 @@ Images support the text; they do not replace it. Diagrams carry a few words each
 
 ## Where it is used
 
-- The README banner, demo and diagrams (GitHub picks the dark or light variant to match the reader's theme).
+- The README mark and diagrams (GitHub picks the dark or light variant to match the reader's theme). The README headline and the "See it in action" walkthrough are real text, so they stay readable on phones; the demo animation is linked, not embedded.
 - The pitch page, [`site/index.html`](../site/index.html): dark by default; people whose device asks for light get a warm cream version with the same red and type.
 
 ## Credit

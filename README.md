@@ -1,10 +1,10 @@
 <div align="center">
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="brand/images/readme/banner-dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="brand/images/readme/banner-light.png">
-  <img src="brand/images/readme/banner-light.png" alt="Living System: your rules in plain files. Agents propose. People decide." width="100%">
-</picture>
+<img src="brand/mark.svg" alt="" width="96">
+
+# Living System
+
+### Your context, your rules, any AI agent
 
 [![Release](https://img.shields.io/github/v/release/the-trinity-tribe/living-system?style=flat-square&color=EB5757&label=release)](https://github.com/the-trinity-tribe/living-system/releases/latest)
 [![Tests](https://img.shields.io/github/actions/workflow/status/the-trinity-tribe/living-system/tests.yml?branch=main&style=flat-square&label=tests)](https://github.com/the-trinity-tribe/living-system/actions/workflows/tests.yml)
@@ -17,15 +17,9 @@ Keep your rules, knowledge, goals and workflows in plain files you own.<br>
 Switch between Claude Code, Codex, Hermes or a local model without starting over,<br>
 and decide yourself what changes. Free, open source, and it all stays on your computer.
 
-[Start in one sentence](#start-in-one-sentence) · [Quick start](#quick-start) · [Works with](#works-with) · [How it works](#how-it-works) · [Features](#features) · [Docs](docs/README.md) · [Help test it](#help-test-it) · [Discussions](https://github.com/the-trinity-tribe/living-system/discussions)
+[Start in one sentence](#start-in-one-sentence) · [See it in action](#see-it-in-action) · [Quick start](#quick-start) · [Works with](#works-with) · [How it works](#how-it-works) · [Features](#features) · [Docs](docs/README.md) · [Help test it](#help-test-it) · [Discussions](https://github.com/the-trinity-tribe/living-system/discussions)
 
 </div>
-
-<br>
-
-<img src="brand/images/demo.gif" alt="Demo: set up a workspace, the agent proposes a rule, you approve it, the guard blocks a direct edit and a saved password, and verify shows nothing changed" width="100%">
-
-<p align="center"><sub>Real output from version 0.2.0: a workspace, a proposal, your approval, two blocked shortcuts, and proof that nothing changed afterwards.</sub></p>
 
 ## Start in one sentence
 
@@ -53,6 +47,63 @@ Most AI tools keep their own memory of you: locked inside one product, growing o
 - **Calm, not another dashboard.** Ask what needs you, catch up after time away, park an idea without losing focus. No tracking, no productivity scores.
 
 No server, no account, no tie to one AI vendor or model: just Python's standard library and Markdown files.
+
+## See it in action
+
+Real output from version 0.2.0, step by step; long lines are wrapped to fit. (Prefer to watch? The same run as a [25-second animation](brand/images/demo.gif).)
+
+**1. You set up a workspace.** One command, or one sentence to your agent.
+
+```text
+$ python3 tools/living.py init ~/my-workspace --profile professional
+Created workspace: ~/my-workspace
+Profile: professional | language: en | calm replies: off | coach: off
+Undo: delete that folder. Next: open it in Claude Code or Codex.
+```
+
+**2. Your agent proposes a rule.** It writes a suggestion; nothing is a rule yet.
+
+```text
+Written proposals/2026-10-25-clients-hear-from-me-within-two-days.md.
+It is not a rule yet. Read it; when you have decided, run in the workspace:
+  python3 tools/review.py review proposals/2026-10-25-clients-hear-
+  from-me-within-two-days.md --outcome approve|reject|defer
+  --by "Your Name"
+```
+
+**3. You decide.** Only your review turns the proposal into a rule.
+
+```text
+$ python3 tools/review.py review proposals/2026-10-25-clients-hear-
+  from-me-within-two-days.md --outcome approve --by "Adrianna"
+promoted; created decisions/2026-10-25-clients-hear-from-me-within-
+two-days.md
+```
+
+**4. The agent tries a shortcut.** Editing the rule directly is blocked.
+
+```text
+Living System guard: blocked. decisions are created only by
+`python3 tools/review.py review` after a human decides, and are
+never edited or deleted. Write a proposal instead (AGENTS.md
+section 6).
+```
+
+**5. Or tries to save a password.** Secrets stay out of your files.
+
+```text
+Living System guard: blocked. this looks like a password, key or
+token (a password written out). Secrets never go into the workspace
+(AGENTS.md section 4): keep them in a password manager and write
+only where to find them.
+```
+
+**6. Proof.** Anything changed after your approval would show up here.
+
+```text
+$ python3 tools/review.py verify
+Review record intact: 1 entry; every recorded file is unchanged.
+```
 
 ## Quick start
 
@@ -135,7 +186,15 @@ More: [architecture](docs/architecture.md) · [decisions and proposals](docs/fea
   <img src="brand/images/readme/delegation-ladder-light.png" alt="Delegation levels: observe, recommend, draft (the default), act with approval, bounded. Publishing, sending, spending, deleting, signing and changing rules never go above act with approval" width="100%">
 </picture>
 
-`living.py agency` lists who may do what and marks each line as **enforced** by a tool or **instruction** only. [Agency and delegation](docs/features/agency.md)
+You choose, per kind of work, how much your agent may do:
+
+1. **Observe:** reads and reports.
+2. **Recommend:** suggests; you do it.
+3. **Draft:** prepares; you check it. This is the default.
+4. **Act with approval:** acts after your yes, each time.
+5. **Bounded:** acts alone within set limits, until a review date.
+
+Publishing, sending, spending, deleting, signing and changing rules never go above *act with approval*. `living.py agency` lists who may do what and marks each line as **enforced** by a tool or **instruction** only. [Agency and delegation](docs/features/agency.md)
 
 ### Knowledge that outlives a role
 
@@ -145,7 +204,7 @@ More: [architecture](docs/architecture.md) · [decisions and proposals](docs/fea
   <img src="brand/images/readme/workspaces-light.png" alt="Private workspaces share role knowledge with a company workspace, where it is checked and accepted, and the next person gets an onboarding path" width="100%">
 </picture>
 
-Folders on your own computers: Living System syncs, uploads and sends nothing. [Connected workspaces](docs/features/connected-workspaces.md)
+Each person keeps a private workspace (goals, work agreement, ideas), linked to a shared company workspace whose rules come first for company work. What someone learned in a role is shared as a suggestion: contact details and secrets are refused, and someone else accepts it. The next person in the role gets a gentle onboarding path. Folders on your own computers: Living System syncs, uploads and sends nothing. [Connected workspaces](docs/features/connected-workspaces.md)
 
 ### Calm by design
 
