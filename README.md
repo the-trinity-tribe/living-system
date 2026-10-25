@@ -13,9 +13,7 @@
 [![License](https://img.shields.io/badge/license-MPL--2.0-161616?style=flat-square)](LICENSE)
 [![Status](https://img.shields.io/badge/status-experimental-D6C4A8?style=flat-square)](#limitations)
 
-Keep your rules, knowledge, goals and workflows in plain files you own.<br>
-Switch between Claude Code, Codex, Hermes or a local model without starting over,<br>
-and decide yourself what changes. Free, open source, and it all stays on your computer.
+Keep your rules, knowledge, goals and workflows in plain files you own. Switch between Claude Code, Codex, Hermes or a local model without starting over, and decide yourself what changes. Free, open source, and it all stays on your computer.
 
 [Start in one sentence](#start-in-one-sentence) · [See it in action](#see-it-in-action) · [Quick start](#quick-start) · [Works with](#works-with) · [How it works](#how-it-works) · [Features](#features) · [Docs](docs/README.md) · [Help test it](#help-test-it) · [Discussions](https://github.com/the-trinity-tribe/living-system/discussions)
 
