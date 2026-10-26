@@ -32,6 +32,7 @@ Plain words first. Exact commands are under the heading that needs them. Every f
 - [Review record](features/review-record.md): every review is fingerprinted, so you can tell if an approved rule was changed afterwards.
 - [Connected workspaces](features/connected-workspaces.md): a shared company workspace and private personal ones; role knowledge is handed on without personal information.
 - [Onboarding path](features/onboarding.md): a private reading path through company rules, role knowledge and workflows, a few items at a time.
+- [The review loop and review rhythm](features/review-rhythm.md): choose a quick yes now or a batch later, a rhythm for reviews, a calm once-a-day reminder, and who else may approve.
 - [Parking, tending and checking ideas](features/parking-and-tending.md): focus mode, park an idea without switching task, tend what is waiting one item at a time, and decide what not to build.
 - [Personal work agreement](features/work-agreement.md): your own plain-text agreement on how AI works with you, including what saved time is for.
 - [Learning mode](features/learning-mode.md): coach mode, practice questions about your own rules, and a handbook for working without AI.

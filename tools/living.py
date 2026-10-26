@@ -129,7 +129,7 @@ def write_manifest(ws):
         json.dumps({"kernel_version": KERNEL_VERSION, "files": files}, indent=2) + "\n", encoding="utf-8", newline="\n")
 
 
-def build(ws, profile, language, calm_replies, coach=False, team=False):
+def build(ws, profile, language, calm_replies, coach=False, team=False, review_every="weekly", review_mode="batch"):
     lang = language_dir(language)
     copy_tree(CORE / "template", ws)
     if lang and (lang / "template").is_dir():
@@ -152,7 +152,7 @@ def build(ws, profile, language, calm_replies, coach=False, team=False):
     (ws / ".living").mkdir()
     (ws / ".living" / "profile.json").write_text(json.dumps(
         {"profile": profile, "language": language, "calm_replies": bool(calm_replies), "coach": bool(coach),
-         **({"team": True} if team else {})}, indent=2) + "\n",
+         **({"team": True} if team else {}), **review_settings(review_every, review_mode)}, indent=2) + "\n",
         encoding="utf-8", newline="\n")
     (ws / ".living" / "catalog.md").write_text(catalog_text(), encoding="utf-8", newline="\n")
     # Where the tools live on this computer, so agents can run status, runs or doctor without asking.
@@ -178,7 +178,8 @@ def catalog_text(root=None):
             "(`AGENTS.md` section 11).\n")
 
 
-def init(target, profile, language, calm_replies=False, coach=False, team=False):
+def init(target, profile, language, calm_replies=False, coach=False, team=False,
+         review_every="weekly", review_mode="batch"):
     if profile not in PROFILES:
         raise Refusal(f"profile must be one of {', '.join(PROFILES)}")
     if not re.fullmatch(r"[a-z]{2,3}(-[A-Za-z0-9]{2,8})?", language):
@@ -190,7 +191,8 @@ def init(target, profile, language, calm_replies=False, coach=False, team=False)
         umask = os.umask(0)
         os.umask(umask)
         os.chmod(tmp, 0o777 & ~umask)
-        build(tmp, profile, language, calm_replies, coach, team)
+        review_settings(review_every, review_mode)  # refuse a bad value before anything is built
+        build(tmp, profile, language, calm_replies, coach, team, review_every, review_mode)
         emptied = target.is_dir()
         if emptied:
             target.rmdir()  # Windows cannot rename onto an existing folder, even an empty one
@@ -1352,7 +1354,16 @@ def agency(ws):
              f"  {E if team else I} " + ("Team workspace: review.py refuses an approval by whoever proposed the change."
                                          if team else "Not a team workspace: the person who proposes may also approve."),
              f"  {E} Every review is recorded; `review.py verify` shows later changes.",
-             "", "Protections:"]
+             f"  {I} Review mode: {prof.get('review_mode', 'batch')} ("
+             f"{REVIEW_MODES.get(prof.get('review_mode', 'batch'), 'unknown')}). Your yes is still needed for each rule.",
+             f"  {I} Review rhythm: {prof.get('review_every', 'not set')}. `living.py nudge` says once a day when a review is due;"
+             f" nothing runs by itself."]
+    found_approvers = approvers(ws)
+    for text, k in found_approvers:
+        lines.append(f"  {I} Approvers: {text} [{k}] (names are labels; the tool does not check who types)")
+    if not found_approvers:
+        lines.append(f"  {I} Approvers: only the owner, until an approved decision names others.")
+    lines += ["", "Protections:"]
     if hooks:
         lines += [f"  {E} The write guard runs in {' and '.join(hooks)}" + (" (Codex: after you trust its hooks)"
                   if "Codex" in hooks else "") + ": no agent edits to decisions/, approvals, outcomes, the guard, "
@@ -1746,6 +1757,11 @@ def status(ws):
             if not approved:
                 todo.append(f"Read {f} and change status: draft to status: approved when it is right")
     lines += ["Waiting for you:", *(f"  - {x}" for x in todo)] if todo else ["Waiting for you: nothing."]
+    due = review_due(ws, prof)
+    if due:
+        lines.append(due_line(due))
+    for text, k in approvers(ws):
+        lines.append(f"Approvers (approved decision {k}): {text}")
     step = handover_next_step(ws)
     if step:
         lines.append(f"Last session's next step: {step}")
@@ -2371,6 +2387,180 @@ def focus(ws, state):
         write_json(ws / ".living/profile.json", prof)
     return ("Focus mode is on: the agent does what you ask and makes no other suggestions. Undo: focus . off"
             if state == "on" else "Focus mode is off: suggestions are welcome again.")
+
+
+REVIEW_EVERY_DAYS = {"daily": 1, "weekly": 7, "monthly": 30}
+REVIEW_MODES = {"batch": "proposals wait for your review pass; the agent does not interrupt you with them",
+                "ask-now": "the agent asks you about a new proposal right away"}
+
+
+def review_days(every):
+    """Days between reviews for a stored rhythm ('daily', 'weekly', 'monthly', 'off' or a number of days); None for off."""
+    if every in (None, "off"):
+        return None
+    if isinstance(every, int) and not isinstance(every, bool) and 1 <= every <= 365:
+        return every
+    if every in REVIEW_EVERY_DAYS:
+        return REVIEW_EVERY_DAYS[every]
+    raise Refusal("review rhythm must be daily, weekly, monthly, off, or a number of days from 1 to 365")
+
+
+def review_settings(every=None, mode=None, today=None):
+    """The review settings to store in .living/profile.json, checked. Nothing is stored for what is None."""
+    import datetime
+    out = {}
+    if every is not None:
+        if isinstance(every, str) and every.isdigit():
+            every = int(every)
+        review_days(every)
+        out["review_every"] = every
+        out["review_set_on"] = (today or datetime.date.today()).isoformat()
+    if mode is not None:
+        if mode not in REVIEW_MODES:
+            raise Refusal(f"review mode must be one of: {', '.join(REVIEW_MODES)}")
+        out["review_mode"] = mode
+    return out
+
+
+def last_review_date(ws, prof):
+    """The newest day on which the human looked over what was waiting: a recorded review, `reviewed`, or the day
+    the rhythm was set. None if there is none."""
+    import datetime
+    days = []
+    for key in ("last_review", "review_set_on"):
+        try:
+            days.append(datetime.date.fromisoformat(str(prof.get(key))))
+        except ValueError:
+            pass
+    try:
+        for line in (Path(ws) / "decisions/review-record.jsonl").read_text(encoding="utf-8").splitlines():
+            try:
+                entry = json.loads(line)
+                if entry.get("outcome") != "start":
+                    days.append(datetime.date.fromisoformat(entry["date"]))
+            except (ValueError, KeyError, TypeError, AttributeError):
+                pass
+    except (OSError, UnicodeDecodeError):
+        pass
+    return max(days) if days else None
+
+
+def review_waiting(ws, R=None):
+    """How many things wait for the human's yes or no: proposals to review, shared role knowledge, parked items
+    whose date has come, knowledge and lesson suggestions, delegations to look at again."""
+    ws = Path(ws)
+    R = R or review_tool()
+    n = len(role_inbox(ws)) + len(parked_due(ws)) + sum(1 for *_, due in delegations(ws) if due)
+    for p in sorted((ws / "proposals").glob("*.md")) if (ws / "proposals").is_dir() else []:
+        try:
+            if R.split_frontmatter(p.read_text(encoding="utf-8"), p.name)[0].get("status") in R.REVIEWABLE:
+                n += 1
+        except (R.Refusal, OSError, UnicodeDecodeError):
+            pass
+    for rel, marker in (("knowledge/inbox.md", "---knowledge---"), ("lessons/inbox.md", "---lesson---")):
+        if (ws / rel).is_file():
+            n += (ws / rel).read_text(encoding="utf-8", errors="replace").count(marker)
+    return n
+
+
+def review_due(ws, prof=None, today=None):
+    """None, or (waiting, last look, rhythm) when something waits and the chosen rhythm has passed. Read-only."""
+    import datetime
+    today = today or datetime.date.today()
+    prof = read_profile(ws) if prof is None else prof
+    try:
+        days = review_days(prof.get("review_every"))
+    except Refusal:
+        return None  # a damaged setting is silent here; `review-rhythm` explains it
+    if days is None:
+        return None
+    last = last_review_date(ws, prof)
+    waiting = review_waiting(ws)
+    if not waiting or (last is not None and (today - last).days < days):
+        return None
+    return waiting, last, prof["review_every"]
+
+
+def due_line(due):
+    waiting, last, every = due
+    return (f"Review is due: {waiting} item(s) waiting, last looked over {last or 'never'} (your rhythm: {every}). "
+            f"Go through them one at a time with the tend skill, or review a proposal yourself.")
+
+
+def review_rhythm(ws, every=None, mode=None, today=None):
+    """Show or change how often a review is due and whether the agent asks now or leaves proposals for a batch."""
+    ws = Path(ws)
+    read_manifest(ws)
+    refuse_links(ws, [".living/profile.json"])
+    new = review_settings(every, mode, today)
+    with workspace_lock(ws):
+        prof = read_profile(ws)
+        prof.update(new)
+        if new:
+            write_json(ws / ".living/profile.json", prof)
+    cur_every, cur_mode = prof.get("review_every"), prof.get("review_mode", "batch")
+    lines = ["Review rhythm: " + ("not set. Nothing will remind you. Set one: review-rhythm . --every weekly"
+                                  if cur_every is None else f"{cur_every}"
+                                  + ("" if review_days(cur_every) else " (no reminders)")),
+             f"Review mode: {cur_mode} ({REVIEW_MODES[cur_mode] if cur_mode in REVIEW_MODES else 'unknown'})"]
+    if new:
+        lines.insert(0, "Saved. Undo: run this again with the old value.")
+    return "\n".join(lines)
+
+
+def reviewed(ws, today=None):
+    """Record that the human looked over the waiting items today. Writes one date in .living/profile.json."""
+    import datetime
+    today = today or datetime.date.today()
+    ws = Path(ws)
+    read_manifest(ws)
+    refuse_links(ws, [".living/profile.json"])
+    with workspace_lock(ws):
+        prof = read_profile(ws)
+        prof["last_review"] = today.isoformat()
+        write_json(ws / ".living/profile.json", prof)
+    days = review_days(prof.get("review_every")) if prof.get("review_every") is not None else None
+    return (f"Noted: you looked over what was waiting on {today}." +
+            (f" Next review is due from {today + datetime.timedelta(days=days)}, if something is waiting." if days else ""))
+
+
+def nudge(ws, today=None):
+    """One calm line if a review is due, at most once per calendar day; '' otherwise. Never reviews anything."""
+    import datetime
+    today = today or datetime.date.today()
+    ws = Path(ws)
+    read_manifest(ws)
+    prof = read_profile(ws)
+    due = review_due(ws, prof, today)
+    if due is None or prof.get("nudged_on") == today.isoformat():
+        return ""
+    refuse_links(ws, [".living/profile.json"])
+    with workspace_lock(ws):
+        prof = read_profile(ws)
+        prof["nudged_on"] = today.isoformat()
+        write_json(ws / ".living/profile.json", prof)
+    return due_line(due)
+
+
+APPROVERS = re.compile(r"^Approvers:\s*(.+)$", re.M)
+
+
+def approvers(ws):
+    """[(text, decision path)] from current decisions whose Rule has an 'Approvers:' line."""
+    R = review_tool()
+    ws = Path(ws)
+    out = []
+    try:
+        current = R.current_decisions(ws) if (ws / "decisions").is_dir() else []
+        for k in sorted(current):
+            try:
+                rule = R.section(R.split_frontmatter((ws / k).read_text(encoding="utf-8"), k)[2], "Rule", k)
+            except (Refusal, OSError):
+                continue
+            out += [(m.strip(), k) for m in APPROVERS.findall(rule)]
+    except Refusal:
+        pass
+    return out
 
 
 PARKED_DECIDE, PARKED_AGAIN = " | to decide: ", " | look again: "
@@ -3046,6 +3236,8 @@ MENU = """Living System: everyday commands (run them from the Living System fold
   What changed while away?  python3 tools/living.py since <workspace> --days 14
   Is everything healthy?    python3 tools/living.py doctor <workspace>
   Park an idea              python3 tools/living.py park <workspace> "the idea"
+  How often to review       python3 tools/living.py review-rhythm <workspace> --every weekly
+  Note that I reviewed      python3 tools/living.py reviewed <workspace>
   Focus mode on or off      python3 tools/living.py focus <workspace> on
   My onboarding path        python3 tools/living.py onboard <workspace>
   Rules on paper            python3 tools/living.py handbook <workspace> --out <file.md>
@@ -3067,6 +3259,10 @@ def main(argv=None):
     i.add_argument("--calm-replies", action="store_true")
     i.add_argument("--coach", action="store_true", help="the agent also helps you keep and build your own skills")
     i.add_argument("--team", action="store_true", help="a shared company workspace: who proposes a change never approves it")
+    i.add_argument("--review-every", default="weekly", metavar="RHYTHM",
+                   help="how often a review is due: daily, weekly (default), monthly, off, or a number of days")
+    i.add_argument("--review-mode", default="batch", choices=tuple(REVIEW_MODES),
+                   help="batch (default): proposals wait for a review pass; ask-now: the agent asks right away")
     v = sub.add_parser("value-score", help="count right/wrong/made up/don't know in value-check/questions.md")
     v.add_argument("workspace")
     ls = sub.add_parser("modules", help="list optional modules")
@@ -3155,6 +3351,14 @@ def main(argv=None):
     pk.add_argument("--done", type=int, metavar="N", help="tick off parked idea number N")
     pk.add_argument("--decide", default="", help="what needs deciding about it, in one line")
     pk.add_argument("--again", metavar="DATE", help="when to look at it again (YYYY-MM-DD); nothing happens by itself")
+    rr2 = sub.add_parser("review-rhythm", help="show or set how often a review is due, and whether the agent asks now or leaves it for a batch")
+    rr2.add_argument("workspace")
+    rr2.add_argument("--every", metavar="RHYTHM", help="daily, weekly, monthly, off, or a number of days")
+    rr2.add_argument("--mode", choices=tuple(REVIEW_MODES), help="batch or ask-now")
+    nd = sub.add_parser("nudge", help="one calm line if a review is due, at most once a day; nothing otherwise")
+    nd.add_argument("workspace")
+    rv = sub.add_parser("reviewed", help="note that you looked over what was waiting today")
+    rv.add_argument("workspace")
     at = sub.add_parser("atlas", help="a map of how rules, projects, workflows and knowledge connect (read-only)")
     at.add_argument("workspace")
     at.add_argument("--out", help="save it to this .md file outside the workspace (default: print it)")
@@ -3193,10 +3397,11 @@ def main(argv=None):
             setattr(a, name, os.path.expanduser(getattr(a, name)))
     try:
         if a.cmd == "init":
-            ws = init(a.dir, a.profile, a.language, a.calm_replies, a.coach, a.team)
+            ws = init(a.dir, a.profile, a.language, a.calm_replies, a.coach, a.team, a.review_every, a.review_mode)
             print(f"Created workspace: {ws.resolve()}")
             print(f"Profile: {a.profile} | language: {a.language} | calm replies: {'on' if a.calm_replies else 'off'} | coach: {'on' if a.coach else 'off'}"
-                  + (" | team workspace" if a.team else ""))
+                  + (" | team workspace" if a.team else "")
+                  + f" | review: {a.review_every}, {a.review_mode}")
             print("Undo: delete that folder. Next: open it in Claude Code or Codex.")
         elif a.cmd == "value-score":
             print(format_score(*value_score(a.workspace)))
@@ -3266,6 +3471,14 @@ def main(argv=None):
             print(focus(a.workspace, a.state))
         elif a.cmd == "park":
             print(format_park(*park(a.workspace, a.idea, a.done, decide=a.decide, again=a.again)))
+        elif a.cmd == "review-rhythm":
+            print(review_rhythm(a.workspace, a.every, a.mode))
+        elif a.cmd == "nudge":
+            line = nudge(a.workspace)
+            if line:
+                print(line)
+        elif a.cmd == "reviewed":
+            print(reviewed(a.workspace))
         elif a.cmd == "atlas":
             text = atlas(a.workspace)
             print(f"Saved {write_handbook(a.workspace, os.path.expanduser(a.out), text, ATLAS_MARK, 'atlas')}."

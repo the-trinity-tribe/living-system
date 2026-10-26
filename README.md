@@ -28,7 +28,7 @@ Set up Living System for me: download https://github.com/the-trinity-tribe/livin
 ```
 
 1. Your agent downloads Living System and reads its setup guide.
-2. It asks you five short questions, one at a time. "Skip" is always fine.
+2. It asks you a few short questions, one at a time, including who else may approve and how often you want to look things over. "Skip" is always fine.
 3. It shows exactly what it will create, and waits for your yes.
 4. You open your new workspace and work as usual. Try: *"Help me make my first decision."*
 
@@ -141,7 +141,7 @@ Then open `~/my-workspace` in your agent and work as usual. Try saying *"Help me
 
 - **Windows:** type `py` wherever this page says `python3`. If `py` is not found, install Python from python.org and tick "Add python.exe to PATH".
 - **Profiles:** `student`, `professional`, `employee`, `manager`. **Languages** with starter files: `en`, `de`, `pl`.
-- **Options:** `--calm-replies` (short, plain answers), `--coach` (help keeping your own skills), `--team` (a shared company workspace).
+- **Options:** `--calm-replies` (short, plain answers), `--coach` (help keeping your own skills), `--team` (a shared company workspace), `--review-every` and `--review-mode` (how often a review is due, and whether your agent asks right away or leaves proposals for a batch).
 - `init` refuses a folder that already has files and leaves nothing behind if it fails. To undo, delete the folder.
 - Your workspace is created **outside** this repository on purpose, so personal data never sits inside a clone of a public project. Details: [INSTALL.md](INSTALL.md).
 
@@ -187,6 +187,27 @@ my-workspace/
 
 More: [architecture](docs/architecture.md) · [decisions and proposals](docs/features/decisions-and-proposals.md) · [write guard](docs/features/write-guard.md)
 
+## How the yes works day to day
+
+**Do I get asked every time, or do I look things over later?** You choose when you set up. Both end in the same step: you say yes, no or later to one named proposal.
+
+- **Batch (the default).** Your agent writes a proposal, tells you in one line, and carries on with your task. Proposals wait. When you have ten minutes, say "let's tend": your agent walks you through what is waiting, one item at a time.
+- **Ask-now.** Your agent asks you right away: approve, reject or later?
+
+**How often should I look?** You also choose a rhythm: weekly (the default), daily, monthly, a number of days, or off. When something is waiting and your rhythm has passed, `status` shows one line, and your agent mentions it once at the start of a session, at most once a day. If nothing is waiting, you hear nothing. Nothing runs in the background, nothing is tracked, and nothing is reviewed for you. If you want a desktop reminder, there is an optional timer recipe for Linux, macOS and Windows in the [review loop page](docs/features/review-rhythm.md).
+
+**Who else may approve?** Setup asks. The answer is written as a rule you approve yourself ("Alex may approve decisions about client updates"). Until you approve it, only you approve.
+
+**What a tool enforces, and what is only an instruction:**
+
+| Enforced by a tool | Only an instruction to your agent |
+| --- | --- |
+| Only the review command creates or changes a rule, and only with your stated outcome for that proposal. | Batch or ask-now behaviour. |
+| In a team workspace, whoever proposed a change cannot approve it. | Saying the reminder once, and not nagging. |
+| The write guard blocks direct edits to approved rules (once protected; see `living.py protect`). | Who else may approve. Names are labels: the tool does not check who is typing. |
+
+`living.py agency` shows the same list for your own workspace. Details: [the review loop](docs/features/review-rhythm.md).
+
 ## Everything inside
 
 Use only what helps. Every feature has its own plain-language page answering the same ten questions; the full index is in [docs](docs/README.md).
@@ -196,6 +217,7 @@ Use only what helps. Every feature has its own plain-language page answering the
 - **[Status](docs/features/status.md):** what needs you, in plain words.
 - **[Catch-up](docs/features/catch-up.md):** back from a holiday? See what changed, changed rules first.
 - **[Handover note](docs/features/handover-note.md):** the next session continues where the last one stopped.
+- **[The review loop](docs/features/review-rhythm.md):** choose a quick yes now or a batch later, a review rhythm, a calm once-a-day reminder, and who else may approve.
 - **[Park, tend and focus](docs/features/parking-and-tending.md):** park an idea mid-task with a date to decide, tidy up in ten quiet minutes, or switch on a focus mode with no suggestions.
 
 | You want | Ask your agent, or run | What happens |

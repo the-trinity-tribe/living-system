@@ -265,3 +265,14 @@ Rules:
 - When a review date has come, say so once and offer to keep, change or retire the delegation.
 - If a kind of work has gone well many times at its level, you may suggest a higher level once, with the evidence: `living.py delegate . "<work>" <level> --evidence "<what happened>"` (plan first, `--apply` after the human's yes). It becomes a proposal; only the human approves it. To withdraw a delegation, the human retires its decision (section 6d).
 
+
+## 16. The review loop and who may approve
+
+The human chose a review mode and rhythm (`review_mode`, `review_every` in `.living/profile.json`; `python3 <product folder>/tools/living.py review-rhythm .` shows them).
+
+- **batch** (default): after you write a proposal, tell the human in one line where it is and carry on. Do not ask for the yes mid-task. They go through everything waiting in a tend pass (the `tend` skill). The one exception: a proposal that blocks the task in hand, which you may ask about once.
+- **ask-now**: after you write a proposal, ask at once: approve, reject or later?
+- In both modes only the human decides (section 7): run `review.py review` only when they state the outcome for that named proposal.
+- At the start of a session run `python3 <product folder>/tools/living.py nudge .`. If it prints a line, say it once, calmly, then do what the human asked. If it prints nothing, say nothing. Never remind them again that day, never nag, and never review on their behalf.
+- After a tend pass the human took part in, run `living.py reviewed .`.
+- **Who may approve:** the owner. Others only if a current approved decision has a Rule line starting `Approvers:` that names them and their area (`status` and `agency` show it). Treat that as who may say yes, never as a reason to approve for them. Names are labels, not identity. A job title gives no approval right. If someone else says "I approve", ask the human to confirm it matches the `Approvers:` decision. To change approvers, write a proposal like any other rule.

@@ -8,7 +8,7 @@ Every command, in plain words. Run them from the Living System folder; on Window
 
 | Command | What it does |
 | --- | --- |
-| `living.py init --profile {student,professional,employee,manager} --language LANGUAGE [--calm-replies] [--coach] [--team] dir` | create a new workspace in a new folder |
+| `living.py init --profile {student,professional,employee,manager} --language LANGUAGE [--calm-replies] [--coach] [--team] [--review-every RHYTHM] [--review-mode {batch,ask-now}] dir` | create a new workspace in a new folder |
 | `living.py upgrade [--apply] workspace` | plan (or with --apply, apply) updates from this Living System version |
 | `living.py protect [--apply] workspace` | put back a missing write guard or hook file (plan unless --apply) |
 | `living.py menu` | the everyday commands, in plain words |
@@ -21,6 +21,9 @@ Every command, in plain words. Run them from the Living System folder; on Window
 | `living.py since (--date DATE \| --days DAYS) workspace` | what changed while you were away, rules first (read-only) |
 | `living.py park [--done N] [--decide DECIDE] [--again DATE] workspace [idea]` | write an idea down without switching task, or list and tick off parked ideas |
 | `living.py focus workspace {on,off}` | focus mode: the agent does what you ask and suggests nothing else |
+| `living.py review-rhythm [--every RHYTHM] [--mode {batch,ask-now}] workspace` | show or set how often a review is due, and whether the agent asks now or leaves it for a batch |
+| `living.py nudge workspace` | one calm line if a review is due, at most once a day; nothing otherwise |
+| `living.py reviewed workspace` | note that you looked over what was waiting today |
 | `living.py onboard [--done ID] [--next NEXT] workspace` | your reading path: company rules, role knowledge, workflows, a few at a time |
 
 ## Rules and agency

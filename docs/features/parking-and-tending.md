@@ -8,7 +8,7 @@ Small helpers that protect your attention:
 
 - **Focus mode:** while it is on, the agent does what you ask and suggests nothing else. `python3 tools/living.py focus ~/my-workspace on` (or `off`), or just say "focus mode on".
 - **Park:** an idea that pops up mid-task is written down in one line, and the work carries on. You can add what needs deciding and a date to look again; `status` reminds you when the date comes. Nothing parked is ever acted on by itself.
-- **Tend:** when you have a few minutes, the agent walks you through everything that is waiting, one item at a time. It also acts as a gardener: it offers outdated knowledge for composting, duplicates for merging, and lessons that keep coming up as a proposal for a rule. It never approves anything.
+- **Tend:** the batch pass of the [review loop](review-rhythm.md). When you have a few minutes, the agent walks you through everything that is waiting, one item at a time. It also acts as a gardener: it offers outdated knowledge for composting, duplicates for merging, and lessons that keep coming up as a proposal for a rule. It never approves anything.
 - **Idea check:** before building something, a short set of questions helps you decide whether it is worth it and what the smallest useful version is. It can also end in "don't build it".
 
 ## Why would someone need it?
@@ -51,7 +51,7 @@ python3 tools/living.py park ~/my-workspace --done 1
 ## What changes inside the system when it runs?
 
 - `park` adds one dated line to `me/parked.md`, or ticks one off. Listing changes nothing. `status` shows how many ideas are parked.
-- Tend runs the same commands you could run yourself (`status`, `runs --decide`, `park --done`), and only after your choice.
+- Tend runs the same commands you could run yourself (`status`, `runs --decide`, `park --done`), and only after your choice. If you took part in the pass, it ends with `reviewed`, which records today as the day you looked (the [review rhythm](review-rhythm.md) restarts from it).
 - Idea check writes nothing unless you choose to park the idea.
 
 ## Where does the human keep control?

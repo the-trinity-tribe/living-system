@@ -8,7 +8,7 @@ It creates your own private workspace: a new folder of plain Markdown files with
 
 You can do it in two ways:
 
-- **With your agent.** Open the Living System folder in Claude Code or Codex and say: "Read INSTALL.md and set up my workspace." The agent asks up to five short questions (plus whether to keep replies short), shows you what it will create, and waits for your yes.
+- **With your agent.** Open the Living System folder in Claude Code or Codex and say: "Read INSTALL.md and set up my workspace." The agent asks a few short questions, including who else may approve and how often to review (plus whether to keep replies short), shows you what it will create, and waits for your yes.
 - **By hand.** Run one command (below).
 
 ## Why would someone need it?
@@ -42,6 +42,8 @@ python3 tools/review.py --root ~/my-workspace check
 | `--language` | Required. A language code such as `en`, `de`, `pl` or `pt-BR`. A name like `English` is refused. |
 | `--calm-replies` | Optional. Asks the agent for short, plain replies. |
 | `--team` | Optional, for a shared company workspace: whoever proposes a change cannot approve it (see [connected workspaces](connected-workspaces.md)). |
+| `--review-every` | Optional. How often a review is due: `daily`, `weekly` (default), `monthly`, `off`, or a number of days. See [the review loop](review-rhythm.md). |
+| `--review-mode` | Optional. `batch` (default: proposals wait for a review pass) or `ask-now` (the agent asks right away). |
 | `--coach` | Optional. The agent also helps you keep your own skills (see [learning mode](learning-mode.md)). |
 
 Success prints the new path, your choices, and `Undo: delete that folder.`
@@ -118,7 +120,7 @@ What the folder contains:
 
 | File | What it is |
 | --- | --- |
-| `profile.json` | Your profile, language, calm-replies and coach choices. |
+| `profile.json` | Your profile, language, calm-replies, coach and review choices. |
 | `catalog.md` | A list of the optional [modules](modules.md) that existed when the workspace was made, so the agent knows what it could offer. |
 | `manifest.json` | The Living System version and a fingerprint (SHA-256) of every file as created. Installed modules add their own entries. |
 | `.lock` | Appears only while `add` or `remove` runs. |

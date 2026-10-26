@@ -57,6 +57,7 @@ python3 tools/living.py delegate ~/my-workspace "weekly update drafts" draft --e
 ## What changes inside the system when it runs?
 
 - `agency` changes nothing.
+- `agency` also shows the review mode, the review rhythm and any approvers (from approved `Approvers:` decisions), each marked `[instruction]`: see [the review loop](review-rhythm.md).
 - `delegate --apply` writes one proposal in `proposals/`. Approving it creates a normal decision whose rule starts with `Delegation:`, recorded in the review record like any other.
 
 ## Where does the human keep control?

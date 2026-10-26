@@ -50,6 +50,8 @@ Nothing. Status only reads files:
 | Proposals to review | files in `proposals/` whose status is `proposed` or `deferred`, each with the exact review command to copy once you have decided |
 | Lesson suggestions | `---lesson---` blocks in `lessons/inbox.md`, if that module is installed |
 | Knowledge suggestions and re-checks | `---knowledge---` blocks in `knowledge/inbox.md`, and knowledge files last verified more than 90 days ago |
+| Review due | one line, only when something waits **and** your [review rhythm](review-rhythm.md) has passed since you last looked |
+| Approvers | who else may approve, from approved decisions whose rule starts with `Approvers:` |
 | Drafts | `SYSTEM.md` and `PRINCIPLES.md` without `status: approved` |
 | Last session's next step | the "next step" line in `handover/LATEST.md` |
 | Health | the error and warning count from `doctor` |

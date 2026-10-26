@@ -152,8 +152,10 @@ class TestInit(InitCase):
 
     def test_language_and_calm_replies_stored(self):
         ws = self.ws("student", language="pl", calm_replies=True)
-        self.assertEqual(json.loads((ws / ".living/profile.json").read_text(encoding="utf-8")),
+        stored = json.loads((ws / ".living/profile.json").read_text(encoding="utf-8"))
+        self.assertEqual({k: v for k, v in stored.items() if not k.startswith("review_")},
                          {"profile": "student", "language": "pl", "calm_replies": True, "coach": False})
+        self.assertEqual((stored["review_every"], stored["review_mode"]), ("weekly", "batch"))
         ws2 = self.ws("professional")
         self.assertFalse(json.loads((ws2 / ".living/profile.json").read_text(encoding="utf-8"))["calm_replies"])
 

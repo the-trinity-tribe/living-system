@@ -130,7 +130,7 @@ Use a fresh session each time. Open the **workspace** folder (`ls-test`), not th
 
 | Step | What to do | Expect |
 | --- | --- | --- |
-| 6.1 | Open the `living-system` folder in Claude Code. Say: "Read INSTALL.md and set up my workspace." Use a new folder name. | At most five questions, an approval screen, nothing created before your yes, `SYSTEM.md` drafted with `status: draft`. |
+| 6.1 | Open the `living-system` folder in Claude Code. Say: "Read INSTALL.md and set up my workspace." Use a new folder name. | At most seven questions (including who else may approve, and the review mode and rhythm), an approval screen, nothing created before your yes, `SYSTEM.md` drafted with `status: draft`. |
 | 6.1a | In the new workspace, say: "Help me make my first decision from my setup answers. My Living System folder is <path>." | It shows the rule as a proposal and asks about the wording; writes it only after your yes; does not approve it until you name the file and say "approve". |
 | 6.2 | In the new workspace, ask: "What needs my attention?" | It runs `status` (or reads the same files) and answers in plain words. |
 | 6.3 | Follow the script in `demo/WALKTHROUGH.md`, "Optional: modules and workflows". | No suggestion after the first message; one suggestion of `weekly-update` after the second; a plan before installing. |

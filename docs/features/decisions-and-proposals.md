@@ -41,6 +41,10 @@ Plain steps:
 3. Decide. Tell your agent the outcome for that named proposal, or run the review yourself.
 4. If you approve, a new decision file appears. The proposal is marked `promoted`.
 
+### When do I say yes?
+
+You choose: right away when the agent shows a proposal (`ask-now`), or later in a short pass (`batch`, the default). Both end in the same review command, and only your stated outcome for a named proposal counts. Your workspace also reminds you, once a day at most, when a review is due. See [the review loop](review-rhythm.md). Who else may approve is written as an approved decision starting with `Approvers:`.
+
 ### Seeing the whole history
 
 `python3 tools/review.py history` lists every decision, oldest first: which ones are in force, and for each older one whether it was amended, replaced or retired, by which decision and when. It changes nothing.
