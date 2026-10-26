@@ -61,7 +61,7 @@ Add any time: **calm replies** (short, plain answers), **coach mode** (help keep
 
 ## See it in action
 
-Real output from version 0.2.0, step by step; long lines are wrapped to fit. (Prefer to watch? The same run as a [25-second animation](brand/images/demo.gif).)
+Real output from version 0.3.0, step by step; long lines are wrapped to fit. (Prefer to watch? The same run as a [25-second animation](brand/images/demo.gif).)
 
 **1. You set up a workspace.** One command, or one sentence to your agent.
 
@@ -69,6 +69,7 @@ Real output from version 0.2.0, step by step; long lines are wrapped to fit. (Pr
 $ python3 tools/living.py init ~/my-workspace --profile professional
 Created workspace: ~/my-workspace
 Profile: professional | language: en | calm replies: off | coach: off
+ | review: weekly, batch
 Undo: delete that folder. Next: open it in Claude Code or Codex.
 ```
 
@@ -321,7 +322,7 @@ Start at [demo/moss-and-circuit/AGENTS.md](demo/moss-and-circuit/AGENTS.md), or 
 
 ## Help test it
 
-Version 0.2.0 is experimental and open for testing, feedback and contributions.
+Version 0.3.0 is experimental and open for testing, feedback and contributions.
 
 - **Try it:** [TESTING.md](TESTING.md) has a 30-minute path and says which feedback helps most.
 - **Tell us:** [open an issue](https://github.com/the-trinity-tribe/living-system/issues/new/choose) and choose *Feedback*, *Bug* or *Idea*, or start a [discussion](https://github.com/the-trinity-tribe/living-system/discussions). Plain words are perfect.

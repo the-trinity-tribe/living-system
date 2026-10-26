@@ -1,6 +1,6 @@
 # Feature: reading your workspace in Obsidian (or any editor)
 
-Status: EXPERIMENTAL. Version: 0.2.0.
+Status: EXPERIMENTAL. Version: 0.3.0.
 
 ## What does this feature do?
 

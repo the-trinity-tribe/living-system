@@ -2,7 +2,9 @@
 
 All notable changes. Dates are when a version was prepared. Versions before 1.0 are experimental: details may change between them.
 
-## Unreleased
+## 0.3.0 (2026-10-26)
+
+A feature release: a plain answer to "how does the yes work day to day?", plus a clearer README, more agents and more credits. Release notes: [docs/releases/0.3.0.md](docs/releases/0.3.0.md). Coming from 0.2.0: run `upgrade`; your workspace stays silent about reviews until you set a rhythm (see the release notes).
 
 - The review loop: a plain answer to "how does the yes work day to day?". New workspaces choose a review mode (`batch`, the default, or `ask-now`) and a review rhythm (`weekly` by default, or daily, monthly, a number of days, or off). `living.py review-rhythm` shows or changes them, `living.py nudge` prints one calm line at most once a day when something waits and the rhythm has passed (nothing otherwise), and `living.py reviewed` records that you looked over the queue. `status` shows a "Review is due" line only when it is due. Nothing runs in the background and nothing is tracked beyond a few dates in `.living/profile.json`. Workspace rules (new section 16) and the `tend` skill carry the behaviour; this is an instruction to the agent, and `agency` marks it as such. Existing workspaces stay silent until a rhythm is set.
 - Who may approve: setup now asks "who else may approve decisions, and for which area". The answer becomes an approved decision whose rule starts with `Approvers:`; `status` and `agency` list it, marked as an instruction (names are labels, the tool does not check who types). Approval rights still come only from approved decisions, never from a job title.

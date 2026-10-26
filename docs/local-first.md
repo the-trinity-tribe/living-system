@@ -1,6 +1,6 @@
 # Local-first and resource use
 
-Status: EXPERIMENTAL. Version: 0.2.0.
+Status: EXPERIMENTAL. Version: 0.3.0.
 
 What runs on your own computer, what needs an AI agent, and what Living System does not measure.
 

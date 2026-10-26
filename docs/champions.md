@@ -1,6 +1,6 @@
 # Making the case: a guide for people who tried it
 
-Status: EXPERIMENTAL. Version: 0.2.0.
+Status: EXPERIMENTAL. Version: 0.3.0.
 
 You used Living System at work and want your CEO, CTO or founder to consider it. This page helps you argue from what you saw, not from promises. Every argument here is something you can check or show.
 
@@ -35,7 +35,7 @@ Do not add numbers you did not measure. If you want to talk about time saved, ti
 - **"Is it compliant (GDPR, ISO, …)?"** It makes no compliance claim. It can support your process by keeping rules, approvals and their history in plain files you control. Personal data rules still apply to what people write in it.
 - **"Why not just a wiki or a shared drive?"** The difference is the agent rules: the AI answers from approved rules, names the file, says when something is not written down, and cannot change a rule on its own. A wiki is still useful; Living System can sit next to it.
 - **"What if the AI vendor changes?"** The same files work with two agents today, and `handbook` prints the rules and steps for working with no AI at all.
-- **"Who maintains it?"** Be honest: it is an experimental open-source project. Version 0.2.0. Check the changelog and the tests yourself.
+- **"Who maintains it?"** Be honest: it is an experimental open-source project. Version 0.3.0. Check the changelog and the tests yourself.
 
 ## 4. A small pilot to suggest
 

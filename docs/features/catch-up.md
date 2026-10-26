@@ -1,6 +1,6 @@
 # Feature: catch-up ("what changed while I was away")
 
-Status: EXPERIMENTAL. Version: 0.2.0.
+Status: EXPERIMENTAL. Version: 0.3.0.
 
 ## What does this feature do?
 

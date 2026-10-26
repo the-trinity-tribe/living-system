@@ -1,6 +1,6 @@
 # AI tools for Living System
 
-Status: EXPERIMENTAL. Version: 0.2.0. Facts about other companies' tools were last checked on **2026-10-23**. They change often. Check the linked pages before you rely on them.
+Status: EXPERIMENTAL. Version: 0.3.0. Facts about other companies' tools were last checked on **2026-10-23**. They change often. Check the linked pages before you rely on them.
 
 This page explains, in plain words, which AI tools work with Living System, what to install, and how to stay safe.
 
