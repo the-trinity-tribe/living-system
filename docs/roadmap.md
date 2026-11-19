@@ -324,6 +324,17 @@ A second set of ideas, checked the same way after the 0.2.0 preview was publishe
 | No dark patterns, surveillance, quotas, hidden profiling, misleading claims | Implemented | Core | Built: `docs/ethics.md`. |
 | Four separate dimensions: business, human, resources, reliability | Implemented | Enhancement | Built: evidence summary sections and the experiment card. |
 
+## Third addition: everyday use without an agent (2026-11-16)
+
+Three gaps found by using the tools as a newcomer would. All three were built on 2026-11-16, each with tests. None is released yet; see the changelog under "Unreleased".
+
+| Capability | Coverage | Decision | Why |
+| --- | --- | --- | --- |
+| Search that says how much weight a result carries | Implemented | Core | Built: `living.py find`. A plain search cannot tell an approved rule from a line in outside material; this one labels and orders results by that difference. |
+| A view for people who do not read terminals | Implemented | Enhancement | Built: `living.py overview`. One HTML page with no scripts and no network use, saved outside the workspace. |
+| Restore in one checked step | Implemented | Enhancement | Built: `living.py restore`. Completes `export` and `export-check`; refuses a damaged backup and never overwrites a folder. |
+| Search by meaning | Missing | Reject | Needs a model or an index service. Agents already do this in context; `find` stays exact and predictable. |
+
 ## Not now, and not at all
 
 Every **Defer** and **Reject** above, in one list.

@@ -4,7 +4,7 @@ Status: EXPERIMENTAL. Version: 0.3.0.
 
 ## What does this feature do?
 
-It packs your whole workspace into one zip file: your rules, proposals, projects, knowledge, workflows and settings. You can keep it as a backup, move to another computer, or hand it to a different AI tool.
+It packs your whole workspace into one zip file: your rules, proposals, projects, knowledge, workflows and settings. One command brings it back. You can keep it as a backup, move to another computer, or hand it to a different AI tool.
 
 ## Why would someone need it?
 
@@ -35,14 +35,23 @@ To check a backup without unpacking it: `python3 tools/living.py export-check ~/
 
 
 1. Export to a new `.zip` file outside the workspace.
-2. To restore: unzip it into a new, empty folder.
-3. Run `python3 tools/living.py upgrade <that folder> --apply` from your Living System folder. It records where Living System is on this computer and brings files up to date if the version changed.
-4. Run `doctor` on the folder.
+2. To restore, run this from your Living System folder. It shows what would happen first:
+
+   ```sh
+   python3 tools/living.py restore ~/living-backup-2026-10-24.zip ~/my-workspace-restored          # checks the zip, writes nothing
+   python3 tools/living.py restore ~/living-backup-2026-10-24.zip ~/my-workspace-restored --apply  # unpacks it
+   ```
+
+3. Run `doctor` on the new folder. If `restore` says the backup comes from another version, run `upgrade` on it too.
+
+`restore` runs the same check as `export-check` and refuses a backup that is damaged or has a changed file. It only unpacks into a new or empty folder, so it can never overwrite a workspace. It also records where Living System is on this computer.
+
+By hand, without the command: unzip into a new, empty folder, then run `python3 tools/living.py upgrade <that folder> --apply`.
 
 ## Example scenarios
 
 - Before trying a new module, you export a backup. If you do not like the result, you restore it.
-- You get a new laptop. You unzip the export, run `upgrade`, and your agent finds everything as before.
+- You get a new laptop. You run `restore` on the export, and your agent finds everything as before.
 - You switch from one AI tool to another. Both read the same files; nothing needs converting.
 
 ## What changes inside the system when it runs?
@@ -59,5 +68,7 @@ Nothing in the workspace changes. The zip contains every file except: `.living/l
 
 - **The file already exists:** choose a new name; the export never overwrites, even if the file appears while it runs.
 - **"another review is running" or "another Living System command is changing this workspace":** the export waits for nothing and refuses, so it never captures a half-finished change. Try again when the other command has finished.
-- **You restored and the agent asks where Living System is:** run `upgrade` on the restored folder (step 3).
+- **You unzipped by hand and the agent asks where Living System is:** run `upgrade` on the restored folder.
+- **"this export is not complete, so nothing was restored":** the list below that line says what is missing or changed. Use another backup, or unzip by hand if you accept the gaps.
+- **"is not empty; choose a new or empty folder":** `restore` never unpacks over existing files. Pick a new folder name.
 - **Limits:** the zip holds whatever is in your workspace, including private notes. Store it like any other private file. A `.git` history is not included; copy it separately if you use git.

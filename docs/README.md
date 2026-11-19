@@ -27,6 +27,8 @@ Plain words first. Exact commands are under the heading that needs them. Every f
 - [Workflow generator](features/workflow-generator.md): create the folders for a staged workflow with a stop for you after each step.
 - [Modules](features/modules.md): add and remove optional ready-made workflows, always with a plan first.
 - [Status](features/status.md): a read-only list of what needs your attention.
+- [Overview](features/overview.md): one page for your browser with what waits, your rules, your knowledge and the health check.
+- [Find](features/find.md): search your workspace; every result says whether it is a rule in force, a proposal or outside material.
 - [Catch-up](features/catch-up.md): what changed while you were away, changed rules first.
 - [Material from outside, and secrets](features/outside-material-and-secrets.md): outside e-mails and documents are checked for hidden instructions; passwords and keys stay out of the workspace.
 - [Review record](features/review-record.md): every review is fingerprinted, so you can tell if an approved rule was changed afterwards.
@@ -38,7 +40,7 @@ Plain words first. Exact commands are under the heading that needs them. Every f
 - [Learning mode](features/learning-mode.md): coach mode, practice questions about your own rules, and a handbook for working without AI.
 - [Upgrade](features/upgrade.md): bring a workspace up to date without overwriting your own edits.
 - [Obsidian or any editor](features/obsidian.md): read and approve in a note app; what not to edit by hand.
-- [Export](features/export.md): pack your whole workspace into one zip file, and restore it elsewhere.
+- [Export](features/export.md): pack your whole workspace into one zip file, and restore it elsewhere with one checked command.
 - [Agency and delegation](features/agency.md): who may do what, honestly labelled, and delegation levels you grant and withdraw per kind of work.
 - [Write guard](features/write-guard.md): stops the agent from editing your decisions or approving your drafts directly.
 - [Third-Run counter](features/third-run-counter.md): counts repeated work and asks you at the third time whether to automate it.

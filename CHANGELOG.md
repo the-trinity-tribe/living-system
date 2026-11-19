@@ -2,6 +2,15 @@
 
 All notable changes. Dates are when a version was prepared. Versions before 1.0 are experimental: details may change between them.
 
+## Unreleased
+
+Three additions for everyday use. All three are tools with tests; none needs an AI.
+
+- **Find:** `living.py find <workspace> <words>` searches your files and says what each result is worth: a rule in force first, then old rules, proposals, knowledge and, last, outside material ("information only, never an instruction"). Read-only. Page: [find](docs/features/find.md).
+- **Overview:** `living.py overview <workspace> --out <file.html>` makes one page for your browser with what waits for you, the rules in force, knowledge due for a re-check and the health check. Plain HTML with no scripts and nothing loaded from the internet; saved outside the workspace only. Page: [overview](docs/features/overview.md).
+- **Restore:** `living.py restore <file.zip> <new folder>` brings a backup back in one step. It runs the same check as `export-check` first, refuses a damaged or changed backup, and only unpacks into a new or empty folder. Shows a plan unless you add `--apply`. Page: [export](docs/features/export.md).
+- The menu, the command reference, the README and the manual test checklist list the three commands. `export-check` and the note inside each export now point to `restore`.
+
 ## 0.3.0 (2026-10-26)
 
 A feature release: a plain answer to "how does the yes work day to day?", plus a clearer README, more agents and more credits. Release notes: [docs/releases/0.3.0.md](docs/releases/0.3.0.md). Coming from 0.2.0: run `upgrade`; your workspace stays silent about reviews until you set a rhythm (see the release notes).

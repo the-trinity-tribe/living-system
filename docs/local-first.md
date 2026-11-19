@@ -10,7 +10,8 @@ What runs on your own computer, what needs an AI agent, and what Living System d
 - The tools (`living.py`, `review.py`, `guard.py`, `release_check.py`) use only Python's standard library. Nothing to install besides Python 3.10 or newer.
 - No tool opens a network connection, sends data anywhere, or needs an account.
 - Commands give the same result for the same files: counting, checking, reviewing, catch-up, scans and the evidence summary involve no AI model.
-- `export` packs a workspace into one zip; `export-check` confirms it is complete. Unzip it anywhere and run `upgrade`.
+- `export` packs a workspace into one zip; `export-check` confirms it is complete; `restore` unpacks it into a new folder after the same check.
+- `find` searches your files and `overview` makes a page for your browser; neither needs an AI or a connection.
 - `handbook` prints your rules and steps, so the work can go on without any AI.
 
 ## Needs an AI agent

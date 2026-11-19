@@ -1004,9 +1004,10 @@ EXPORT_NOTE = """Living System workspace export
 
 These are plain Markdown and JSON files. Any text editor, and any AI tool that can read files, can open them.
 
-To use them again: unzip this file into a new, empty folder. Then, from a Living System folder, run
-    python3 tools/living.py doctor <that folder>
-and, if the Living System version changed, python3 tools/living.py upgrade <that folder>.
+To use them again, from a Living System folder, run
+    python3 tools/living.py restore <this file> <a new, empty folder> --apply
+It checks the file first and says if an upgrade is needed. By hand: unzip into a new, empty folder, then run
+    python3 tools/living.py upgrade <that folder> --apply
 
 Left out on purpose: .living/local.json (a path on the old computer), .living/.lock, .living/upgrade/,
 .git/ and Python caches.
@@ -1704,6 +1705,50 @@ def status(ws):
         n = len(R.current_decisions(org)) if (org / "decisions").is_dir() else 0
         lines.append(f"Company workspace: {org} (your role: {prof.get('role', '?')}; {n} company rule(s) in force, "
                      f"they come first for company work)")
+    todo += waiting_for_you(ws, R)
+    lines += ["Waiting for you:", *(f"  - {x}" for x in todo)] if todo else ["Waiting for you: nothing."]
+    due = review_due(ws, prof)
+    if due:
+        lines.append(due_line(due))
+    for text, k in approvers(ws):
+        lines.append(f"Approvers (approved decision {k}): {text}")
+    step = handover_next_step(ws)
+    if step:
+        lines.append(f"Last session's next step: {step}")
+        import datetime
+        note = ws / "handover/LATEST.md"
+        when = note.stat().st_mtime
+        written = datetime.date.fromtimestamp(when)
+        later = [rel for day, rel in changed_files(ws, written, installed_files(read_manifest(ws)))
+                 if not rel.startswith(("handover/", "me/")) and (ws / rel).stat().st_mtime > when + 60]
+        if later:
+            lines.append(f"    (that note is from {written}; {len(later)} file(s) changed after it, e.g. {later[0]}, so "
+                         f"check it is still where things stand)")
+    if prof.get("focus"):
+        lines.append(f"Focus mode: on (no suggestions; python3 tools/living.py focus {ws} off to end it)")
+    parked = ws / PARKED_FILE
+    if parked.is_file():
+        n = sum(1 for m in PARKED_ITEM.finditer(parked.read_text(encoding="utf-8", errors="replace")) if m.group(1) == " ")
+        if n:
+            lines.append(f"Parked ideas: {n} (python3 tools/living.py park {ws} lists them; the tend skill goes through them)")
+
+    path = ws / ONBOARD_FILE
+    if path.is_file():
+        marks = [m for m, *_ in ONBOARD_ITEM.findall(path.read_text(encoding="utf-8", errors="replace"))]
+        if marks and " " in marks:
+            lines.append(f"Onboarding: {marks.count(' ')} of {len(marks)} item(s) still to read "
+                         f"(python3 tools/living.py onboard {ws} shows the next ones)")
+    health = doctor(ws)
+    errors = sum(1 for lvl, _ in health if lvl == "ERROR")
+    warns = sum(1 for lvl, _ in health if lvl == "WARN")
+    lines.append(f"Health: {errors} error(s), {warns} warning(s)." + (f" Details: python3 tools/living.py doctor {ws}" if errors or warns else ""))
+    return "\n".join(lines)
+
+
+def waiting_for_you(ws, R):
+    """Everything that waits for the human's decision, one plain line each. Read-only. Used by status and overview."""
+    ws = Path(ws)
+    todo = []
     for work, level, rest, k, due in delegations(ws):
         if due:
             todo.append(f"Look again at the delegation '{work}' ({level}); its review date has come ({k})")
@@ -1756,43 +1801,7 @@ def status(ws):
                 approved = False
             if not approved:
                 todo.append(f"Read {f} and change status: draft to status: approved when it is right")
-    lines += ["Waiting for you:", *(f"  - {x}" for x in todo)] if todo else ["Waiting for you: nothing."]
-    due = review_due(ws, prof)
-    if due:
-        lines.append(due_line(due))
-    for text, k in approvers(ws):
-        lines.append(f"Approvers (approved decision {k}): {text}")
-    step = handover_next_step(ws)
-    if step:
-        lines.append(f"Last session's next step: {step}")
-        import datetime
-        note = ws / "handover/LATEST.md"
-        when = note.stat().st_mtime
-        written = datetime.date.fromtimestamp(when)
-        later = [rel for day, rel in changed_files(ws, written, installed_files(read_manifest(ws)))
-                 if not rel.startswith(("handover/", "me/")) and (ws / rel).stat().st_mtime > when + 60]
-        if later:
-            lines.append(f"    (that note is from {written}; {len(later)} file(s) changed after it, e.g. {later[0]}, so "
-                         f"check it is still where things stand)")
-    if prof.get("focus"):
-        lines.append(f"Focus mode: on (no suggestions; python3 tools/living.py focus {ws} off to end it)")
-    parked = ws / PARKED_FILE
-    if parked.is_file():
-        n = sum(1 for m in PARKED_ITEM.finditer(parked.read_text(encoding="utf-8", errors="replace")) if m.group(1) == " ")
-        if n:
-            lines.append(f"Parked ideas: {n} (python3 tools/living.py park {ws} lists them; the tend skill goes through them)")
-
-    path = ws / ONBOARD_FILE
-    if path.is_file():
-        marks = [m for m, *_ in ONBOARD_ITEM.findall(path.read_text(encoding="utf-8", errors="replace"))]
-        if marks and " " in marks:
-            lines.append(f"Onboarding: {marks.count(' ')} of {len(marks)} item(s) still to read "
-                         f"(python3 tools/living.py onboard {ws} shows the next ones)")
-    health = doctor(ws)
-    errors = sum(1 for lvl, _ in health if lvl == "ERROR")
-    warns = sum(1 for lvl, _ in health if lvl == "WARN")
-    lines.append(f"Health: {errors} error(s), {warns} warning(s)." + (f" Details: python3 tools/living.py doctor {ws}" if errors or warns else ""))
-    return "\n".join(lines)
+    return todo
 
 
 SINCE_COVERED = ("decisions", "proposals", "knowledge", "lessons", "handover", "SYSTEM.md", "PRINCIPLES.md")
@@ -3042,15 +3051,15 @@ def evidence(ws, today=None):
     return "\n".join(out)
 
 
-def write_handbook(ws, target, text, mark=None, what="handbook"):
+def write_handbook(ws, target, text, mark=None, what="handbook", suffixes=(".md", ".txt")):
     """Save a generated copy (the handbook, the evidence summary) outside the workspace.
     Only an earlier copy of the same kind (same first line) is ever replaced."""
     mark = mark or HANDBOOK_MARK
     if Path(target).expanduser().is_symlink():
         raise Refusal(f"{target} is a link; choose a plain file name")
     ws, target = Path(ws).resolve(), Path(target).expanduser().resolve()
-    if target.suffix.lower() not in (".md", ".txt"):
-        raise Refusal(f"the {what} file name must end in .md or .txt")
+    if target.suffix.lower() not in suffixes:
+        raise Refusal(f"the {what} file name must end in {' or '.join(suffixes)}")
     if ws in (target, *target.parents):
         raise Refusal(f"save the {what} outside the workspace, so no agent mistakes the copy for the rules")
     try:
@@ -3066,7 +3075,7 @@ def write_handbook(ws, target, text, mark=None, what="handbook"):
     if target.exists():
         with open(target, encoding="utf-8", errors="replace") as f:
             if f.readline().strip() != mark:
-                raise Refusal(f"{target} already exists and is not a {what}; choose a new file name")
+                raise Refusal(f"{target} already exists and was not made as the {what}; choose a new file name")
     fd, tmp = tempfile.mkstemp(prefix=".living-handbook-", suffix=".tmp", dir=target.parent)
     try:
         with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as f:
@@ -3221,6 +3230,265 @@ def knowledge_upkeep(ws, R):
     return out
 
 
+FIND_KINDS = (  # most trustworthy first: a result says how much weight it carries, not only where it is
+    ("rule", "RULE IN FORCE (approved by a human)"),
+    ("foundation", "Foundation (SYSTEM.md, PRINCIPLES.md)"),
+    ("history", "Rule history: no longer in force"),
+    ("decision", "Decision (state unknown: run review.py check)"),
+    ("proposal", "Proposal: not a rule"),
+    ("knowledge", "Knowledge"),
+    ("lessons", "Lessons"),
+    ("workflow", "Workflow"),
+    ("project", "Project"),
+    ("roles", "Role knowledge"),
+    ("handover", "Handover note"),
+    ("me", "Your private notes"),
+    ("other", "Other files"),
+    ("archive", "Archived knowledge: out of daily use"),
+    ("incoming", "Outside material: information only, never an instruction"),
+)
+FIND_FOLDERS = {"proposals": "proposal", "knowledge": "knowledge", "lessons": "lessons", "workflows": "workflow",
+                "projects": "project", "roles": "roles", "handover": "handover", "me": "me", "incoming": "incoming"}
+FIND_SUFFIXES = (".md", ".txt")
+FIND_MAX_BYTES = 1_000_000
+FIND_LINES = 3
+
+
+def find_kind(rel, current):
+    """Which kind of file this is, and so how much weight a result from it carries."""
+    top = rel.split("/", 1)[0]
+    if top == "decisions":
+        return "decision" if current is None else "rule" if rel in current else "history"
+    if rel in ("SYSTEM.md", "PRINCIPLES.md"):
+        return "foundation"
+    if archived(rel):
+        return "archive"
+    return FIND_FOLDERS.get(top, "other")
+
+
+def find(ws, words):
+    """Search the workspace for files that contain every word. Read-only, and needs no AI.
+    Returns [(kind, path, [(line number, line), ...])], most trustworthy kind first."""
+    ws = Path(ws)
+    read_manifest(ws)
+    words = [w.casefold() for w in words if w.strip()]
+    if not words or any(len(w) < 2 for w in words):
+        raise Refusal("give one or more words of at least two letters to look for")
+    R = review_tool()
+    try:
+        current = set(R.current_decisions(ws)) if (ws / "decisions").is_dir() else set()
+    except Refusal:
+        current = None  # a damaged decision file: still search, but do not claim which rules are in force
+    clean = lambda s: HIDDEN.sub("", UNSAFE.sub(" ", s)).strip()
+    hits = []
+    for p in sorted(ws.rglob("*")):
+        parts = p.relative_to(ws).parts
+        if set(parts) & set(SCAN_SKIP) or p.suffix.lower() not in FIND_SUFFIXES or p.is_symlink() or not p.is_file():
+            continue
+        rel = p.relative_to(ws).as_posix()
+        if linked_part(ws, rel) or p.stat().st_size > FIND_MAX_BYTES:
+            continue
+        text = p.read_text(encoding="utf-8", errors="replace")
+        folded = text.casefold()
+        if not all(w in folded or w in rel.casefold() for w in words):
+            continue
+        lines = [(n, clean(line)) for n, line in enumerate(text.splitlines(), 1) if any(w in line.casefold() for w in words)]
+        hits.append((find_kind(rel, current), rel, lines, sum(folded.count(w) for w in words)))
+    order = [k for k, _ in FIND_KINDS]
+    hits.sort(key=lambda h: (order.index(h[0]), -h[3], h[1]))
+    return [(kind, rel, lines) for kind, rel, lines, _ in hits]
+
+
+def format_find(results, words):
+    asked = " ".join(words)
+    if not results:
+        return f"Nothing found for: {asked}\nOnly .md and .txt files are searched, and a file must contain every word."
+    labels, out, last = dict(FIND_KINDS), [f"{len(results)} file(s) contain: {asked}"], None
+    for kind, rel, lines in results:
+        if kind != last:
+            out += ["", labels[kind]]
+            last = kind
+        out.append(f"  {rel}")
+        for n, line in lines[:FIND_LINES]:
+            out.append(f"      {n}: {line[:160]}")
+        if len(lines) > FIND_LINES:
+            out.append(f"      ... and {len(lines) - FIND_LINES} more line(s)")
+    return "\n".join(out)
+
+
+RESTORE_MAX_BYTES = 1_000_000_000
+RESTORE_SKIP = ("EXPORT-README.txt", EXPORT_INVENTORY)
+
+
+def restore(zip_path, target, apply=False):
+    """Unpack an export into a new or empty folder, after checking it. Plan only unless apply.
+    Returns (file count, notes). Never writes into an existing workspace."""
+    import zipfile
+    path = Path(zip_path).expanduser()
+    problems, _ = export_check(path)
+    old_format = [p for p in problems if p.startswith(f"no {EXPORT_INVENTORY}")]
+    problems = [p for p in problems if p not in old_format]
+    if problems:
+        raise Refusal("this export is not complete, so nothing was restored:\n" + "\n".join(f"  - {p}" for p in problems))
+    target = Path(target).expanduser()
+    check_target(target)
+    notes = ["made by an older version: your own files could not be checked against a list"] if old_format else []
+    with zipfile.ZipFile(path) as z:
+        infos = [i for i in z.infolist() if not i.filename.endswith("/") and i.filename not in RESTORE_SKIP]
+        if any(unsafe_rel(i.filename) for i in infos):
+            raise Refusal("this export holds a path that is not safe to unpack; nothing was restored")
+        if sum(i.file_size for i in infos) > RESTORE_MAX_BYTES:
+            raise Refusal("this export unpacks to more than 1 GB; unzip it by hand if that is really your workspace")
+        version = json.loads(z.read(".living/manifest.json").decode("utf-8-sig")).get("kernel_version")
+        if version != KERNEL_VERSION:
+            notes.append(f"it was made with version {version}; this is {KERNEL_VERSION}. After restoring, run: "
+                         f"python3 tools/living.py upgrade {target}")
+        if not apply:
+            return len(infos), notes
+        tmp = Path(tempfile.mkdtemp(prefix=".living-restore-", dir=target.parent))
+        try:
+            umask = os.umask(0)
+            os.umask(umask)
+            os.chmod(tmp, 0o777 & ~umask)
+            for i in infos:
+                dest = tmp / i.filename
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                try:
+                    with open(dest, "xb") as f:
+                        f.write(z.read(i))
+                except FileExistsError:
+                    raise Refusal(f"this export holds {i.filename} twice; nothing was restored") from None
+            # Where the tools live on this computer; left out of every export because it is a local path.
+            (tmp / ".living/local.json").write_text(json.dumps({"product_folder": str(HERE.parent)}, indent=2) + "\n",
+                                                    encoding="utf-8", newline="\n")
+            emptied = target.is_dir()
+            if emptied:
+                target.rmdir()  # Windows cannot rename onto an existing folder, even an empty one
+            try:
+                os.rename(tmp, target)
+            except BaseException:
+                if emptied:
+                    target.mkdir(exist_ok=True)
+                raise
+        except BaseException:
+            shutil.rmtree(tmp, ignore_errors=True)
+            raise
+    return len(infos), notes
+
+
+OVERVIEW_MARK = "<!-- living-system overview: a generated view, not the rules -->"
+OVERVIEW_STYLE = """
+:root{--bg:#fff8ea;--card:#fffdf7;--line:#e4d6b8;--ink:#161616;--soft:#5c5343;--accent:#eb5757;--ok:#2f6b3f;--warn:#8a5a00}
+@media (prefers-color-scheme:dark){:root{--bg:#161616;--card:#242424;--line:#2d2d2d;--ink:#ffedc9;--soft:#d6c4a8;--ok:#9fd8ad;--warn:#ffcf70}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:60rem;margin:0 auto;padding:2rem 1rem 4rem}
+h1{font-size:1.9rem;line-height:1.2;margin:0 0 .4rem;overflow-wrap:anywhere}
+h2{font-size:1.15rem;margin:2.2rem 0 .7rem;padding-top:.9rem;border-top:2px solid var(--accent)}
+p{margin:.3rem 0}
+.soft,small{color:var(--soft)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(9.5rem,1fr));gap:.75rem;margin:1.5rem 0 0;padding:0;list-style:none}
+.tiles li{background:var(--card);border:1px solid var(--line);border-radius:.6rem;padding:.8rem 1rem}
+.tiles b{display:block;font-size:1.8rem;line-height:1.2}
+ul.list{list-style:none;margin:0;padding:0}
+ul.list li{background:var(--card);border:1px solid var(--line);border-radius:.6rem;padding:.7rem 1rem;margin:0 0 .5rem;overflow-wrap:anywhere}
+code{font:.85em ui-monospace,Menlo,Consolas,monospace;overflow-wrap:anywhere}
+.cmd{display:block;margin-top:.35rem;color:var(--soft)}
+.ok{color:var(--ok)}.warn{color:var(--warn)}
+footer{margin-top:3rem;color:var(--soft);font-size:.9rem}
+"""
+
+
+def overview(ws, today=None):
+    """One page for a browser: what waits, the rules in force, knowledge and health. Read-only.
+    Plain HTML with no scripts and nothing loaded from anywhere; every piece of workspace text is escaped."""
+    import datetime
+    from html import escape as e
+    ws = Path(ws)
+    read_manifest(ws)
+    R = review_tool()
+    today = today or datetime.date.today()
+    try:
+        prof = read_profile(ws)
+    except Refusal:
+        prof = {}
+    try:
+        rules = [row for row in R.history(ws) if row[4] == "in force"] if (ws / "decisions").is_dir() else []
+    except Refusal as err:
+        raise Refusal(f"a decision file cannot be read ({err}); run review.py check first") from None
+    todo = []
+    for line in waiting_for_you(ws, R):
+        if line.startswith("    ") and todo:
+            todo[-1][1].append(line.strip())
+        else:
+            todo.append((line, []))
+    ages = knowledge_ages(ws, today)
+    stale = [rel for rel, days, problem in ages if problem or (days is not None and days > STALE_DAYS)]
+    parked = ws / PARKED_FILE
+    n_parked = sum(1 for m in PARKED_ITEM.finditer(parked.read_text(encoding="utf-8", errors="replace"))
+                   if m.group(1) == " ") if parked.is_file() else 0
+    try:
+        work = read_runs(ws)["work"]
+    except Refusal:
+        work = {}
+    health = doctor(ws)
+    errors, warns = (sum(1 for lvl, _ in health if lvl == level) for level in ("ERROR", "WARN"))
+    name = ws.resolve().name
+    tile = lambda n, label: f"<li><b>{n}</b>{e(label)}</li>"
+    items = lambda rows: '<ul class="list">' + "".join(f"<li>{row}</li>" for row in rows) + "</ul>"
+    out = [OVERVIEW_MARK, "<!doctype html>", '<html lang="en"><head><meta charset="utf-8">',
+           '<meta name="viewport" content="width=device-width, initial-scale=1">',
+           "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\">",
+           f"<title>Overview: {e(name)}</title><style>{OVERVIEW_STYLE}</style></head><body><main>",
+           f"<h1>{e(name)}</h1>",
+           f'<p class="soft">Made on {today} with <code>living.py overview</code>. A view built from your files, which '
+           f"stay the source. It changes nothing, and it is private to you: read it before you share it.</p>",
+           f'<p class="soft">Profile: {e(str(prof.get("profile", "?")))} · language: {e(str(prof.get("language", "?")))}'
+           + (" · focus mode on" if prof.get("focus") else "") + "</p>",
+           '<ul class="tiles">', tile(len(todo), "waiting for you"), tile(len(rules), "rules in force"),
+           tile(len(ages), "knowledge files"), tile(n_parked, "parked ideas"),
+           tile(errors + warns, "health findings"), "</ul>",
+           "<h2>Waiting for you</h2>"]
+    out.append(items(e(text) + "".join(f'<small class="cmd">{e(c)}</small>' for c in cmds) for text, cmds in todo)
+               if todo else '<p class="ok">Nothing. You are up to date.</p>')
+    due = review_due(ws, prof)
+    if due:
+        out.append(f"<p>{e(due_line(due))}</p>")
+    out.append(f"<h2>Rules in force ({len(rules)})</h2>")
+    out.append(items(f"<strong>{e(title)}</strong><br><small>approved {e(str(date))} by {e(str(by))} · "
+                     f"<code>{e(k)}</code></small>" for k, title, date, by, _ in rules)
+               if rules else '<p class="soft">None yet. A rule starts as a proposal that you approve.</p>')
+    step = handover_next_step(ws)
+    if step:
+        out += ["<h2>Where you stopped</h2>", f"<p>{e(step)}</p>"]
+    out.append(f"<h2>Knowledge ({len(ages)})</h2>")
+    if ages:
+        def state(rel, days, problem):
+            if problem:
+                return f'<span class="warn">check the date: {e(problem)}</span>'
+            if days is None:
+                return "no check date"
+            return (f'<span class="warn">last checked {days} days ago: due for a re-check</span>' if days > STALE_DAYS
+                    else f"last checked {days} day(s) ago")
+        out.append(items(f"<code>{e(rel)}</code><br><small>{state(rel, days, problem)}</small>" for rel, days, problem in ages))
+        if stale:
+            out.append(f'<p class="soft">{len(stale)} file(s) are due for a re-check (older than {STALE_DAYS} days).</p>')
+    else:
+        out.append('<p class="soft">No knowledge files yet.</p>')
+    if work:
+        out.append("<h2>Repeated work</h2>")
+        out.append(items(f"<strong>{e(n)}</strong><br><small>{int(w['count'])} run(s), last {e(str(w['last']))} · "
+                         + ("decide now" if run_is_due(w) else e(str(w.get("decision") or "counting"))) + "</small>"
+                         for n, w in sorted(work.items())))
+    out.append("<h2>Health</h2>")
+    out.append(items(f'<span class="{"warn" if lvl != "INFO" else "soft"}">{e(lvl)}</span> {e(msg)}' for lvl, msg in
+                     sorted(health, key=lambda r: {"ERROR": 0, "WARN": 1, "INFO": 2}[r[0]]))
+               if health else '<p class="ok">All good: no problems found.</p>')
+    out.append(f"<footer>Living System {e(KERNEL_VERSION)}. Experimental. Make this page again any time; "
+               f"the files in your workspace are what counts.</footer></main></body></html>")
+    return "\n".join(out)
+
+
 def format_doctor(results):
     if not results:
         return "All good: no problems found."
@@ -3233,6 +3501,8 @@ def format_doctor(results):
 MENU = """Living System: everyday commands (run them from the Living System folder; on Windows type py instead of python3)
 
   What needs me?            python3 tools/living.py status <workspace>
+  Everything on one page    python3 tools/living.py overview <workspace> --out <file.html>
+  Find something            python3 tools/living.py find <workspace> <words>
   What changed while away?  python3 tools/living.py since <workspace> --days 14
   Is everything healthy?    python3 tools/living.py doctor <workspace>
   Park an idea              python3 tools/living.py park <workspace> "the idea"
@@ -3243,6 +3513,7 @@ MENU = """Living System: everyday commands (run them from the Living System fold
   Rules on paper            python3 tools/living.py handbook <workspace> --out <file.md>
   Back up everything        python3 tools/living.py export <workspace> <file.zip> --apply
   Check a backup            python3 tools/living.py export-check <file.zip>
+  Restore a backup          python3 tools/living.py restore <file.zip> <new folder> --apply
   Optional modules          python3 tools/living.py modules --workspace <workspace>
 
 Easier still: open the workspace in Claude Code or Codex and ask in your own words.
@@ -3311,6 +3582,16 @@ def main(argv=None):
     d.add_argument("--out", help="also save the report to this .md file outside the workspace")
     xc = sub.add_parser("export-check", help="check that an export zip holds a complete workspace (read-only)")
     xc.add_argument("file")
+    rs = sub.add_parser("restore", help="unpack an export into a new or empty folder, after checking it (plan unless --apply)")
+    rs.add_argument("file", help="the export .zip file")
+    rs.add_argument("dir", help="a new or empty folder for the restored workspace")
+    rs.add_argument("--apply", action="store_true")
+    fd = sub.add_parser("find", help="search your workspace; each result says if it is a rule in force, a proposal or outside material (read-only)")
+    fd.add_argument("workspace")
+    fd.add_argument("words", nargs="+", help="the words to look for; a file must contain all of them")
+    ov = sub.add_parser("overview", help="one page for your browser: what waits, rules in force, knowledge, health (read-only)")
+    ov.add_argument("workspace")
+    ov.add_argument("--out", required=True, help="save it to this .html file outside the workspace")
     sub.add_parser("menu", help="the everyday commands, in plain words")
     s = sub.add_parser("status", help="what needs your attention, in plain words (read-only)")
     s.add_argument("workspace")
@@ -3512,9 +3793,23 @@ def main(argv=None):
                 print(text)
         elif a.cmd == "menu":
             print(MENU)
+        elif a.cmd == "restore":
+            n, notes = restore(os.path.expanduser(a.file), a.dir, a.apply)
+            where = Path(a.dir).resolve()
+            print(f"Restored {n} files to {where}. Next: python3 tools/living.py doctor {where}" if a.apply else
+                  f"The export is complete: {n} files would be unpacked into {where}. Nothing was written. "
+                  f"Run again with --apply to restore.")
+            for note in notes:
+                print(f"Note: {note}")
+        elif a.cmd == "find":
+            print(format_find(find(a.workspace, a.words), a.words))
+        elif a.cmd == "overview":
+            saved = write_handbook(a.workspace, os.path.expanduser(a.out), overview(a.workspace), OVERVIEW_MARK,
+                                   "overview", suffixes=(".html",))
+            print(f"Saved {saved}. Open it in your browser. It is a copy for reading, not the rules.")
         elif a.cmd == "export-check":
             problems, n = export_check(a.file)
-            print(f"{n} entries. " + ("Complete: it can be restored (unzip into a new folder, then run upgrade)."
+            print(f"{n} entries. " + ("Complete: it can be restored (python3 tools/living.py restore <file.zip> <new folder>)."
                                       if not problems else "Problems:\n" + "\n".join(f"  - {p}" for p in problems)))
             return 1 if problems else 0
         elif a.cmd == "doctor":

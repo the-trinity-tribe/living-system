@@ -216,6 +216,8 @@ Use only what helps. Every feature has its own plain-language page answering the
 ### Every day: less to remember
 
 - **[Status](docs/features/status.md):** what needs you, in plain words.
+- **[Overview](docs/features/overview.md):** your whole workspace on one page in your browser. No terminal reading.
+- **[Find](docs/features/find.md):** search your files, and see at once whether a result is a rule in force, an old rule, a proposal or outside material.
 - **[Catch-up](docs/features/catch-up.md):** back from a holiday? See what changed, changed rules first.
 - **[Handover note](docs/features/handover-note.md):** the next session continues where the last one stopped.
 - **[The review loop](docs/features/review-rhythm.md):** choose a quick yes now or a batch later, a review rhythm, a calm once-a-day reminder, and who else may approve.
@@ -224,6 +226,8 @@ Use only what helps. Every feature has its own plain-language page answering the
 | You want | Ask your agent, or run | What happens |
 | --- | --- | --- |
 | What needs me? | `status` | One short list in plain words. |
+| Everything on one page | `overview` | A page for your browser: what waits, your rules, your knowledge. |
+| Did we decide this? | `find` | Results with their weight: rule in force first, outside material last. |
 | Back from a holiday | `since --days 14` | What changed, changed rules first. |
 | An idea mid-task | `park` | Kept with what to decide and when. |
 | Deep work | `focus on` | No suggestions until you say so. |
@@ -305,7 +309,7 @@ python3 tools/living.py add ~/my-workspace weekly-update --apply  # install it
 
 - **[Doctor](docs/features/doctor.md):** a health check that finds what is missing, broken or out of date.
 - **[Upgrade](docs/features/upgrade.md):** safe updates that keep every file you edited.
-- **[Export](docs/features/export.md):** one-file backups you can check.
+- **[Export and restore](docs/features/export.md):** one-file backups you can check, and bring back with one command.
 - **[Obsidian or any editor](docs/features/obsidian.md):** read and approve in a note app.
 - **[Value check](docs/features/value-check.md):** measure in ten minutes whether it helps *you*, and [make the case](docs/champions.md) honestly with a counts-only summary.
 

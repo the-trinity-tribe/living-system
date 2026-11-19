@@ -18,6 +18,8 @@ Every command, in plain words. Run them from the Living System folder; on Window
 | Command | What it does |
 | --- | --- |
 | `living.py status workspace` | what needs your attention, in plain words (read-only) |
+| `living.py overview --out OUT workspace` | one page for your browser: what waits, rules in force, knowledge, health (read-only) |
+| `living.py find workspace words [words ...]` | search your workspace; each result says if it is a rule in force, a proposal or outside material (read-only) |
 | `living.py since (--date DATE \| --days DAYS) workspace` | what changed while you were away, rules first (read-only) |
 | `living.py park [--done N] [--decide DECIDE] [--again DATE] workspace [idea]` | write an idea down without switching task, or list and tick off parked ideas |
 | `living.py focus workspace {on,off}` | focus mode: the agent does what you ask and suggests nothing else |
@@ -71,6 +73,7 @@ Every command, in plain words. Run them from the Living System folder; on Window
 | --- | --- |
 | `living.py export [--apply] workspace file` | pack the workspace into one zip file (plan unless --apply) |
 | `living.py export-check file` | check that an export zip holds a complete workspace (read-only) |
+| `living.py restore [--apply] file dir` | unpack an export into a new or empty folder, after checking it (plan unless --apply) |
 
 ## The review tool
 
