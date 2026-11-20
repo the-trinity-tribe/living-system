@@ -38,11 +38,11 @@ We tried this sentence in fresh Claude Code and Codex sessions ([results](demo/W
 
 Most AI tools keep their own memory of you: locked inside one product, growing on its own, and hard to check. Living System turns that around.
 
-- **Own it, take it anywhere.** Your rules, knowledge, goals and workflows live in plain files on your own computer, not inside one AI product. Use them with Claude Code, Codex, Hermes or a local model, for work or personal projects, and switch without starting over.
+- **Own it, take it anywhere.** Your rules, knowledge, goals and workflows live in plain files on your own computer, not inside one AI product. Use them with Claude Code, Codex, Hermes or a local model, for work or personal projects, and switch without starting over. Back up to one file and restore it with one checked command.
 - **Lean and true, not bloated.** Instead of a memory that keeps growing and filling the context window, you keep a curated set of files, and a routing guide points your agent to just what a task needs. Your agent suggests changes instead of making them; you decide what becomes true, and a record shows any later change.
 - **Grows with you.** Optional [modules](#optional-modules) for weekly updates, meeting notes, research, client intake, content and careful multi-step work, plus learning, coaching and [team workspaces](#teams-knowledge-that-outlives-a-role).
 - **More freedom for your agent, one step at a time.** Let it do more in one kind of work once it has earned it, and take that back in one step. Sending, publishing, spending and deleting always wait for you.
-- **Calm, not another dashboard.** Ask what needs you, catch up after time away, park an idea without losing focus. No tracking, no productivity scores.
+- **Calm, not another dashboard.** Ask what needs you, catch up after time away, park an idea without losing focus. See it all on one quiet page in your browser, or search your files and see at once which result is a rule you approved. No tracking, no productivity scores.
 
 No server, no account, no tie to one AI vendor or model: just Python's standard library and Markdown files.
 
@@ -133,6 +133,7 @@ cd living-system
 ```sh
 python3 tools/living.py init ~/my-workspace --profile professional --language en
 python3 tools/living.py status ~/my-workspace
+python3 tools/living.py overview ~/my-workspace --out ~/living-overview.html   # the same, as a page for your browser
 ```
 
 Then open `~/my-workspace` in your agent and work as usual. Try saying *"Help me make my first decision from my setup answers."*
@@ -216,8 +217,8 @@ Use only what helps. Every feature has its own plain-language page answering the
 ### Every day: less to remember
 
 - **[Status](docs/features/status.md):** what needs you, in plain words.
-- **[Overview](docs/features/overview.md):** your whole workspace on one page in your browser. No terminal reading.
-- **[Find](docs/features/find.md):** search your files, and see at once whether a result is a rule in force, an old rule, a proposal or outside material.
+- **[Overview](docs/features/overview.md) (new):** your whole workspace on one page in your browser. No terminal reading.
+- **[Find](docs/features/find.md) (new):** search your files, and see at once whether a result is a rule in force, an old rule, a proposal or outside material.
 - **[Catch-up](docs/features/catch-up.md):** back from a holiday? See what changed, changed rules first.
 - **[Handover note](docs/features/handover-note.md):** the next session continues where the last one stopped.
 - **[The review loop](docs/features/review-rhythm.md):** choose a quick yes now or a batch later, a review rhythm, a calm once-a-day reminder, and who else may approve.
@@ -309,7 +310,7 @@ python3 tools/living.py add ~/my-workspace weekly-update --apply  # install it
 
 - **[Doctor](docs/features/doctor.md):** a health check that finds what is missing, broken or out of date.
 - **[Upgrade](docs/features/upgrade.md):** safe updates that keep every file you edited.
-- **[Export and restore](docs/features/export.md):** one-file backups you can check, and bring back with one command.
+- **[Export and restore](docs/features/export.md):** one-file backups you can check, and bring back with one command (`restore` is new).
 - **[Obsidian or any editor](docs/features/obsidian.md):** read and approve in a note app.
 - **[Value check](docs/features/value-check.md):** measure in ten minutes whether it helps *you*, and [make the case](docs/champions.md) honestly with a counts-only summary.
 
@@ -326,7 +327,7 @@ Start at [demo/moss-and-circuit/AGENTS.md](demo/moss-and-circuit/AGENTS.md), or 
 
 ## Help test it
 
-Version 0.3.0 is experimental and open for testing, feedback and contributions.
+Version 0.3.0 is experimental and open for testing, feedback and contributions. Features marked *new* are on `main` and come with the next release; see the [changelog](CHANGELOG.md).
 
 - **Try it:** [TESTING.md](TESTING.md) has a 30-minute path and says which feedback helps most.
 - **Tell us:** [open an issue](https://github.com/the-trinity-tribe/living-system/issues/new/choose) and choose *Feedback*, *Bug* or *Idea*, or start a [discussion](https://github.com/the-trinity-tribe/living-system/discussions). Plain words are perfect.
