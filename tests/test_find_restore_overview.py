@@ -217,10 +217,10 @@ class TestOverview(Base):
 
     def test_workspace_text_is_escaped(self):
         write(self.ws / "proposals/2026-10-22-x.md", proposal('<script>alert(1)</script> & "quotes"'))
-        write(self.ws / "knowledge/<img src=x onerror=alert(1)>.md", "# K\n")
+        write(self.ws / "knowledge/a&b 'onerror'.md", "# K\n")  # Windows file names cannot hold < or >
         html = L.overview(self.ws)
         self.assertNotIn("<script", html)
-        self.assertNotIn("<img", html)
+        self.assertIn("knowledge/a&amp;b &#x27;onerror&#x27;.md", html)
         self.assertIn("&lt;script&gt;alert(1)&lt;/script&gt; &amp;", html)
 
     def test_read_only_and_saved_outside_as_html_only(self):
