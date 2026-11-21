@@ -1,6 +1,6 @@
 # Roadmap and capability review
 
-Status: EXPERIMENTAL. Version: 0.3.0. Reviewed on 2026-10-24.
+Status: EXPERIMENTAL. Version: 0.4.0. Reviewed on 2026-10-24.
 
 Which capabilities Living System has, which it will get, and which it deliberately will not. Coverage was checked against the code and tests, not against descriptions. "Unverified" means the behaviour is an agent instruction that has not yet been tested in a live session.
 
@@ -326,7 +326,7 @@ A second set of ideas, checked the same way after the 0.2.0 preview was publishe
 
 ## Third addition: everyday use without an agent (2026-11-16)
 
-Three gaps found by using the tools as a newcomer would. All three were built on 2026-11-16, each with tests. None is released yet; see the changelog under "Unreleased".
+Three gaps found by using the tools as a newcomer would. All three were built on 2026-11-16, each with tests. All three are released in 0.4.0; see the changelog.
 
 | Capability | Coverage | Decision | Why |
 | --- | --- | --- | --- |

@@ -217,8 +217,8 @@ Use only what helps. Every feature has its own plain-language page answering the
 ### Every day: less to remember
 
 - **[Status](docs/features/status.md):** what needs you, in plain words.
-- **[Overview](docs/features/overview.md) (new):** your whole workspace on one page in your browser. No terminal reading.
-- **[Find](docs/features/find.md) (new):** search your files, and see at once whether a result is a rule in force, an old rule, a proposal or outside material.
+- **[Overview](docs/features/overview.md):** your whole workspace on one page in your browser. No terminal reading.
+- **[Find](docs/features/find.md):** search your files, and see at once whether a result is a rule in force, an old rule, a proposal or outside material.
 - **[Catch-up](docs/features/catch-up.md):** back from a holiday? See what changed, changed rules first.
 - **[Handover note](docs/features/handover-note.md):** the next session continues where the last one stopped.
 - **[The review loop](docs/features/review-rhythm.md):** choose a quick yes now or a batch later, a review rhythm, a calm once-a-day reminder, and who else may approve.
@@ -327,7 +327,7 @@ Start at [demo/moss-and-circuit/AGENTS.md](demo/moss-and-circuit/AGENTS.md), or 
 
 ## Help test it
 
-Version 0.3.0 is experimental and open for testing, feedback and contributions. Features marked *new* are on `main` and come with the next release; see the [changelog](CHANGELOG.md).
+Version 0.4.0 is experimental and open for testing, feedback and contributions. See the [changelog](CHANGELOG.md).
 
 - **Try it:** [TESTING.md](TESTING.md) has a 30-minute path and says which feedback helps most.
 - **Tell us:** [open an issue](https://github.com/the-trinity-tribe/living-system/issues/new/choose) and choose *Feedback*, *Bug* or *Idea*, or start a [discussion](https://github.com/the-trinity-tribe/living-system/discussions). Plain words are perfect.

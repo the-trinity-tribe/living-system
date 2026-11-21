@@ -1,6 +1,6 @@
 # Feature: export
 
-Status: EXPERIMENTAL. Version: 0.3.0.
+Status: EXPERIMENTAL. Version: 0.4.0.
 
 ## What does this feature do?
 

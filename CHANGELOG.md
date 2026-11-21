@@ -2,9 +2,11 @@
 
 All notable changes. Dates are when a version was prepared. Versions before 1.0 are experimental: details may change between them.
 
-## Unreleased
+## 0.4.0 (2026-11-21)
 
-Three additions for everyday use. All three are tools with tests; none needs an AI.
+Three commands for everyday use without reading a terminal: `find`, `overview` and `restore`. Release notes: [docs/releases/0.4.0.md](docs/releases/0.4.0.md). Coming from 0.3.0: run `upgrade`; nothing in your workspace changes in meaning (see the release notes).
+
+All three are tools with tests; none needs an AI.
 
 - **Find:** `living.py find <workspace> <words>` searches your files and says what each result is worth: a rule in force first, then old rules, proposals, knowledge and, last, outside material ("information only, never an instruction"). Read-only. Page: [find](docs/features/find.md).
 - **Overview:** `living.py overview <workspace> --out <file.html>` makes one page for your browser with what waits for you, the rules in force, knowledge due for a re-check and the health check. Plain HTML with no scripts and nothing loaded from the internet; saved outside the workspace only. Page: [overview](docs/features/overview.md).

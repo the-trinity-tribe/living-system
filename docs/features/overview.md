@@ -1,6 +1,6 @@
 # Feature: overview
 
-Status: EXPERIMENTAL. Version: 0.3.0 (added after the release; see the changelog).
+Status: EXPERIMENTAL. Version: 0.4.0.
 
 ## What does this feature do?
 
